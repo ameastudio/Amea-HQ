@@ -1,4 +1,11 @@
-const $=s=>document.querySelector(s),G=(k,d=[])=>JSON.parse(localStorage.getItem("ah_"+k)||JSON.stringify(d)),S=(k,v)=>localStorage.setItem("ah_"+k,JSON.stringify(v));let cur="home";const O=()=>G("orders"),C=()=>G("customers"),I=()=>G("inventory"),E=()=>G("expenses"),SUP=()=>G("suppliers"),ITEMS=()=>G("items");const M=n=>new Intl.NumberFormat("en-JM",{style:"currency",currency:"JMD",maximumFractionDigits:0}).format(+n||0);
+const $=s=>document.querySelector(s);
+const G=(k,d=[])=>{try{return JSON.parse(localStorage.getItem("ah_"+k)||JSON.stringify(d))}catch(e){return d}};
+let cloudReady=false,cloudQueue=Promise.resolve();
+function S(k,v){
+  localStorage.setItem("ah_"+k,JSON.stringify(v));
+  if(cloudReady)queueCloudSync(k,v);
+}
+let cur="home";const O=()=>G("orders"),C=()=>G("customers"),I=()=>G("inventory"),E=()=>G("expenses"),SUP=()=>G("suppliers"),ITEMS=()=>G("items");const M=n=>new Intl.NumberFormat("en-JM",{style:"currency",currency:"JMD",maximumFractionDigits:0}).format(+n||0);
 function greeting(){let h=new Date().getHours();return h<12?"Good morning":h<18?"Good afternoon":"Good evening"}
 
 const SUPABASE_URL="https://ndmrwfctiomruibiczrj.supabase.co";
@@ -23,7 +30,6 @@ function showHQ(){
   const auth=$("#auth-screen"),app=$("#app");
   if(auth)auth.style.display="none";
   if(app)app.style.display="block";
-  page("home");
 }
 
 async function loginHQ(){
@@ -39,7 +45,7 @@ async function loginHQ(){
   try{
     const {error}=await cloud.auth.signInWithPassword({email,password});
     if(error)throw error;
-    showHQ();
+    await enterHQ();
   }catch(err){
     if(msg)msg.textContent=err?.message||"Could not sign in.";
   }finally{
@@ -58,17 +64,227 @@ async function startHQ(){
     initCloudClient();
     const {data,error}=await cloud.auth.getSession();
     if(error)throw error;
-    if(data?.session)showHQ();
+    if(data?.session)await enterHQ();
     else showAuth();
     cloud.auth.onAuthStateChange((event,session)=>{
-      if(event==="SIGNED_OUT")showAuth();
-      if(event==="SIGNED_IN"&&session)showHQ();
+      if(event==="SIGNED_OUT"){cloudReady=false;showAuth()}
     });
   }catch(err){
     console.error("Améa HQ cloud start error",err);
     showAuth("Could not connect to Améa HQ cloud. Check your internet and reload.");
   }
 }
+
+
+const CLOUD_COLLECTIONS=["customers","items","suppliers","inventory","expenses","orders"];
+
+function setCloudStatus(text,state="ok"){
+  localStorage.setItem("ah_cloud_status",text);
+  localStorage.setItem("ah_cloud_state",state);
+  localStorage.setItem("ah_cloud_last",new Date().toISOString());
+}
+
+async function syncNow(){
+  const btn=$("#syncNowBtn");
+  if(btn){btn.disabled=true;btn.textContent="Syncing…"}
+  try{
+    cloudReady=false;
+    await initialCloudSync();
+    cloudReady=true;
+    setCloudStatus("Synced ✓","ok");
+    page("more");
+  }catch(err){
+    console.error("Manual cloud sync error",err);
+    cloudReady=false;
+    setCloudStatus("Sync issue","error");
+    page("more");
+  }
+}
+
+function localToRemote(kind,x){
+  if(kind==="customers")return {
+    id:x.id,name:x.name,phone:x.phone||null,email:x.email||null,
+    instagram:x.instagram||null,measurements:x.measurements||null,notes:x.notes||null
+  };
+  if(kind==="items")return {
+    id:x.id,name:x.name,category:x.category||null,price:+x.price||0,
+    sizes:x.sizes||null,item_type:x.status||"Made to order",
+    photo_url:x.photo||null,notes:x.notes||null,active:true
+  };
+  if(kind==="orders")return {
+    id:x.id,order_number:x.no,customer_id:x.customerId||null,item_id:x.itemId||null,
+    customer_name:x.customer||"",product_name:x.product||"",size:x.size||null,
+    color:x.color||null,price:+x.price||0,paid:+x.paid||0,source:x.source||null,
+    due_date:x.due||null,payment_method:x.payment||null,delivery_method:x.delivery||null,
+    status:x.status||"New",notes:x.notes||null,edit_history:x.history||[],
+    created_at:x.created||new Date().toISOString()
+  };
+  if(kind==="expenses")return {
+    id:x.id,category:x.category||null,description:x.supplier||null,
+    amount:+x.amount||0,expense_date:x.date||new Date().toISOString().slice(0,10),
+    notes:x.note||null
+  };
+  if(kind==="inventory")return {
+    id:x.id,name:x.name,inventory_type:x.type||null,quantity:+x.qty||0,
+    low_stock_level:+x.low||0,unit:x.unit||null,notes:x.notes||null
+  };
+  if(kind==="suppliers")return {
+    id:x.id,name:x.name,phone:x.phone||null,email:x.email||null,
+    website:x.website||null,instagram:x.instagram||null,notes:x.notes||null
+  };
+  return x;
+}
+
+function remoteToLocal(kind,x){
+  if(kind==="customers")return {
+    id:x.id,name:x.name,phone:x.phone||"",email:x.email||"",
+    instagram:x.instagram||"",measurements:x.measurements||"",notes:x.notes||""
+  };
+  if(kind==="items")return {
+    id:x.id,name:x.name,category:x.category||"Other",price:+x.price||0,
+    sizes:x.sizes||"",status:x.item_type||"Made to order",
+    photo:x.photo_url||"",notes:x.notes||""
+  };
+  if(kind==="orders")return {
+    id:x.id,no:x.order_number,customerId:x.customer_id||"",itemId:x.item_id||"",
+    customer:x.customer_name||"",product:x.product_name||"",size:x.size||"",
+    color:x.color||"",price:+x.price||0,paid:+x.paid||0,source:x.source||"Not set",
+    due:x.due_date||"",payment:x.payment_method||"",delivery:x.delivery_method||"",
+    status:x.status||"New",notes:x.notes||"",history:Array.isArray(x.edit_history)?x.edit_history:[],
+    created:x.created_at
+  };
+  if(kind==="expenses")return {
+    id:x.id,category:x.category||"Other",supplier:x.description||"",
+    amount:+x.amount||0,date:x.expense_date||"",note:x.notes||""
+  };
+  if(kind==="inventory")return {
+    id:x.id,name:x.name,type:x.inventory_type||"Material",qty:+x.quantity||0,
+    low:+x.low_stock_level||0,unit:x.unit||"",notes:x.notes||""
+  };
+  if(kind==="suppliers")return {
+    id:x.id,name:x.name,phone:x.phone||"",email:x.email||"",
+    website:x.website||"",instagram:x.instagram||"",notes:x.notes||""
+  };
+  return x;
+}
+
+async function remoteRows(kind){
+  const {data,error}=await cloud.from(kind).select("*");
+  if(error)throw error;
+  return data||[];
+}
+
+async function upsertCollection(kind,rows){
+  if(!rows.length)return;
+  const payload=rows.map(x=>localToRemote(kind,x));
+  const {error}=await cloud.from(kind).upsert(payload,{onConflict:"id"});
+  if(error)throw error;
+}
+
+async function syncSettingsInitial(){
+  const local=G("settings",{});
+  const {data:{user}}=await cloud.auth.getUser();
+  if(!user)throw new Error("No signed-in user.");
+
+  const {data,error}=await cloud.from("business_settings").select("*").maybeSingle();
+  if(error)throw error;
+
+  if(data){
+    localStorage.setItem("ah_settings",JSON.stringify({
+      email:data.business_email||"",
+      phone:data.phone||"",
+      instagram:data.instagram||"",
+      delivery:Array.isArray(data.delivery_methods)?data.delivery_methods:["Pickup","Delivery"]
+    }));
+  }else{
+    const row={
+      owner_id:user.id,
+      business_name:"Améa",
+      currency:"JMD",
+      business_email:local.email||null,
+      phone:local.phone||null,
+      instagram:local.instagram||null,
+      delivery_methods:Array.isArray(local.delivery)?local.delivery:["Pickup","Delivery"]
+    };
+    const {error:insertError}=await cloud.from("business_settings").upsert(row,{onConflict:"owner_id"});
+    if(insertError)throw insertError;
+  }
+}
+
+async function initialCloudSync(){
+  // Cloud is authoritative once it contains rows.
+  // If a table is empty, existing phone/browser data is uploaded automatically
+  // so the user does not lose the HQ records already entered.
+  for(const kind of CLOUD_COLLECTIONS){
+    const remote=await remoteRows(kind);
+    const local=G(kind,[]);
+    if(remote.length){
+      localStorage.setItem("ah_"+kind,JSON.stringify(remote.map(x=>remoteToLocal(kind,x))));
+    }else if(local.length){
+      await upsertCollection(kind,local);
+    }
+  }
+  await syncSettingsInitial();
+  setCloudStatus("Synced ✓","ok");
+}
+
+async function pushSettingsToCloud(v){
+  const {data:{user}}=await cloud.auth.getUser();
+  if(!user)return;
+  const row={
+    owner_id:user.id,business_name:"Améa",currency:"JMD",
+    business_email:v.email||null,phone:v.phone||null,instagram:v.instagram||null,
+    delivery_methods:Array.isArray(v.delivery)?v.delivery:["Pickup","Delivery"]
+  };
+  const {error}=await cloud.from("business_settings").upsert(row,{onConflict:"owner_id"});
+  if(error)throw error;
+}
+
+async function pushCollectionToCloud(kind,v){
+  if(!cloudReady||!cloud)return;
+  if(kind==="settings")return pushSettingsToCloud(v);
+  if(!CLOUD_COLLECTIONS.includes(kind))return;
+  await upsertCollection(kind,Array.isArray(v)?v:[]);
+}
+
+function queueCloudSync(kind,v){
+  const snapshot=JSON.parse(JSON.stringify(v));
+  cloudQueue=cloudQueue
+    .then(()=>pushCollectionToCloud(kind,snapshot))
+    .then(()=>setCloudStatus("Synced ✓","ok"))
+    .catch(err=>{
+      console.error("Améa HQ cloud sync error",err);
+      setCloudStatus("Sync issue","error");
+    });
+}
+
+async function deleteCloudRow(table,id){
+  if(!cloudReady||!cloud)return;
+  const {error}=await cloud.from(table).delete().eq("id",id);
+  if(error){
+    console.error("Cloud delete error",error);
+    setCloudStatus("Sync issue","error");
+  }else setCloudStatus("Synced ✓","ok");
+}
+
+async function enterHQ(){
+  showHQ();
+  const view=$("#view");
+  if(view)view.innerHTML=`<div class="cloud-loading"><div class="cloud-spinner"></div><h2>Opening Améa HQ…</h2><div class="meta">Syncing your business data securely.</div></div>`;
+  try{
+    cloudReady=false;
+    await initialCloudSync();
+    cloudReady=true;
+    page("home");
+  }catch(err){
+    console.error("Initial Améa HQ sync error",err);
+    cloudReady=false;
+    setCloudStatus("Using device data","error");
+    page("home");
+    setTimeout(()=>alert("Améa HQ opened, but cloud sync could not finish. Your device data is still here. Check your internet and try again."),50);
+  }
+}
+
 
 
 function ordersForCustomer(c){
@@ -108,11 +324,54 @@ else if(cur=="invoices"){
 
 else if(cur=="items")v.innerHTML=`<div class=top><div><h2>Items</h2><div class=meta>Products you sell — separate from materials inventory.</div></div><button onclick=newItem()>＋ Add</button></div><div class=item-catalog>${ITEMS().map(x=>`<div class=item-card onclick="newItem('${x.id}')">${x.photo?`<img src="${x.photo}" alt="${esc(x.name)}">`:`<div class=item-photo-placeholder>AMÉA</div>`}<div class=item-card-body><b>${esc(x.name)}</b><div class=meta>${esc(x.category||"Other")} · ${M(x.price)}</div><div class=meta>${x.status=="Ready-made"?"Ready-made":"Made to order"}${x.sizes?` · ${esc(x.sizes)}`:""}</div></div></div>`).join("")||'<div class=empty>No items yet. Add your first product so orders can select from a list.</div>'}</div>`;
 else if(cur=="inventory")v.innerHTML=`<div class=top><h2>Inventory</h2><button onclick=newInventory()>＋ Add</button></div>${I().map(x=>`<div class=item><div class=top><b>${x.name}</b><span class=${x.qty<=x.low?"money":""}>${x.qty}</span></div><div class=meta>${x.type}${x.qty<=x.low?" · LOW STOCK":""}</div></div>`).join("")||'<div class=empty>No inventory yet.</div>'}`;
-else if(cur=="more")v.innerHTML=`<h2>More</h2><div class=quick><button onclick="page('items')">♢ Items</button><button onclick="page('inventory')">▦ Inventory</button><button onclick="page('expenses')">↘ Expenses</button><button onclick="page('analytics')">▥ Analytics</button><button onclick="page('calendar')">♡ Calendar</button><button onclick="page('settings')">⚙ Settings</button></div><div class="section"><div class="card cloud-card"><div><b>Cloud account</b><div class="meta">Signed in securely with Supabase.</div></div><button class="signout-btn" onclick="logoutHQ()">Sign Out</button></div></div>`;
+else if(cur=="more"){
+  let cs=localStorage.getItem("ah_cloud_status")||"Connected";
+  let state=localStorage.getItem("ah_cloud_state")||"ok";
+  let last=localStorage.getItem("ah_cloud_last");
+  let when=last?new Date(last).toLocaleString("en-JM",{dateStyle:"medium",timeStyle:"short"}):"Not synced yet";
+  v.innerHTML=`<h2>More</h2>
+  <div class=quick>
+    <button onclick="page('items')">♢ Items</button>
+    <button onclick="page('inventory')">▦ Inventory</button>
+    <button onclick="page('expenses')">↘ Expenses</button>
+    <button onclick="page('analytics')">▥ Analytics</button>
+    <button onclick="page('calendar')">♡ Calendar</button>
+    <button onclick="page('settings')">⚙ Settings</button>
+  </div>
+
+  <div class="section">
+    <div class="card backup-card">
+      <div class="backup-head">
+        <div>
+          <span class="backup-eyebrow">AMÉA CLOUD</span>
+          <h3>Cloud Backup</h3>
+        </div>
+        <span class="sync-pill ${state==="error"?"error":"ok"}">${esc(cs)}</span>
+      </div>
+
+      <div class="backup-row">
+        <span>Last backup</span>
+        <b>${esc(when)}</b>
+      </div>
+
+      <div class="backup-note">
+        Your customers, orders, items, inventory, expenses, suppliers and business settings are stored in your private Améa cloud account.
+      </div>
+
+      <div class="backup-ready">
+        <b>Business phone ready</b>
+        <span>When this says <strong>Synced ✓</strong>, you can sign in on your business phone and HQ will load your cloud data there.</span>
+      </div>
+
+      <button id="syncNowBtn" class="primary backup-sync" onclick="syncNow()">Sync Now</button>
+      <button class="signout-btn backup-signout" onclick="logoutHQ()">Sign Out</button>
+    </div>
+  </div>`;
+}
 else if(cur=="expenses")v.innerHTML=`<div class=top><h2>Expenses</h2><div class=top-actions><button onclick=manageSuppliers()>Suppliers</button><button onclick=newExpense()>＋ Add</button></div></div>${E().slice().reverse().map(x=>`<div class=item><div class=top><b>${x.category}</b><span class=money>${M(x.amount)}</span></div><div class=meta>${x.date}${x.supplier?" · Supplier: "+x.supplier:""}${x.note?" · "+x.note:""}</div></div>`).join("")||'<div class=empty>No expenses yet.</div>'}`;
 else if(cur=="analytics"){renderAnalytics("month")}
 else if(cur=="calendar")v.innerHTML=`<div class=top><h2>Calendar</h2><button onclick=ics()>Add .ics</button></div>${O().filter(x=>x.due).sort((a,b)=>a.due.localeCompare(b.due)).map(x=>`<div class=item><b>${x.due}</b><div class=meta>${x.no} · ${x.customer} · ${x.product} · ${x.delivery}</div></div>`).join("")||'<div class=empty>No due dates yet.</div>'}`;
-else if(cur=="settings"){let s=G("settings",{});v.innerHTML=`<h2>Settings</h2><div class=card><label>Email</label><input id=se value="${s.email||""}"><label>WhatsApp / phone</label><input id=sp value="${s.phone||""}"><label>Instagram</label><input id=si value="${s.instagram||""}"><label>Delivery options</label><input id=sd value="${(s.delivery||["Pickup","Delivery"]).join(", ")}"><button class=primary onclick=saveSettings()>Save</button></div><div class="section quick"><button onclick=notify()>Allow Notifications</button><button onclick=backup()>Export Backup</button></div><p class=meta>This build stores data on this device. Export backups regularly.</p>`}}
+else if(cur=="settings"){let s=G("settings",{});v.innerHTML=`<h2>Settings</h2><div class=card><label>Email</label><input id=se value="${s.email||""}"><label>WhatsApp / phone</label><input id=sp value="${s.phone||""}"><label>Instagram</label><input id=si value="${s.instagram||""}"><label>Delivery options</label><input id=sd value="${(s.delivery||["Pickup","Delivery"]).join(", ")}"><button class=primary onclick=saveSettings()>Save</button></div><div class="section quick"><button onclick=notify()>Allow Notifications</button><button onclick=backup()>Export Backup</button></div><p class=meta>Your HQ data is synced to your private cloud account. Device storage is kept as a local copy too.</p>`}}
 function list(a){return a.map(x=>`<div class=item onclick="editOrder('${x.id}')"><div class=top><b>${x.no} · ${x.customer}</b><span class=badge>${x.status}</span></div><div class=meta>${x.product} · ${x.size||"—"} · ${x.color||"—"}<br>Placed via: ${x.source||"Not set"} · Payment: ${x.payment} · Delivery: ${x.delivery}<br>Due: ${x.due||"—"}</div><div class=money>${M(x.paid)} paid · ${M(Math.max(0,x.price-x.paid))} balance</div></div>`).join("")}
 function searchO(q){q=q.toLowerCase();$("#ol").innerHTML=list(O().filter(x=>JSON.stringify(x).toLowerCase().includes(q)))}
 function openF(h){$("#form").innerHTML=h;if(!dlg.open)dlg.showModal()}function openAddMenu(){openF(`<h2>Add to Améa HQ</h2><div class=add-menu><button onclick="newOrder()">＋ New Order</button><button onclick="newCustomer()">＋ Customer</button><button onclick="newItem()">＋ Item</button><button onclick="newExpense()">＋ Expense</button><button onclick="newInventory()">＋ Inventory</button></div>`)}
@@ -180,7 +439,7 @@ async function saveItem(id=""){
 }
 function deleteItem(id){
   if(O().some(o=>o.itemId===id))return alert("This item is already used on an order, so it can't be deleted yet.");
-  if(confirm("Delete this item?")){S("items",ITEMS().filter(x=>x.id!==id));dlg.close();page("items")}
+  if(confirm("Delete this item?")){S("items",ITEMS().filter(x=>x.id!==id));deleteCloudRow("items",id);dlg.close();page("items")}
 }
 function fillOrderItem(id){
   const item=itemById(id);
@@ -294,7 +553,7 @@ async function shareInvoice(id){
   alert(text);
 }
 
-function delOrder(id){let r=prompt("Reason for deleting this order?");if(!r)return;let d=G("deleted");d.push({...O().find(x=>x.id==id),deleteReason:r,deletedAt:new Date().toISOString()});S("deleted",d);S("orders",O().filter(x=>x.id!=id));dlg.close();render()}
+function delOrder(id){let r=prompt("Reason for deleting this order?");if(!r)return;let d=G("deleted");d.push({...O().find(x=>x.id==id),deleteReason:r,deletedAt:new Date().toISOString()});S("deleted",d);S("orders",O().filter(x=>x.id!=id));deleteCloudRow("orders",id);dlg.close();render()}
 function openCustomer(id){
   const c=C().find(x=>x.id===id); if(!c)return;
   const st=customerStats(c);
@@ -397,6 +656,8 @@ function deleteCustomer(id){
     : `Delete ${c.name}?`;
   if(!confirm(message))return;
   S("customers",C().filter(x=>x.id!==id));
+  if(orders.length)S("orders",O().map(o=>o.customerId===id?{...o,customerId:""}:o));
+  deleteCloudRow("customers",id);
   dlg.close();
   render();
 }
@@ -404,7 +665,7 @@ function newExpense(){let suppliers=SUP();openF(`<h2>Add Expense</h2><label>Cate
 function saveExpense(){let a=E(),supplier=es.value.trim();a.push({id:crypto.randomUUID(),category:ec.value,supplier,amount:+ea.value||0,date:ed.value,note:en.value});S("expenses",a);if(supplier&&!SUP().some(x=>x.name.toLowerCase()==supplier.toLowerCase())){let s=SUP();s.push({id:crypto.randomUUID(),name:supplier});S("suppliers",s)}dlg.close();render()}
 function manageSuppliers(){let s=SUP();openF(`<div class=top><h2>Suppliers</h2><button onclick=addSupplier()>＋ Add</button></div><div id=supplierRows>${s.map(x=>`<div class=item><div class=top><b>${x.name}</b><button class=mini-danger onclick="deleteSupplier('${x.id}')">Remove</button></div></div>`).join("")||'<div class=empty>No suppliers saved yet.</div>'}</div>`)}
 function addSupplier(){let name=prompt("Supplier name");if(!name||!name.trim())return;let s=SUP();if(!s.some(x=>x.name.toLowerCase()==name.trim().toLowerCase())){s.push({id:crypto.randomUUID(),name:name.trim()});S("suppliers",s)}manageSuppliers()}
-function deleteSupplier(id){S("suppliers",SUP().filter(x=>x.id!=id));manageSuppliers()}
+function deleteSupplier(id){S("suppliers",SUP().filter(x=>x.id!=id));deleteCloudRow("suppliers",id);manageSuppliers()}
 function newInventory(){openF(`<h2>Add Inventory</h2><label>Item</label><input id=ii><label>Type</label><select id=it><option>Material</option><option>Packaging</option><option>Finished product</option></select><label>Quantity</label><input id=iq type=number><label>Low stock alert at</label><input id=il type=number value=2><button class=primary onclick=saveInventory()>Save</button>`)}function saveInventory(){let a=I();a.push({id:crypto.randomUUID(),name:ii.value,type:it.value,qty:+iq.value||0,low:+il.value||2});S("inventory",a);dlg.close();render()}
 
 function analyticsMonthKey(dateString){

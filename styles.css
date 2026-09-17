@@ -125,3 +125,37 @@ nav button span{
   font-weight:700;
   white-space:nowrap;
 }
+
+.cloud-loading{
+  min-height:55vh;
+  display:grid;
+  align-content:center;
+  justify-items:center;
+  text-align:center;
+  padding:30px;
+}
+.cloud-loading h2{margin:14px 0 5px;font-size:18px}
+.cloud-spinner{
+  width:34px;height:34px;border-radius:50%;
+  border:3px solid #ffe0ec;border-top-color:#f76fa8;
+  animation:ameaSpin .75s linear infinite;
+}
+@keyframes ameaSpin{to{transform:rotate(360deg)}}
+
+.backup-card{padding:17px}
+.backup-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.backup-eyebrow{display:block;font-size:8px;letter-spacing:1.5px;color:#c06a8f;font-weight:800;margin-bottom:4px}
+.backup-head h3{margin:0;font-size:17px}
+.sync-pill{font-size:9px;font-weight:800;border-radius:999px;padding:6px 9px;white-space:nowrap}
+.sync-pill.ok{background:#eef9f1;color:#2c7a46;border:1px solid #d6eedc}
+.sync-pill.error{background:#fff0f4;color:#b62f62;border:1px solid #f4cfdd}
+.backup-row{display:flex;justify-content:space-between;gap:15px;padding:14px 0;border-bottom:1px solid #f7dfe9;font-size:11px}
+.backup-row span{color:var(--m)}
+.backup-row b{text-align:right}
+.backup-note{font-size:10px;line-height:1.55;color:var(--m);padding:14px 0}
+.backup-ready{background:#fff2f7;border:1px solid #ffdce9;border-radius:14px;padding:12px;margin-bottom:12px}
+.backup-ready b,.backup-ready span{display:block}
+.backup-ready b{font-size:11px;margin-bottom:4px;color:#b93f73}
+.backup-ready span{font-size:10px;line-height:1.5;color:var(--m)}
+.backup-sync{width:100%;margin-top:2px}
+.backup-signout{width:100%;margin-top:8px}
