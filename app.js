@@ -358,10 +358,7 @@ else if(cur=="more"){
         Your customers, orders, items, inventory, expenses, suppliers and business settings are stored in your private Améa cloud account.
       </div>
 
-      <div class="backup-ready">
-        <b>Business phone ready</b>
-        <span>When this says <strong>Synced ✓</strong>, you can sign in on your business phone and HQ will load your cloud data there.</span>
-      </div>
+      
 
       <button id="syncNowBtn" class="primary backup-sync" onclick="syncNow()">Sync Now</button>
       <button class="signout-btn backup-signout" onclick="logoutHQ()">Sign Out</button>
