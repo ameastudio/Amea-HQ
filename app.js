@@ -24,3 +24,4 @@ function notify(){Notification.requestPermission().then(x=>alert(x=="granted"?"N
 function dl(n,d,t){let a=document.createElement("a");a.href=URL.createObjectURL(new Blob([d],{type:t}));a.download=n;a.click()}function backup(){dl("amea-hq-backup.json",JSON.stringify({orders:O(),customers:C(),inventory:I(),expenses:E(),settings:G("settings",{}),deleted:G("deleted")},null,2),"application/json")}
 function ics(){let a=["BEGIN:VCALENDAR","VERSION:2.0"];O().filter(x=>x.due).forEach(x=>a.push("BEGIN:VEVENT",`UID:${x.id}@ameahq`,`DTSTART;VALUE=DATE:${x.due.replaceAll("-","")}`,`SUMMARY:${x.no} - ${x.customer} - ${x.product}`,"END:VEVENT"));a.push("END:VCALENDAR");dl("amea-orders.ics",a.join("\r\n"),"text/calendar")}
 if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
+window.addEventListener("DOMContentLoaded",()=>{lockApp();});
