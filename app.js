@@ -1,8 +1,28 @@
 const $=s=>document.querySelector(s),G=(k,d=[])=>JSON.parse(localStorage.getItem("ah_"+k)||JSON.stringify(d)),S=(k,v)=>localStorage.setItem("ah_"+k,JSON.stringify(v));let cur="home";const O=()=>G("orders"),C=()=>G("customers"),I=()=>G("inventory"),E=()=>G("expenses"),SUP=()=>G("suppliers");const M=n=>new Intl.NumberFormat("en-JM",{style:"currency",currency:"JMD",maximumFractionDigits:0}).format(+n||0);
 function greeting(){let h=new Date().getHours();return h<12?"Good morning":h<18?"Good afternoon":"Good evening"}
+
+function ordersForCustomer(c){
+  const name=String(c?.name||"").trim().toLowerCase();
+  return O().filter(o=>
+    (o.customerId&&c?.id&&o.customerId===c.id) ||
+    (!o.customerId&&String(o.customer||"").trim().toLowerCase()===name)
+  );
+}
+function customerStats(c){
+  const orders=ordersForCustomer(c).slice().sort((a,b)=>new Date(b.created||0)-new Date(a.created||0));
+  const paid=orders.reduce((sum,o)=>sum+(+o.paid||0),0);
+  const sources=[...new Set(orders.map(o=>o.source).filter(x=>x&&x!=="Not set"))];
+  const last=orders[0]?.created?new Date(orders[0].created):null;
+  return {orders,paid,sources,last};
+}
+function customerStatusText(c){
+  const n=ordersForCustomer(c).length;
+  return n===0?"No purchases yet":n===1?"1 purchase":"Returning customer · "+n+" purchases";
+}
+
 function page(x){cur=x;render()}function render(){let v=$("#view");if(cur=="home"){let o=O(),e=E(),now=new Date(),mo=o.filter(x=>new Date(x.created).getMonth()==now.getMonth()),sales=mo.reduce((a,x)=>a+x.paid,0),out=mo.reduce((a,x)=>a+Math.max(0,x.price-x.paid),0),ex=e.filter(x=>new Date(x.date).getMonth()==now.getMonth()).reduce((a,x)=>a+x.amount,0),today=new Date().toISOString().slice(0,10);v.innerHTML=`<div class=hero><h2>${greeting()}, Améa Boss ✨</h2><div class=meta>Everything in your studio, in one pretty place.</div></div><div class=grid><div class=card>Sales<b>${M(sales)}</b></div><div class=card>Orders<b>${mo.length}</b></div><div class=card>Outstanding<b>${M(out)}</b></div><div class=card>Expenses<b>${M(ex)}</b></div></div><div class=section><h3>Today</h3><div class=card>${list(O().filter(x=>x.due==today),true)||'<div class=meta>No orders due today 💗</div>'}</div></div><div class=section><h3>Quick Actions</h3><div class=quick><button onclick=newOrder()>＋ New Order</button><button onclick=newCustomer()>＋ Customer</button><button onclick=newExpense()>＋ Expense</button><button onclick="page('calendar')">♡ Calendar</button></div></div><div class=section><h3>Recent Orders</h3>${list(O().slice(-5).reverse())||'<div class=empty>No orders yet.</div>'}</div>`}
 else if(cur=="orders")v.innerHTML=`<h2>Orders</h2><input placeholder="Search orders, customers, products…" oninput="searchO(this.value)"><div id=ol>${list(O().slice().reverse())||'<div class=empty>No orders yet.</div>'}</div>`;
-else if(cur=="customers")v.innerHTML=`<div class=top><h2>Customers</h2><button onclick=newCustomer()>＋ Add</button></div>${C().map(x=>{let sources=[...new Set(O().filter(o=>o.customer.trim().toLowerCase()==x.name.trim().toLowerCase()).map(o=>o.source).filter(Boolean))];return `<div class=item><b>${x.name}</b><div class=meta>${x.phone||""} ${x.email?"· "+x.email:""}<br>${x.measurements||""}${sources.length?`<br>Ordered via: ${sources.join(", ")}`:""}</div></div>`}).join("")||'<div class=empty>No customers yet.</div>'}`;
+else if(cur=="customers")v.innerHTML=`<div class=top><h2>Customers</h2><button onclick=newCustomer()>＋ Add</button></div>${C().map(x=>{let st=customerStats(x),last=st.last?st.last.toLocaleDateString("en-JM",{day:"numeric",month:"short",year:"numeric"}):"";return `<div class=item><div class=top><b>${esc(x.name)}</b><span class="customer-badge ${st.orders.length?"returning":"new"}">${st.orders.length?"RETURNING":"NEW"}</span></div><div class=meta>${esc(x.phone||"")}${x.email?" · "+esc(x.email):""}${x.measurements?`<br>${esc(x.measurements)}`:""}<br><b>${customerStatusText(x)}</b>${st.orders.length?`<br>Lifetime paid: ${M(st.paid)}${last?" · Last order: "+last:""}`:""}${st.sources.length?`<br>Ordered via: ${st.sources.map(esc).join(", ")}`:""}</div></div>`}).join("")||'<div class=empty>No customers yet.</div>'}`;
 else if(cur=="inventory")v.innerHTML=`<div class=top><h2>Inventory</h2><button onclick=newInventory()>＋ Add</button></div>${I().map(x=>`<div class=item><div class=top><b>${x.name}</b><span class=${x.qty<=x.low?"money":""}>${x.qty}</span></div><div class=meta>${x.type}${x.qty<=x.low?" · LOW STOCK":""}</div></div>`).join("")||'<div class=empty>No inventory yet.</div>'}`;
 else if(cur=="more")v.innerHTML=`<h2>More</h2><div class=quick><button onclick="page('analytics')">▥ Analytics</button><button onclick="page('expenses')">↘ Expenses</button><button onclick="page('calendar')">♡ Calendar</button><button onclick="page('settings')">⚙ Settings</button></div>`;
 else if(cur=="expenses")v.innerHTML=`<div class=top><h2>Expenses</h2><div class=top-actions><button onclick=manageSuppliers()>Suppliers</button><button onclick=newExpense()>＋ Add</button></div></div>${E().slice().reverse().map(x=>`<div class=item><div class=top><b>${x.category}</b><span class=money>${M(x.amount)}</span></div><div class=meta>${x.date}${x.supplier?" · Supplier: "+x.supplier:""}${x.note?" · "+x.note:""}</div></div>`).join("")||'<div class=empty>No expenses yet.</div>'}`;
@@ -13,12 +33,45 @@ function list(a){return a.map(x=>`<div class=item onclick="editOrder('${x.id}')"
 function searchO(q){q=q.toLowerCase();$("#ol").innerHTML=list(O().filter(x=>JSON.stringify(x).toLowerCase().includes(q)))}
 function openF(h){$("#form").innerHTML=h;if(!dlg.open)dlg.showModal()}function openAddMenu(){openF(`<h2>Add to Améa HQ</h2><div class=add-menu><button onclick="newOrder()">＋ New Order</button><button onclick="newCustomer()">＋ Customer</button><button onclick="newExpense()">＋ Expense</button><button onclick="newInventory()">＋ Inventory</button></div>`)}
 function dels(){return G("settings",{}).delivery||["Pickup","Delivery"]}
-function newOrder(x={}){openF(`<h2>${x.id?"Edit":"New"} Order</h2><label>Customer</label><input id=oc value="${x.customer||""}"><label>Product</label><input id=op value="${x.product||""}"><div class=row><div><label>Size</label><input id=os value="${x.size||""}"></div><div><label>Color</label><input id=ocol value="${x.color||""}"></div></div><div class=row><div><label>Price</label><input id=opr type=number value="${x.price||""}"></div><div><label>Paid</label><input id=opa type=number value="${x.paid||0}"></div></div><label>Where was this order placed?</label><select id=osrc>${["Not set","Website","Instagram","WhatsApp","In person","Phone","Other"].map(z=>`<option ${x.source==z?"selected":""}>${z}</option>`).join("")}</select><label>Due date</label><input id=od type=date value="${x.due||""}"><label>Payment method</label><select id=opay>${["Cash","Bank transfer","Website"].map(z=>`<option ${x.payment==z?"selected":""}>${z}</option>`).join("")}</select><label>Delivery method</label><select id=odel>${dels().map(z=>`<option ${x.delivery==z?"selected":""}>${z}</option>`).join("")}</select><label>Status</label><select id=ost>${["New","In Studio","Ready","Delivered"].map(z=>`<option ${x.status==z?"selected":""}>${z}</option>`).join("")}</select><label>Private notes</label><textarea id=on>${x.notes||""}</textarea>${x.id?'<label>Reason for edit</label><input id=reason placeholder="Reason required">':""}<button class=primary onclick="saveOrder('${x.id||""}')">Save Order</button>${x.id?`<button class=invoice-btn onclick="openInvoice('${x.id}')">Create Invoice</button><button class=danger onclick="delOrder('${x.id}')">Delete Order</button>`:""}`)}
-function saveOrder(id){let a=O(),old=a.find(x=>x.id==id);if(old&&!$("#reason").value.trim())return alert("Add a reason for the edit.");let seq=+localStorage.getItem("ah_seq")||0,x={id:id||crypto.randomUUID(),no:old?.no||"AM-"+String(seq+1).padStart(4,"0"),customer:oc.value.trim(),product:op.value.trim(),size:os.value,color:ocol.value,price:+opr.value||0,paid:+opa.value||0,source:osrc.value,due:od.value,payment:opay.value,delivery:odel.value,status:ost.value,notes:on.value,created:old?.created||new Date().toISOString(),history:old?.history||[]};if(!x.customer||!x.product)return alert("Add customer and product.");if(old){x.history.push({at:new Date().toISOString(),reason:reason.value});a=a.map(z=>z.id==id?x:z)}else{localStorage.setItem("ah_seq",seq+1);a.push(x)}S("orders",a);dlg.close();render()}
+function newOrder(x={}){
+  const customers=C();
+  let selectedId=x.customerId||customers.find(c=>String(c.name||"").trim().toLowerCase()===String(x.customer||"").trim().toLowerCase())?.id||"";
+  const customerOptions=customers.length
+    ? `<option value="">Select a customer</option>${customers.map(c=>`<option value="${c.id}" ${selectedId===c.id?"selected":""}>${esc(c.name)}${c.phone?" · "+esc(c.phone):""}</option>`).join("")}`
+    : `<option value="">No customers saved yet</option>`;
+  openF(`<h2>${x.id?"Edit":"New"} Order</h2>
+  <label>Customer</label>
+  <select id=oc ${customers.length?"":"disabled"}>${customerOptions}</select>
+  ${customers.length?"":'<div class=customer-help>Add a customer first, then return to New Order.</div>'}
+  <label>Product</label><input id=op value="${esc(x.product||"")}">
+  <div class=row><div><label>Size</label><input id=os value="${esc(x.size||"")}"></div><div><label>Color</label><input id=ocol value="${esc(x.color||"")}"></div></div>
+  <div class=row><div><label>Price</label><input id=opr type=number value="${x.price||""}"></div><div><label>Paid</label><input id=opa type=number value="${x.paid||0}"></div></div>
+  <label>Where was this order placed?</label><select id=osrc>${["Not set","Website","Instagram","WhatsApp","In person","Phone","Other"].map(z=>`<option ${x.source==z?"selected":""}>${z}</option>`).join("")}</select>
+  <label>Due date</label><input id=od type=date value="${x.due||""}">
+  <label>Payment method</label><select id=opay>${["Cash","Bank transfer","Website"].map(z=>`<option ${x.payment==z?"selected":""}>${z}</option>`).join("")}</select>
+  <label>Delivery method</label><select id=odel>${dels().map(z=>`<option ${x.delivery==z?"selected":""}>${z}</option>`).join("")}</select>
+  <label>Status</label><select id=ost>${["New","In Studio","Ready","Delivered"].map(z=>`<option ${x.status==z?"selected":""}>${z}</option>`).join("")}</select>
+  <label>Private notes</label><textarea id=on>${esc(x.notes||"")}</textarea>
+  ${x.id?'<label>Reason for edit</label><input id=reason placeholder="Reason required">':""}
+  <button class=primary onclick="saveOrder('${x.id||""}')" ${customers.length?"":"disabled"}>Save Order</button>
+  ${x.id?`<button class=invoice-btn onclick="openInvoice('${x.id}')">Create Invoice</button><button class=danger onclick="delOrder('${x.id}')">Delete Order</button>`:""}`)
+}
+function saveOrder(id){
+  let a=O(),old=a.find(x=>x.id==id);
+  if(old&&!$("#reason").value.trim())return alert("Add a reason for the edit.");
+  const customer=C().find(c=>c.id===oc.value);
+  if(!customer)return alert("Select a customer.");
+  let seq=+localStorage.getItem("ah_seq")||0,
+  x={id:id||crypto.randomUUID(),no:old?.no||"AM-"+String(seq+1).padStart(4,"0"),customerId:customer.id,customer:customer.name,product:op.value.trim(),size:os.value,color:ocol.value,price:+opr.value||0,paid:+opa.value||0,source:osrc.value,due:od.value,payment:opay.value,delivery:odel.value,status:ost.value,notes:on.value,created:old?.created||new Date().toISOString(),history:old?.history||[]};
+  if(!x.product)return alert("Add product.");
+  if(old){x.history.push({at:new Date().toISOString(),reason:reason.value});a=a.map(z=>z.id==id?x:z)}
+  else{localStorage.setItem("ah_seq",seq+1);a.push(x)}
+  S("orders",a);dlg.close();render()
+}
 function editOrder(id){newOrder(O().find(x=>x.id==id))}
 
 function esc(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
-function customerForOrder(o){return C().find(c=>String(c.name||"").trim().toLowerCase()==String(o.customer||"").trim().toLowerCase())||{}}
+function customerForOrder(o){return C().find(c=>(o.customerId&&c.id===o.customerId)||(!o.customerId&&String(c.name||"").trim().toLowerCase()==String(o.customer||"").trim().toLowerCase()))||{}}
 function invoiceMarkup(id,printMode=false){
   const o=O().find(x=>x.id==id); if(!o)return "";
   const c=customerForOrder(o),s=G("settings",{}),balance=Math.max(0,(+o.price||0)-(+o.paid||0));

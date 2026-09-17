@@ -30,3 +30,9 @@ html,body{min-height:100%;overscroll-behavior:none}
 .analytics-picker input[type=month]{width:100%;min-height:46px;border:1px solid #ffd4e5;background:#fff;border-radius:13px;padding:10px 12px;color:var(--t);font-size:16px}
 .analytics-period{margin:5px 0 16px;color:var(--m);font-size:12px}
 .analytics-period b{color:var(--t)}
+
+.customer-badge{font-size:8px;letter-spacing:1px;border-radius:999px;padding:5px 8px;font-weight:800}
+.customer-badge.returning{background:#ffe3ef;color:#c83876}
+.customer-badge.new{background:#fff4f8;color:#a76b84;border:1px solid #f2d6e2}
+.customer-help{margin:-2px 0 12px;padding:10px 12px;border-radius:12px;background:#fff2f7;color:var(--m);font-size:11px;line-height:1.45}
+select:disabled,button:disabled{opacity:.55;cursor:not-allowed}
