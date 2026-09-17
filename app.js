@@ -1,4 +1,4 @@
-const $=s=>document.querySelector(s),G=(k,d=[])=>JSON.parse(localStorage.getItem("ah_"+k)||JSON.stringify(d)),S=(k,v)=>localStorage.setItem("ah_"+k,JSON.stringify(v));let cur="home";const O=()=>G("orders"),C=()=>G("customers"),I=()=>G("inventory"),E=()=>G("expenses"),SUP=()=>G("suppliers");const M=n=>new Intl.NumberFormat("en-JM",{style:"currency",currency:"JMD",maximumFractionDigits:0}).format(+n||0);
+const $=s=>document.querySelector(s),G=(k,d=[])=>JSON.parse(localStorage.getItem("ah_"+k)||JSON.stringify(d)),S=(k,v)=>localStorage.setItem("ah_"+k,JSON.stringify(v));let cur="home";const O=()=>G("orders"),C=()=>G("customers"),I=()=>G("inventory"),E=()=>G("expenses"),SUP=()=>G("suppliers"),ITEMS=()=>G("items");const M=n=>new Intl.NumberFormat("en-JM",{style:"currency",currency:"JMD",maximumFractionDigits:0}).format(+n||0);
 function greeting(){let h=new Date().getHours();return h<12?"Good morning":h<18?"Good afternoon":"Good evening"}
 
 function ordersForCustomer(c){
@@ -23,28 +23,113 @@ function customerStatusText(c){
 function page(x){cur=x;render()}function render(){let v=$("#view");if(cur=="home"){let o=O(),e=E(),now=new Date(),mo=o.filter(x=>new Date(x.created).getMonth()==now.getMonth()),sales=mo.reduce((a,x)=>a+x.paid,0),out=mo.reduce((a,x)=>a+Math.max(0,x.price-x.paid),0),ex=e.filter(x=>new Date(x.date).getMonth()==now.getMonth()).reduce((a,x)=>a+x.amount,0),today=new Date().toISOString().slice(0,10);v.innerHTML=`<div class=hero><h2>${greeting()}, Améa Boss ✨</h2><div class=meta>Everything in your studio, in one pretty place.</div></div><div class=grid><div class=card>Sales<b>${M(sales)}</b></div><div class=card>Orders<b>${mo.length}</b></div><div class=card>Outstanding<b>${M(out)}</b></div><div class=card>Expenses<b>${M(ex)}</b></div></div><div class=section><h3>Today</h3><div class=card>${list(O().filter(x=>x.due==today),true)||'<div class=meta>No orders due today 💗</div>'}</div></div><div class=section><h3>Quick Actions</h3><div class=quick><button onclick=newOrder()>＋ New Order</button><button onclick=newCustomer()>＋ Customer</button><button onclick=newExpense()>＋ Expense</button><button onclick="page('calendar')">♡ Calendar</button></div></div><div class=section><h3>Recent Orders</h3>${list(O().slice(-5).reverse())||'<div class=empty>No orders yet.</div>'}</div>`}
 else if(cur=="orders")v.innerHTML=`<h2>Orders</h2><input placeholder="Search orders, customers, products…" oninput="searchO(this.value)"><div id=ol>${list(O().slice().reverse())||'<div class=empty>No orders yet.</div>'}</div>`;
 else if(cur=="customers")v.innerHTML=`<div class=top><h2>Customers</h2><button onclick=newCustomer()>＋ Add</button></div>${C().map(x=>{let st=customerStats(x),last=st.last?st.last.toLocaleDateString("en-JM",{day:"numeric",month:"short",year:"numeric"}):"";return `<div class=item><div class=top><b>${esc(x.name)}</b><span class="customer-badge ${st.orders.length?"returning":"new"}">${st.orders.length?"RETURNING":"NEW"}</span></div><div class=meta>${esc(x.phone||"")}${x.email?" · "+esc(x.email):""}${x.measurements?`<br>${esc(x.measurements)}`:""}<br><b>${customerStatusText(x)}</b>${st.orders.length?`<br>Lifetime paid: ${M(st.paid)}${last?" · Last order: "+last:""}`:""}${st.sources.length?`<br>Ordered via: ${st.sources.map(esc).join(", ")}`:""}</div></div>`}).join("")||'<div class=empty>No customers yet.</div>'}`;
+else if(cur=="items")v.innerHTML=`<div class=top><div><h2>Items</h2><div class=meta>Products you sell — separate from materials inventory.</div></div><button onclick=newItem()>＋ Add</button></div><div class=item-catalog>${ITEMS().map(x=>`<div class=item-card onclick="newItem('${x.id}')">${x.photo?`<img src="${x.photo}" alt="${esc(x.name)}">`:`<div class=item-photo-placeholder>AMÉA</div>`}<div class=item-card-body><b>${esc(x.name)}</b><div class=meta>${esc(x.category||"Other")} · ${M(x.price)}</div><div class=meta>${x.status=="Ready-made"?"Ready-made":"Made to order"}${x.sizes?` · ${esc(x.sizes)}`:""}</div></div></div>`).join("")||'<div class=empty>No items yet. Add your first product so orders can select from a list.</div>'}</div>`;
 else if(cur=="inventory")v.innerHTML=`<div class=top><h2>Inventory</h2><button onclick=newInventory()>＋ Add</button></div>${I().map(x=>`<div class=item><div class=top><b>${x.name}</b><span class=${x.qty<=x.low?"money":""}>${x.qty}</span></div><div class=meta>${x.type}${x.qty<=x.low?" · LOW STOCK":""}</div></div>`).join("")||'<div class=empty>No inventory yet.</div>'}`;
-else if(cur=="more")v.innerHTML=`<h2>More</h2><div class=quick><button onclick="page('analytics')">▥ Analytics</button><button onclick="page('expenses')">↘ Expenses</button><button onclick="page('calendar')">♡ Calendar</button><button onclick="page('settings')">⚙ Settings</button></div>`;
+else if(cur=="more")v.innerHTML=`<h2>More</h2><div class=quick><button onclick="page('items')">♢ Items</button><button onclick="page('analytics')">▥ Analytics</button><button onclick="page('expenses')">↘ Expenses</button><button onclick="page('calendar')">♡ Calendar</button><button onclick="page('settings')">⚙ Settings</button></div>`;
 else if(cur=="expenses")v.innerHTML=`<div class=top><h2>Expenses</h2><div class=top-actions><button onclick=manageSuppliers()>Suppliers</button><button onclick=newExpense()>＋ Add</button></div></div>${E().slice().reverse().map(x=>`<div class=item><div class=top><b>${x.category}</b><span class=money>${M(x.amount)}</span></div><div class=meta>${x.date}${x.supplier?" · Supplier: "+x.supplier:""}${x.note?" · "+x.note:""}</div></div>`).join("")||'<div class=empty>No expenses yet.</div>'}`;
 else if(cur=="analytics"){renderAnalytics("month")}
 else if(cur=="calendar")v.innerHTML=`<div class=top><h2>Calendar</h2><button onclick=ics()>Add .ics</button></div>${O().filter(x=>x.due).sort((a,b)=>a.due.localeCompare(b.due)).map(x=>`<div class=item><b>${x.due}</b><div class=meta>${x.no} · ${x.customer} · ${x.product} · ${x.delivery}</div></div>`).join("")||'<div class=empty>No due dates yet.</div>'}`;
 else if(cur=="settings"){let s=G("settings",{});v.innerHTML=`<h2>Settings</h2><div class=card><label>Email</label><input id=se value="${s.email||""}"><label>WhatsApp / phone</label><input id=sp value="${s.phone||""}"><label>Instagram</label><input id=si value="${s.instagram||""}"><label>Delivery options</label><input id=sd value="${(s.delivery||["Pickup","Delivery"]).join(", ")}"><button class=primary onclick=saveSettings()>Save</button></div><div class="section quick"><button onclick=notify()>Allow Notifications</button><button onclick=backup()>Export Backup</button></div><p class=meta>This build stores data on this device. Export backups regularly.</p>`}}
 function list(a){return a.map(x=>`<div class=item onclick="editOrder('${x.id}')"><div class=top><b>${x.no} · ${x.customer}</b><span class=badge>${x.status}</span></div><div class=meta>${x.product} · ${x.size||"—"} · ${x.color||"—"}<br>Placed via: ${x.source||"Not set"} · Payment: ${x.payment} · Delivery: ${x.delivery}<br>Due: ${x.due||"—"}</div><div class=money>${M(x.paid)} paid · ${M(Math.max(0,x.price-x.paid))} balance</div></div>`).join("")}
 function searchO(q){q=q.toLowerCase();$("#ol").innerHTML=list(O().filter(x=>JSON.stringify(x).toLowerCase().includes(q)))}
-function openF(h){$("#form").innerHTML=h;if(!dlg.open)dlg.showModal()}function openAddMenu(){openF(`<h2>Add to Améa HQ</h2><div class=add-menu><button onclick="newOrder()">＋ New Order</button><button onclick="newCustomer()">＋ Customer</button><button onclick="newExpense()">＋ Expense</button><button onclick="newInventory()">＋ Inventory</button></div>`)}
+function openF(h){$("#form").innerHTML=h;if(!dlg.open)dlg.showModal()}function openAddMenu(){openF(`<h2>Add to Améa HQ</h2><div class=add-menu><button onclick="newOrder()">＋ New Order</button><button onclick="newCustomer()">＋ Customer</button><button onclick="newItem()">＋ Item</button><button onclick="newExpense()">＋ Expense</button><button onclick="newInventory()">＋ Inventory</button></div>`)}
 function dels(){return G("settings",{}).delivery||["Pickup","Delivery"]}
+
+function itemById(id){return ITEMS().find(x=>x.id===id)}
+function imageToSmallDataUrl(file){
+  return new Promise((resolve,reject)=>{
+    if(!file)return resolve("");
+    const reader=new FileReader();
+    reader.onerror=()=>reject(new Error("Could not read image"));
+    reader.onload=()=>{
+      const img=new Image();
+      img.onerror=()=>reject(new Error("Could not process image"));
+      img.onload=()=>{
+        const max=700,scale=Math.min(1,max/Math.max(img.width,img.height));
+        const c=document.createElement("canvas");
+        c.width=Math.max(1,Math.round(img.width*scale));
+        c.height=Math.max(1,Math.round(img.height*scale));
+        c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+        resolve(c.toDataURL("image/jpeg",.72));
+      };
+      img.src=reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+function previewItemPhoto(input){
+  const f=input.files&&input.files[0];
+  if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{let p=$("#itemPhotoPreview");if(p){p.src=r.result;p.style.display="block"}};
+  r.readAsDataURL(f);
+}
+function newItem(id=""){
+  const x=id?itemById(id):{};
+  openF(`<h2>${id?"Edit":"New"} Item</h2>
+    <label>Item name</label><input id=itemName value="${esc(x?.name||"")}" placeholder="e.g. Eve Dress">
+    <label>Category</label><select id=itemCategory>${["Dresses","Skirt Sets","Short Sets","Other"].map(z=>`<option ${x?.category==z?"selected":""}>${z}</option>`).join("")}</select>
+    <label>Default price (JMD)</label><input id=itemPrice type=number value="${x?.price||""}">
+    <label>Sizes offered</label><input id=itemSizes value="${esc(x?.sizes||"XS, S, M, L, XL")}" placeholder="XS, S, M, L, XL">
+    <label>Item type</label><select id=itemStatus>${["Made to order","Ready-made"].map(z=>`<option ${x?.status==z?"selected":""}>${z}</option>`).join("")}</select>
+    <label>Photo <span class=meta>(optional)</span></label>
+    ${x?.photo?`<img id=itemPhotoPreview class=item-photo-preview src="${x.photo}" alt="">`:`<img id=itemPhotoPreview class=item-photo-preview style="display:none" alt="">`}
+    <input id=itemPhoto type=file accept="image/*" onchange="previewItemPhoto(this)">
+    <label>Notes</label><textarea id=itemNotes>${esc(x?.notes||"")}</textarea>
+    <button class=primary onclick="saveItem('${id}')">${id?"Save Changes":"Add Item"}</button>
+    ${id?`<button class=danger onclick="deleteItem('${id}')">Delete Item</button>`:""}`)
+}
+async function saveItem(id=""){
+  const name=itemName.value.trim();
+  if(!name)return alert("Add an item name.");
+  const price=+itemPrice.value||0;
+  let a=ITEMS(),old=id?itemById(id):null,photo=old?.photo||"";
+  const file=itemPhoto.files&&itemPhoto.files[0];
+  if(file){
+    try{photo=await imageToSmallDataUrl(file)}
+    catch(e){return alert("I couldn't process that photo. Try another image.")}
+  }
+  const x={id:id||crypto.randomUUID(),name,category:itemCategory.value,price,sizes:itemSizes.value.trim(),status:itemStatus.value,photo,notes:itemNotes.value.trim()};
+  a=id?a.map(z=>z.id===id?x:z):[...a,x];
+  try{S("items",a)}
+  catch(e){return alert("That photo is too large for the current offline app storage. Try a smaller image.")}
+  dlg.close();page("items")
+}
+function deleteItem(id){
+  if(O().some(o=>o.itemId===id))return alert("This item is already used on an order, so it can't be deleted yet.");
+  if(confirm("Delete this item?")){S("items",ITEMS().filter(x=>x.id!==id));dlg.close();page("items")}
+}
+function fillOrderItem(id){
+  const item=itemById(id);
+  if(!item)return;
+  if($("#opr"))opr.value=item.price||0;
+  const sizeInput=$("#os");
+  if(sizeInput){
+    const sizes=String(item.sizes||"").split(",").map(x=>x.trim()).filter(Boolean);
+    sizeInput.setAttribute("list","orderSizeList");
+    let dl=$("#orderSizeList");
+    if(dl)dl.innerHTML=sizes.map(s=>`<option value="${esc(s)}">`).join("");
+  }
+}
+
 function newOrder(x={}){
-  const customers=C();
-  let selectedId=x.customerId||customers.find(c=>String(c.name||"").trim().toLowerCase()===String(x.customer||"").trim().toLowerCase())?.id||"";
+  const customers=C(),items=ITEMS();
+  let selectedCustomerId=x.customerId||customers.find(c=>String(c.name||"").trim().toLowerCase()===String(x.customer||"").trim().toLowerCase())?.id||"";
+  let selectedItemId=x.itemId||items.find(i=>String(i.name||"").trim().toLowerCase()===String(x.product||"").trim().toLowerCase())?.id||"";
   const customerOptions=customers.length
-    ? `<option value="">Select a customer</option>${customers.map(c=>`<option value="${c.id}" ${selectedId===c.id?"selected":""}>${esc(c.name)}${c.phone?" · "+esc(c.phone):""}</option>`).join("")}`
+    ? `<option value="">Select a customer</option>${customers.map(c=>`<option value="${c.id}" ${selectedCustomerId===c.id?"selected":""}>${esc(c.name)}${c.phone?" · "+esc(c.phone):""}</option>`).join("")}`
     : `<option value="">No customers saved yet</option>`;
+  const itemOptions=items.length
+    ? `<option value="">Select an item</option>${items.map(i=>`<option value="${i.id}" ${selectedItemId===i.id?"selected":""}>${esc(i.name)} · ${M(i.price)}</option>`).join("")}`
+    : `<option value="">No items saved yet</option>`;
   openF(`<h2>${x.id?"Edit":"New"} Order</h2>
   <label>Customer</label>
   <select id=oc ${customers.length?"":"disabled"}>${customerOptions}</select>
   ${customers.length?"":'<div class=customer-help>Add a customer first, then return to New Order.</div>'}
-  <label>Product</label><input id=op value="${esc(x.product||"")}">
-  <div class=row><div><label>Size</label><input id=os value="${esc(x.size||"")}"></div><div><label>Color</label><input id=ocol value="${esc(x.color||"")}"></div></div>
+  <label>Item</label>
+  <select id=op ${items.length?"":"disabled"} onchange="fillOrderItem(this.value)">${itemOptions}</select>
+  ${items.length?"":'<div class=customer-help>Add an item first, then return to New Order.</div>'}
+  <div class=row><div><label>Size</label><input id=os list=orderSizeList value="${esc(x.size||"")}"><datalist id=orderSizeList></datalist></div><div><label>Color</label><input id=ocol value="${esc(x.color||"")}"></div></div>
   <div class=row><div><label>Price</label><input id=opr type=number value="${x.price||""}"></div><div><label>Paid</label><input id=opa type=number value="${x.paid||0}"></div></div>
   <label>Where was this order placed?</label><select id=osrc>${["Not set","Website","Instagram","WhatsApp","In person","Phone","Other"].map(z=>`<option ${x.source==z?"selected":""}>${z}</option>`).join("")}</select>
   <label>Due date</label><input id=od type=date value="${x.due||""}">
@@ -53,17 +138,19 @@ function newOrder(x={}){
   <label>Status</label><select id=ost>${["New","In Studio","Ready","Delivered"].map(z=>`<option ${x.status==z?"selected":""}>${z}</option>`).join("")}</select>
   <label>Private notes</label><textarea id=on>${esc(x.notes||"")}</textarea>
   ${x.id?'<label>Reason for edit</label><input id=reason placeholder="Reason required">':""}
-  <button class=primary onclick="saveOrder('${x.id||""}')" ${customers.length?"":"disabled"}>Save Order</button>
-  ${x.id?`<button class=invoice-btn onclick="openInvoice('${x.id}')">Create Invoice</button><button class=danger onclick="delOrder('${x.id}')">Delete Order</button>`:""}`)
+  <button class=primary onclick="saveOrder('${x.id||""}')" ${customers.length&&items.length?"":"disabled"}>Save Order</button>
+  ${x.id?`<button class=invoice-btn onclick="openInvoice('${x.id}')">Create Invoice</button><button class=danger onclick="delOrder('${x.id}')">Delete Order</button>`:""}`);
+  if(selectedItemId)fillOrderItem(selectedItemId);
 }
 function saveOrder(id){
   let a=O(),old=a.find(x=>x.id==id);
   if(old&&!$("#reason").value.trim())return alert("Add a reason for the edit.");
   const customer=C().find(c=>c.id===oc.value);
   if(!customer)return alert("Select a customer.");
+  const item=itemById(op.value);
+  if(!item)return alert("Select an item.");
   let seq=+localStorage.getItem("ah_seq")||0,
-  x={id:id||crypto.randomUUID(),no:old?.no||"AM-"+String(seq+1).padStart(4,"0"),customerId:customer.id,customer:customer.name,product:op.value.trim(),size:os.value,color:ocol.value,price:+opr.value||0,paid:+opa.value||0,source:osrc.value,due:od.value,payment:opay.value,delivery:odel.value,status:ost.value,notes:on.value,created:old?.created||new Date().toISOString(),history:old?.history||[]};
-  if(!x.product)return alert("Add product.");
+  x={id:id||crypto.randomUUID(),no:old?.no||"AM-"+String(seq+1).padStart(4,"0"),customerId:customer.id,customer:customer.name,itemId:item.id,product:item.name,size:os.value,color:ocol.value,price:+opr.value||0,paid:+opa.value||0,source:osrc.value,due:od.value,payment:opay.value,delivery:odel.value,status:ost.value,notes:on.value,created:old?.created||new Date().toISOString(),history:old?.history||[]};
   if(old){x.history.push({at:new Date().toISOString(),reason:reason.value});a=a.map(z=>z.id==id?x:z)}
   else{localStorage.setItem("ah_seq",seq+1);a.push(x)}
   S("orders",a);dlg.close();render()
@@ -193,7 +280,7 @@ function renderAnalytics(range="month",selectedMonth=currentMonthKey()){
 
 function saveSettings(){S("settings",{email:se.value,phone:sp.value,instagram:si.value,delivery:sd.value.split(",").map(x=>x.trim()).filter(Boolean)});alert("Saved 💗")}
 function notify(){Notification.requestPermission().then(x=>alert(x=="granted"?"Notifications allowed 💗":"Notifications not enabled."))}
-function dl(n,d,t){let a=document.createElement("a");a.href=URL.createObjectURL(new Blob([d],{type:t}));a.download=n;a.click()}function backup(){dl("amea-hq-backup.json",JSON.stringify({orders:O(),customers:C(),inventory:I(),expenses:E(),suppliers:SUP(),settings:G("settings",{}),deleted:G("deleted")},null,2),"application/json")}
+function dl(n,d,t){let a=document.createElement("a");a.href=URL.createObjectURL(new Blob([d],{type:t}));a.download=n;a.click()}function backup(){dl("amea-hq-backup.json",JSON.stringify({orders:O(),customers:C(),items:ITEMS(),inventory:I(),expenses:E(),suppliers:SUP(),settings:G("settings",{}),deleted:G("deleted")},null,2),"application/json")}
 function ics(){let a=["BEGIN:VCALENDAR","VERSION:2.0"];O().filter(x=>x.due).forEach(x=>a.push("BEGIN:VEVENT",`UID:${x.id}@ameahq`,`DTSTART;VALUE=DATE:${x.due.replaceAll("-","")}`,`SUMMARY:${x.no} - ${x.customer} - ${x.product}`,"END:VEVENT"));a.push("END:VCALENDAR");dl("amea-orders.ics",a.join("\r\n"),"text/calendar")}
 if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
 window.addEventListener("DOMContentLoaded",()=>{page("home");});

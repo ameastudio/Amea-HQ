@@ -36,3 +36,12 @@ html,body{min-height:100%;overscroll-behavior:none}
 .customer-badge.new{background:#fff4f8;color:#a76b84;border:1px solid #f2d6e2}
 .customer-help{margin:-2px 0 12px;padding:10px 12px;border-radius:12px;background:#fff2f7;color:var(--m);font-size:11px;line-height:1.45}
 select:disabled,button:disabled{opacity:.55;cursor:not-allowed}
+
+.item-catalog{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
+.item-card{background:#fff;border:1px solid #ffe0ec;border-radius:16px;overflow:hidden;cursor:pointer}
+.item-card img,.item-photo-placeholder{width:100%;aspect-ratio:1/1;object-fit:cover;display:block}
+.item-photo-placeholder{display:grid;place-items:center;background:#fff0f6;color:#ef6fa8;font-family:Georgia,serif;font-size:22px}
+.item-card-body{padding:11px}.item-card-body b{display:block;margin-bottom:4px}.item-card-body .meta{font-size:10px;line-height:1.45}
+.item-photo-preview{width:120px;height:120px;object-fit:cover;border-radius:15px;border:1px solid #ffd4e5;margin:6px 0 10px}
+#itemPhoto{background:#fff}
+@media(min-width:700px){.item-catalog{grid-template-columns:repeat(3,1fr)}}
