@@ -11,3 +11,16 @@ html,body{min-height:100%;overscroll-behavior:none}
 .add-menu{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
 .add-menu button{min-height:74px;border:1px solid #f2c7d9;background:#fff5f9;color:#a93f70;border-radius:16px;font-weight:700}
 @media(max-width:420px){.add-menu{grid-template-columns:1fr 1fr}}
+
+.invoice-btn{width:100%;margin-top:8px;background:#fff0f7;color:var(--h);font-weight:700;border:1px solid #ffd3e5}
+.invoice-sheet{margin:16px 0;background:#fff;border:1px solid #ffe0ec;border-radius:18px;padding:18px;color:var(--t)}
+.invoice-head{display:flex;justify-content:space-between;gap:15px;align-items:flex-start}
+.invoice-brand{font-family:Georgia,serif;font-size:36px;color:var(--h);line-height:1}
+.invoice-sub{font-size:8px;letter-spacing:3px;color:var(--m);margin-top:6px}
+.invoice-number{text-align:right;font-size:12px}.invoice-number b,.invoice-number span{display:block}.invoice-number span{color:var(--m);font-size:10px;margin-top:4px}
+.invoice-rule{height:1px;background:#ffe0ec;margin:18px 0}
+.invoice-info{display:grid;grid-template-columns:1fr 1fr;gap:14px}.invoice-info small,.invoice-meta small{display:block;color:var(--m);font-size:8px;letter-spacing:1px;margin-bottom:5px}.invoice-info b,.invoice-info span{display:block;margin:2px 0}.invoice-info span{font-size:10px;color:var(--m)}
+.invoice-line-head,.invoice-line{display:grid;grid-template-columns:1fr auto;gap:12px}.invoice-line-head{margin-top:22px;padding:8px 0;border-bottom:1px solid #ffe0ec;color:var(--m);font-size:8px;letter-spacing:1px}.invoice-line{padding:14px 0;border-bottom:1px solid #ffe0ec}.invoice-line span{display:block;color:var(--m);font-size:10px;margin-top:4px}
+.invoice-totals{margin:16px 0 0 auto;max-width:260px}.invoice-totals>div{display:flex;justify-content:space-between;padding:5px 0}.invoice-balance{border-top:1px solid #ffe0ec;margin-top:4px;padding-top:10px!important;color:var(--h)}
+.invoice-meta{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:22px;padding-top:16px;border-top:1px solid #ffe0ec}.invoice-meta span{font-size:10px}.invoice-thanks{text-align:center;color:var(--h);margin:24px 0 3px;font-size:11px}
+.invoice-actions{display:grid;gap:8px}.invoice-actions button{width:100%}
