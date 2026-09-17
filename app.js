@@ -22,7 +22,7 @@ function customerStatusText(c){
 
 function page(x){cur=x;render()}function render(){let v=$("#view");if(cur=="home"){let o=O(),e=E(),now=new Date(),mo=o.filter(x=>new Date(x.created).getMonth()==now.getMonth()),sales=mo.reduce((a,x)=>a+x.paid,0),out=mo.reduce((a,x)=>a+Math.max(0,x.price-x.paid),0),ex=e.filter(x=>new Date(x.date).getMonth()==now.getMonth()).reduce((a,x)=>a+x.amount,0),today=new Date().toISOString().slice(0,10);v.innerHTML=`<div class=hero><h2>${greeting()}, Améa Boss ✨</h2><div class=meta>Everything in your studio, in one pretty place.</div></div><div class=grid><div class=card>Sales<b>${M(sales)}</b></div><div class=card>Orders<b>${mo.length}</b></div><div class=card>Outstanding<b>${M(out)}</b></div><div class=card>Expenses<b>${M(ex)}</b></div></div><div class=section><h3>Today</h3><div class=card>${list(O().filter(x=>x.due==today),true)||'<div class=meta>No orders due today 💗</div>'}</div></div><div class=section><h3>Quick Actions</h3><div class=quick><button onclick=newOrder()>＋ New Order</button><button onclick=newCustomer()>＋ Customer</button><button onclick=newExpense()>＋ Expense</button><button onclick="page('calendar')">♡ Calendar</button></div></div><div class=section><h3>Recent Orders</h3>${list(O().slice(-5).reverse())||'<div class=empty>No orders yet.</div>'}</div>`}
 else if(cur=="orders")v.innerHTML=`<h2>Orders</h2><input placeholder="Search orders, customers, products…" oninput="searchO(this.value)"><div id=ol>${list(O().slice().reverse())||'<div class=empty>No orders yet.</div>'}</div>`;
-else if(cur=="customers")v.innerHTML=`<div class=top><h2>Customers</h2><button onclick=newCustomer()>＋ Add</button></div>${C().map(x=>{let st=customerStats(x),last=st.last?st.last.toLocaleDateString("en-JM",{day:"numeric",month:"short",year:"numeric"}):"";return `<div class=item><div class=top><b>${esc(x.name)}</b><span class="customer-badge ${st.orders.length?"returning":"new"}">${st.orders.length?"RETURNING":"NEW"}</span></div><div class=meta>${esc(x.phone||"")}${x.email?" · "+esc(x.email):""}${x.measurements?`<br>${esc(x.measurements)}`:""}<br><b>${customerStatusText(x)}</b>${st.orders.length?`<br>Lifetime paid: ${M(st.paid)}${last?" · Last order: "+last:""}`:""}${st.sources.length?`<br>Ordered via: ${st.sources.map(esc).join(", ")}`:""}</div></div>`}).join("")||'<div class=empty>No customers yet.</div>'}`;
+else if(cur=="customers")v.innerHTML=`<div class=top><h2>Customers</h2><button onclick=newCustomer()>＋ Add</button></div>${C().map(x=>{let st=customerStats(x),last=st.last?st.last.toLocaleDateString("en-JM",{day:"numeric",month:"short",year:"numeric"}):"";return `<div class="item customer-row" onclick="openCustomer('${x.id}')"><div class=top><b>${esc(x.name)}</b><span class="customer-badge ${st.orders.length?"returning":"new"}">${st.orders.length?"RETURNING":"NEW"}</span></div><div class=meta>${esc(x.phone||"")}${x.email?" · "+esc(x.email):""}<br><b>${customerStatusText(x)}</b>${st.orders.length?` · ${M(st.paid)} lifetime`:""}${last?`<br>Last order: ${last}`:""}</div><div class=customer-chevron>View customer →</div></div>`}).join("")||'<div class=empty>No customers yet.</div>'}`;
 else if(cur=="items")v.innerHTML=`<div class=top><div><h2>Items</h2><div class=meta>Products you sell — separate from materials inventory.</div></div><button onclick=newItem()>＋ Add</button></div><div class=item-catalog>${ITEMS().map(x=>`<div class=item-card onclick="newItem('${x.id}')">${x.photo?`<img src="${x.photo}" alt="${esc(x.name)}">`:`<div class=item-photo-placeholder>AMÉA</div>`}<div class=item-card-body><b>${esc(x.name)}</b><div class=meta>${esc(x.category||"Other")} · ${M(x.price)}</div><div class=meta>${x.status=="Ready-made"?"Ready-made":"Made to order"}${x.sizes?` · ${esc(x.sizes)}`:""}</div></div></div>`).join("")||'<div class=empty>No items yet. Add your first product so orders can select from a list.</div>'}</div>`;
 else if(cur=="inventory")v.innerHTML=`<div class=top><h2>Inventory</h2><button onclick=newInventory()>＋ Add</button></div>${I().map(x=>`<div class=item><div class=top><b>${x.name}</b><span class=${x.qty<=x.low?"money":""}>${x.qty}</span></div><div class=meta>${x.type}${x.qty<=x.low?" · LOW STOCK":""}</div></div>`).join("")||'<div class=empty>No inventory yet.</div>'}`;
 else if(cur=="more")v.innerHTML=`<h2>More</h2><div class=quick><button onclick="page('items')">♢ Items</button><button onclick="page('analytics')">▥ Analytics</button><button onclick="page('expenses')">↘ Expenses</button><button onclick="page('calendar')">♡ Calendar</button><button onclick="page('settings')">⚙ Settings</button></div>`;
@@ -212,7 +212,111 @@ async function shareInvoice(id){
 }
 
 function delOrder(id){let r=prompt("Reason for deleting this order?");if(!r)return;let d=G("deleted");d.push({...O().find(x=>x.id==id),deleteReason:r,deletedAt:new Date().toISOString()});S("deleted",d);S("orders",O().filter(x=>x.id!=id));dlg.close();render()}
-function newCustomer(){openF(`<h2>Add Customer</h2><label>Name</label><input id=cn><label>Phone</label><input id=cp><label>Email</label><input id=ce><label>Instagram</label><input id=ci><label>Measurements</label><textarea id=cm></textarea><label>Private notes</label><textarea id=cno></textarea><button class=primary onclick=saveCustomer()>Save</button>`)}function saveCustomer(){let a=C();a.push({id:crypto.randomUUID(),name:cn.value,phone:cp.value,email:ce.value,instagram:ci.value,measurements:cm.value,notes:cno.value});S("customers",a);dlg.close();render()}
+function openCustomer(id){
+  const c=C().find(x=>x.id===id); if(!c)return;
+  const st=customerStats(c);
+  const outstanding=st.orders.reduce((sum,o)=>sum+Math.max(0,(+o.price||0)-(+o.paid||0)),0);
+  const last=st.last?st.last.toLocaleDateString("en-JM",{day:"numeric",month:"short",year:"numeric"}):"—";
+  const history=st.orders.length?st.orders.map(o=>{
+    const d=o.created?new Date(o.created).toLocaleDateString("en-JM",{day:"numeric",month:"short",year:"numeric"}):"";
+    return `<button class=customer-order-row onclick="editOrder('${o.id}')">
+      <div><b>${esc(o.no)} · ${esc(o.product)}</b><span>${esc([o.size&&"Size "+o.size,o.color].filter(Boolean).join(" · "))}</span></div>
+      <div><b>${M(o.price)}</b><span>${d}</span></div>
+    </button>`;
+  }).join(""):'<div class=empty>No orders yet.</div>';
+
+  openF(`<div class=customer-profile>
+    <div class=top>
+      <div><h2>${esc(c.name)}</h2><div class="customer-badge ${st.orders.length?"returning":"new"}">${st.orders.length?"RETURNING CUSTOMER":"NEW CUSTOMER"}</div></div>
+      <button class=profile-edit onclick="newCustomer('${c.id}')">Edit</button>
+    </div>
+
+    <div class=customer-stats>
+      <div><span>Orders</span><b>${st.orders.length}</b></div>
+      <div><span>Lifetime paid</span><b>${M(st.paid)}</b></div>
+      <div><span>Outstanding</span><b>${M(outstanding)}</b></div>
+      <div><span>Last order</span><b>${last}</b></div>
+    </div>
+
+    <div class=profile-section>
+      <h3>Customer info</h3>
+      <div class=profile-info>
+        <div><span>Phone</span><b>${esc(c.phone||"—")}</b></div>
+        <div><span>Email</span><b>${esc(c.email||"—")}</b></div>
+        <div><span>Instagram</span><b>${esc(c.instagram||"—")}</b></div>
+        <div><span>Ordered via</span><b>${st.sources.length?st.sources.map(esc).join(", "):"—"}</b></div>
+      </div>
+    </div>
+
+    <div class=profile-section>
+      <h3>Measurements</h3>
+      <div class=profile-note>${c.measurements?esc(c.measurements):"No measurements saved."}</div>
+    </div>
+
+    <div class=profile-section>
+      <h3>Private notes</h3>
+      <div class=profile-note>${c.notes?esc(c.notes):"No private notes."}</div>
+    </div>
+
+    <div class=profile-section>
+      <h3>Order history</h3>
+      <div class=customer-order-history>${history}</div>
+    </div>
+
+    <button class=danger onclick="deleteCustomer('${c.id}')">Delete Customer</button>
+  </div>`)
+}
+
+function newCustomer(id=""){
+  const c=id?C().find(x=>x.id===id):{};
+  openF(`<h2>${id?"Edit":"Add"} Customer</h2>
+    <label>Name</label><input id=cn value="${esc(c?.name||"")}">
+    <label>Phone</label><input id=cp value="${esc(c?.phone||"")}">
+    <label>Email</label><input id=ce type=email value="${esc(c?.email||"")}">
+    <label>Instagram</label><input id=ci value="${esc(c?.instagram||"")}">
+    <label>Measurements</label><textarea id=cm>${esc(c?.measurements||"")}</textarea>
+    <label>Private notes</label><textarea id=cno>${esc(c?.notes||"")}</textarea>
+    <button class=primary onclick="saveCustomer('${id}')">${id?"Save Changes":"Save Customer"}</button>
+    ${id?`<button class=secondary-btn onclick="openCustomer('${id}')">Cancel</button>`:""}
+  `)
+}
+
+function saveCustomer(id=""){
+  const name=cn.value.trim();
+  if(!name)return alert("Add the customer's name.");
+  let a=C(),old=id?a.find(x=>x.id===id):null;
+  const updated={
+    id:id||crypto.randomUUID(),
+    name,
+    phone:cp.value.trim(),
+    email:ce.value.trim(),
+    instagram:ci.value.trim(),
+    measurements:cm.value.trim(),
+    notes:cno.value.trim()
+  };
+  a=id?a.map(x=>x.id===id?updated:x):[...a,updated];
+  S("customers",a);
+
+  // Keep existing order names in sync if the customer's name changes.
+  if(id&&old&&old.name!==name){
+    S("orders",O().map(o=>o.customerId===id?{...o,customer:name}:o));
+  }
+
+  dlg.close();
+  render();
+}
+
+function deleteCustomer(id){
+  const c=C().find(x=>x.id===id); if(!c)return;
+  const orders=ordersForCustomer(c);
+  const message=orders.length
+    ? `${c.name} has ${orders.length} saved order${orders.length===1?"":"s"}. The orders will stay in Améa HQ, but this customer profile and contact details will be deleted. Delete customer?`
+    : `Delete ${c.name}?`;
+  if(!confirm(message))return;
+  S("customers",C().filter(x=>x.id!==id));
+  dlg.close();
+  render();
+}
 function newExpense(){let suppliers=SUP();openF(`<h2>Add Expense</h2><label>Category</label><select id=ec>${["Yarn/materials","Packaging","Ads","Delivery","Equipment","Other"].map(x=>`<option>${x}</option>`)}</select><label>Supplier</label><input id=es list=supplierList placeholder="Where did you buy it?"><datalist id=supplierList>${suppliers.map(x=>`<option value="${x.name}">`).join("")}</datalist><label>Amount</label><input id=ea type=number><label>Date</label><input id=ed type=date value="${new Date().toISOString().slice(0,10)}"><label>Note</label><input id=en><button class=primary onclick=saveExpense()>Save</button>`)}
 function saveExpense(){let a=E(),supplier=es.value.trim();a.push({id:crypto.randomUUID(),category:ec.value,supplier,amount:+ea.value||0,date:ed.value,note:en.value});S("expenses",a);if(supplier&&!SUP().some(x=>x.name.toLowerCase()==supplier.toLowerCase())){let s=SUP();s.push({id:crypto.randomUUID(),name:supplier});S("suppliers",s)}dlg.close();render()}
 function manageSuppliers(){let s=SUP();openF(`<div class=top><h2>Suppliers</h2><button onclick=addSupplier()>＋ Add</button></div><div id=supplierRows>${s.map(x=>`<div class=item><div class=top><b>${x.name}</b><button class=mini-danger onclick="deleteSupplier('${x.id}')">Remove</button></div></div>`).join("")||'<div class=empty>No suppliers saved yet.</div>'}</div>`)}

@@ -61,3 +61,25 @@ nav button span{
   font-size:9px;
   margin-top:3px;
 }
+
+.customer-row{cursor:pointer}
+.customer-chevron{margin-top:9px;color:#c83876;font-size:10px;font-weight:700}
+.customer-profile h2{margin-bottom:7px}
+.profile-edit{border:1px solid #f0bfd3;background:#fff4f8;color:#c83876;border-radius:11px;padding:8px 13px;font-weight:700}
+.customer-stats{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:18px 0}
+.customer-stats>div{background:#fff3f8;border:1px solid #ffe0ec;border-radius:14px;padding:12px}
+.customer-stats span,.profile-info span{display:block;color:var(--m);font-size:9px;margin-bottom:5px}
+.customer-stats b{display:block;font-size:14px;color:var(--t)}
+.profile-section{margin-top:22px}
+.profile-section h3{margin:0 0 10px;font-size:13px}
+.profile-info{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.profile-info>div,.profile-note{background:#fff;border:1px solid #ffe0ec;border-radius:13px;padding:11px;min-width:0}
+.profile-info b{display:block;font-size:11px;overflow-wrap:anywhere}
+.profile-note{font-size:11px;line-height:1.55;white-space:pre-wrap}
+.customer-order-history{display:grid;gap:8px}
+.customer-order-row{width:100%;display:grid;grid-template-columns:1fr auto;gap:12px;text-align:left;align-items:center;border:1px solid #ffe0ec;background:#fff;border-radius:13px;padding:11px;color:var(--t)}
+.customer-order-row div:last-child{text-align:right}
+.customer-order-row b,.customer-order-row span{display:block}
+.customer-order-row b{font-size:11px}
+.customer-order-row span{font-size:9px;color:var(--m);margin-top:4px}
+.secondary-btn{width:100%;margin-top:8px;background:#fff;color:#a85b7c;border:1px solid #f2cfdd}
