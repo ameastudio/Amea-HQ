@@ -1,6 +1,76 @@
 const $=s=>document.querySelector(s),G=(k,d=[])=>JSON.parse(localStorage.getItem("ah_"+k)||JSON.stringify(d)),S=(k,v)=>localStorage.setItem("ah_"+k,JSON.stringify(v));let cur="home";const O=()=>G("orders"),C=()=>G("customers"),I=()=>G("inventory"),E=()=>G("expenses"),SUP=()=>G("suppliers"),ITEMS=()=>G("items");const M=n=>new Intl.NumberFormat("en-JM",{style:"currency",currency:"JMD",maximumFractionDigits:0}).format(+n||0);
 function greeting(){let h=new Date().getHours();return h<12?"Good morning":h<18?"Good afternoon":"Good evening"}
 
+const SUPABASE_URL="https://ndmrwfctiomruibiczrj.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY="sb_publishable_3YRAOX1udY5SkPugRSy8WQ__aTUzl3y";
+let cloud=null;
+
+function initCloudClient(){
+  if(!window.supabase)throw new Error("Supabase library did not load.");
+  cloud=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{
+    auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}
+  });
+}
+
+function showAuth(message=""){
+  const auth=$("#auth-screen"),app=$("#app"),msg=$("#auth-message");
+  if(auth)auth.style.display="grid";
+  if(app)app.style.display="none";
+  if(msg)msg.textContent=message;
+}
+
+function showHQ(){
+  const auth=$("#auth-screen"),app=$("#app");
+  if(auth)auth.style.display="none";
+  if(app)app.style.display="block";
+  page("home");
+}
+
+async function loginHQ(){
+  const email=$("#auth-email")?.value.trim();
+  const password=$("#auth-password")?.value||"";
+  const msg=$("#auth-message"),btn=$("#auth-button");
+  if(!email||!password){
+    if(msg)msg.textContent="Enter your email and password.";
+    return;
+  }
+  if(btn){btn.disabled=true;btn.textContent="Signing in…"}
+  if(msg)msg.textContent="";
+  try{
+    const {error}=await cloud.auth.signInWithPassword({email,password});
+    if(error)throw error;
+    showHQ();
+  }catch(err){
+    if(msg)msg.textContent=err?.message||"Could not sign in.";
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent="Sign In"}
+  }
+}
+
+async function logoutHQ(){
+  if(!cloud)return;
+  await cloud.auth.signOut();
+  showAuth("Signed out.");
+}
+
+async function startHQ(){
+  try{
+    initCloudClient();
+    const {data,error}=await cloud.auth.getSession();
+    if(error)throw error;
+    if(data?.session)showHQ();
+    else showAuth();
+    cloud.auth.onAuthStateChange((event,session)=>{
+      if(event==="SIGNED_OUT")showAuth();
+      if(event==="SIGNED_IN"&&session)showHQ();
+    });
+  }catch(err){
+    console.error("Améa HQ cloud start error",err);
+    showAuth("Could not connect to Améa HQ cloud. Check your internet and reload.");
+  }
+}
+
+
 function ordersForCustomer(c){
   const name=String(c?.name||"").trim().toLowerCase();
   return O().filter(o=>
@@ -38,7 +108,7 @@ else if(cur=="invoices"){
 
 else if(cur=="items")v.innerHTML=`<div class=top><div><h2>Items</h2><div class=meta>Products you sell — separate from materials inventory.</div></div><button onclick=newItem()>＋ Add</button></div><div class=item-catalog>${ITEMS().map(x=>`<div class=item-card onclick="newItem('${x.id}')">${x.photo?`<img src="${x.photo}" alt="${esc(x.name)}">`:`<div class=item-photo-placeholder>AMÉA</div>`}<div class=item-card-body><b>${esc(x.name)}</b><div class=meta>${esc(x.category||"Other")} · ${M(x.price)}</div><div class=meta>${x.status=="Ready-made"?"Ready-made":"Made to order"}${x.sizes?` · ${esc(x.sizes)}`:""}</div></div></div>`).join("")||'<div class=empty>No items yet. Add your first product so orders can select from a list.</div>'}</div>`;
 else if(cur=="inventory")v.innerHTML=`<div class=top><h2>Inventory</h2><button onclick=newInventory()>＋ Add</button></div>${I().map(x=>`<div class=item><div class=top><b>${x.name}</b><span class=${x.qty<=x.low?"money":""}>${x.qty}</span></div><div class=meta>${x.type}${x.qty<=x.low?" · LOW STOCK":""}</div></div>`).join("")||'<div class=empty>No inventory yet.</div>'}`;
-else if(cur=="more")v.innerHTML=`<h2>More</h2><div class=quick><button onclick="page('items')">♢ Items</button><button onclick="page('inventory')">▦ Inventory</button><button onclick="page('expenses')">↘ Expenses</button><button onclick="page('analytics')">▥ Analytics</button><button onclick="page('calendar')">♡ Calendar</button><button onclick="page('settings')">⚙ Settings</button></div>`;
+else if(cur=="more")v.innerHTML=`<h2>More</h2><div class=quick><button onclick="page('items')">♢ Items</button><button onclick="page('inventory')">▦ Inventory</button><button onclick="page('expenses')">↘ Expenses</button><button onclick="page('analytics')">▥ Analytics</button><button onclick="page('calendar')">♡ Calendar</button><button onclick="page('settings')">⚙ Settings</button></div><div class="section"><div class="card cloud-card"><div><b>Cloud account</b><div class="meta">Signed in securely with Supabase.</div></div><button class="signout-btn" onclick="logoutHQ()">Sign Out</button></div></div>`;
 else if(cur=="expenses")v.innerHTML=`<div class=top><h2>Expenses</h2><div class=top-actions><button onclick=manageSuppliers()>Suppliers</button><button onclick=newExpense()>＋ Add</button></div></div>${E().slice().reverse().map(x=>`<div class=item><div class=top><b>${x.category}</b><span class=money>${M(x.amount)}</span></div><div class=meta>${x.date}${x.supplier?" · Supplier: "+x.supplier:""}${x.note?" · "+x.note:""}</div></div>`).join("")||'<div class=empty>No expenses yet.</div>'}`;
 else if(cur=="analytics"){renderAnalytics("month")}
 else if(cur=="calendar")v.innerHTML=`<div class=top><h2>Calendar</h2><button onclick=ics()>Add .ics</button></div>${O().filter(x=>x.due).sort((a,b)=>a.due.localeCompare(b.due)).map(x=>`<div class=item><b>${x.due}</b><div class=meta>${x.no} · ${x.customer} · ${x.product} · ${x.delivery}</div></div>`).join("")||'<div class=empty>No due dates yet.</div>'}`;
@@ -400,4 +470,4 @@ function notify(){Notification.requestPermission().then(x=>alert(x=="granted"?"N
 function dl(n,d,t){let a=document.createElement("a");a.href=URL.createObjectURL(new Blob([d],{type:t}));a.download=n;a.click()}function backup(){dl("amea-hq-backup.json",JSON.stringify({orders:O(),customers:C(),items:ITEMS(),inventory:I(),expenses:E(),suppliers:SUP(),settings:G("settings",{}),deleted:G("deleted")},null,2),"application/json")}
 function ics(){let a=["BEGIN:VCALENDAR","VERSION:2.0"];O().filter(x=>x.due).forEach(x=>a.push("BEGIN:VEVENT",`UID:${x.id}@ameahq`,`DTSTART;VALUE=DATE:${x.due.replaceAll("-","")}`,`SUMMARY:${x.no} - ${x.customer} - ${x.product}`,"END:VEVENT"));a.push("END:VCALENDAR");dl("amea-orders.ics",a.join("\r\n"),"text/calendar")}
 if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
-window.addEventListener("DOMContentLoaded",()=>{page("home");});
+window.addEventListener("DOMContentLoaded",startHQ);
