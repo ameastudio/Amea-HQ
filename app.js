@@ -80,14 +80,31 @@ function addSupplier(){let name=prompt("Supplier name");if(!name||!name.trim())r
 function deleteSupplier(id){S("suppliers",SUP().filter(x=>x.id!=id));manageSuppliers()}
 function newInventory(){openF(`<h2>Add Inventory</h2><label>Item</label><input id=ii><label>Type</label><select id=it><option>Material</option><option>Packaging</option><option>Finished product</option></select><label>Quantity</label><input id=iq type=number><label>Low stock alert at</label><input id=il type=number value=2><button class=primary onclick=saveInventory()>Save</button>`)}function saveInventory(){let a=I();a.push({id:crypto.randomUUID(),name:ii.value,type:it.value,qty:+iq.value||0,low:+il.value||2});S("inventory",a);dlg.close();render()}
 
-function renderAnalytics(range="month"){
+function analyticsMonthKey(dateString){
+  if(!dateString)return "";
+  if(/^\d{4}-\d{2}-\d{2}$/.test(dateString))return dateString.slice(0,7);
+  const d=new Date(dateString);
+  if(Number.isNaN(d.getTime()))return "";
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
+}
+function currentMonthKey(){
+  const d=new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
+}
+function monthLabel(key){
+  if(!/^\d{4}-\d{2}$/.test(key))return "Selected month";
+  const [y,m]=key.split("-").map(Number);
+  return new Date(y,m-1,1).toLocaleDateString("en-JM",{month:"long",year:"numeric"});
+}
+function renderAnalytics(range="month",selectedMonth=currentMonthKey()){
   const now=new Date();
+  const monthKey=selectedMonth||currentMonthKey();
   const inRange=dateString=>{
     if(!dateString)return false;
-    const d=new Date(dateString);
     if(range=="all")return true;
-    if(range=="year")return d.getFullYear()==now.getFullYear();
-    return d.getFullYear()==now.getFullYear()&&d.getMonth()==now.getMonth();
+    if(range=="month")return analyticsMonthKey(dateString)==monthKey;
+    const d=new Date(dateString);
+    return !Number.isNaN(d.getTime())&&d.getFullYear()==now.getFullYear();
   };
   const orders=O().filter(x=>inRange(x.created));
   const expenses=E().filter(x=>inRange(x.date));
@@ -97,12 +114,18 @@ function renderAnalytics(range="month"){
   const sourceCounts={};
   orders.forEach(x=>{let s=x.source||"Not set";sourceCounts[s]=(sourceCounts[s]||0)+1});
   const topSources=Object.entries(sourceCounts).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const title=range=="month"?monthLabel(monthKey):range=="year"?String(now.getFullYear()):"All Time";
   $("#view").innerHTML=`<h2>Analytics</h2>
-  <div class=segmented>
-    <button class="${range=="month"?"active":""}" onclick="renderAnalytics('month')">This Month</button>
-    <button class="${range=="year"?"active":""}" onclick="renderAnalytics('year')">This Year</button>
-    <button class="${range=="all"?"active":""}" onclick="renderAnalytics('all')">All Time</button>
+  <div class=analytics-picker>
+    <label>Choose a month</label>
+    <input id=analyticsMonth type=month value="${monthKey}" onchange="renderAnalytics('month',this.value)">
   </div>
+  <div class=segmented>
+    <button class="${range=="month"&&monthKey==currentMonthKey()?"active":""}" onclick="renderAnalytics('month',currentMonthKey())">This Month</button>
+    <button class="${range=="year"?"active":""}" onclick="renderAnalytics('year','${monthKey}')">This Year</button>
+    <button class="${range=="all"?"active":""}" onclick="renderAnalytics('all','${monthKey}')">All Time</button>
+  </div>
+  <div class=analytics-period>Viewing <b>${title}</b></div>
   <div class=grid>
     <div class=card>Payments<b>${M(sales)}</b></div>
     <div class=card>Expenses<b>${M(ex)}</b></div>
@@ -111,7 +134,7 @@ function renderAnalytics(range="month"){
     <div class=card>Outstanding<b>${M(outstanding)}</b></div>
   </div>
   <div class=section><h3>Where orders came from</h3>
-    ${topSources.length?topSources.map(([name,count])=>`<div class=item><div class=top><b>${name}</b><span>${count} order${count==1?"":"s"}</span></div></div>`).join(""):'<div class=empty>No order-source data yet.</div>'}
+    ${topSources.length?topSources.map(([name,count])=>`<div class=item><div class=top><b>${name}</b><span>${count} order${count==1?"":"s"}</span></div></div>`).join(""):'<div class=empty>No order-source data for this period yet.</div>'}
   </div>`;
 }
 

@@ -24,3 +24,9 @@ html,body{min-height:100%;overscroll-behavior:none}
 .invoice-totals{margin:16px 0 0 auto;max-width:260px}.invoice-totals>div{display:flex;justify-content:space-between;padding:5px 0}.invoice-balance{border-top:1px solid #ffe0ec;margin-top:4px;padding-top:10px!important;color:var(--h)}
 .invoice-meta{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:22px;padding-top:16px;border-top:1px solid #ffe0ec}.invoice-meta span{font-size:10px}.invoice-thanks{text-align:center;color:var(--h);margin:24px 0 3px;font-size:11px}
 .invoice-actions{display:grid;gap:8px}.invoice-actions button{width:100%}
+
+.analytics-picker{margin:10px 0 10px}
+.analytics-picker label{display:block;margin-bottom:6px;font-size:11px;color:var(--m);font-weight:700}
+.analytics-picker input[type=month]{width:100%;min-height:46px;border:1px solid #ffd4e5;background:#fff;border-radius:13px;padding:10px 12px;color:var(--t);font-size:16px}
+.analytics-period{margin:5px 0 16px;color:var(--m);font-size:12px}
+.analytics-period b{color:var(--t)}
