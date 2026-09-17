@@ -117,6 +117,9 @@ function localToRemote(kind,x){
     color:x.color||null,price:+x.price||0,paid:+x.paid||0,source:x.source||null,
     due_date:x.due||null,payment_method:x.payment||null,delivery_method:x.delivery||null,
     status:x.status||"New",notes:x.notes||null,edit_history:x.history||[],
+    order_type:x.orderType||"Made to Order",
+    custom_details:x.customDetails||null,
+    inspiration_photos:Array.isArray(x.inspirationPhotos)?x.inspirationPhotos:[],
     created_at:x.created||new Date().toISOString()
   };
   if(kind==="expenses")return {
@@ -151,6 +154,9 @@ function remoteToLocal(kind,x){
     color:x.color||"",price:+x.price||0,paid:+x.paid||0,source:x.source||"Not set",
     due:x.due_date||"",payment:x.payment_method||"",delivery:x.delivery_method||"",
     status:x.status||"New",notes:x.notes||"",history:Array.isArray(x.edit_history)?x.edit_history:[],
+    orderType:x.order_type||"Made to Order",
+    customDetails:x.custom_details||"",
+    inspirationPhotos:Array.isArray(x.inspiration_photos)?x.inspiration_photos:[],
     created:x.created_at
   };
   if(kind==="expenses")return {
@@ -357,10 +363,7 @@ else if(cur=="more"){
       <div class="backup-note">
         Your customers, orders, items, inventory, expenses, suppliers and business settings are stored in your private Améa cloud account.
       </div>
-
-      
-
-      <button id="syncNowBtn" class="primary backup-sync" onclick="syncNow()">Sync Now</button>
+<button id="syncNowBtn" class="primary backup-sync" onclick="syncNow()">Sync Now</button>
       <button class="signout-btn backup-signout" onclick="logoutHQ()">Sign Out</button>
     </div>
   </div>`;
@@ -369,7 +372,7 @@ else if(cur=="expenses")v.innerHTML=`<div class=top><h2>Expenses</h2><div class=
 else if(cur=="analytics"){renderAnalytics("month")}
 else if(cur=="calendar")v.innerHTML=`<div class=top><h2>Calendar</h2><button onclick=ics()>Add .ics</button></div>${O().filter(x=>x.due).sort((a,b)=>a.due.localeCompare(b.due)).map(x=>`<div class=item><b>${x.due}</b><div class=meta>${x.no} · ${x.customer} · ${x.product} · ${x.delivery}</div></div>`).join("")||'<div class=empty>No due dates yet.</div>'}`;
 else if(cur=="settings"){let s=G("settings",{});v.innerHTML=`<h2>Settings</h2><div class=card><label>Email</label><input id=se value="${s.email||""}"><label>WhatsApp / phone</label><input id=sp value="${s.phone||""}"><label>Instagram</label><input id=si value="${s.instagram||""}"><label>Delivery options</label><input id=sd value="${(s.delivery||["Pickup","Delivery"]).join(", ")}"><button class=primary onclick=saveSettings()>Save</button></div><div class="section quick"><button onclick=notify()>Allow Notifications</button><button onclick=backup()>Export Backup</button></div><p class=meta>Your HQ data is synced to your private cloud account. Device storage is kept as a local copy too.</p>`}}
-function list(a){return a.map(x=>`<div class=item onclick="editOrder('${x.id}')"><div class=top><b>${x.no} · ${x.customer}</b><span class=badge>${x.status}</span></div><div class=meta>${x.product} · ${x.size||"—"} · ${x.color||"—"}<br>Placed via: ${x.source||"Not set"} · Payment: ${x.payment} · Delivery: ${x.delivery}<br>Due: ${x.due||"—"}</div><div class=money>${M(x.paid)} paid · ${M(Math.max(0,x.price-x.paid))} balance</div></div>`).join("")}
+function list(a){return a.map(x=>`<div class=item onclick="editOrder('${x.id}')"><div class=top><b>${x.no} · ${x.customer}</b><span class=badge>${x.status}</span></div><div class=meta>${x.orderType==="Custom"?'<span class="custom-order-tag">CUSTOM</span> ':""}${esc(x.product)} · ${esc(x.size||"—")} · ${esc(x.color||"—")}<br>Placed via: ${esc(x.source||"Not set")} · Payment: ${esc(x.payment||"—")} · Delivery: ${esc(x.delivery||"—")}<br>Due: ${esc(x.due||"—")}</div><div class=money>${M(x.paid)} paid · ${M(Math.max(0,x.price-x.paid))} balance</div></div>`).join("")}
 function searchO(q){q=q.toLowerCase();$("#ol").innerHTML=list(O().filter(x=>JSON.stringify(x).toLowerCase().includes(q)))}
 function openF(h){$("#form").innerHTML=h;if(!dlg.open)dlg.showModal()}function openAddMenu(){openF(`<h2>Add to Améa HQ</h2><div class=add-menu><button onclick="newOrder()">＋ New Order</button><button onclick="newCustomer()">＋ Customer</button><button onclick="newItem()">＋ Item</button><button onclick="newExpense()">＋ Expense</button><button onclick="newInventory()">＋ Inventory</button></div>`)}
 function dels(){return G("settings",{}).delivery||["Pickup","Delivery"]}
@@ -451,23 +454,109 @@ function fillOrderItem(id){
   }
 }
 
+let draftInspoPhotos=[];
+
+function toggleCustomOrder(){
+  const isCustom=$("#otype")?.value==="Custom";
+  const regular=$("#regularOrderFields"),custom=$("#customOrderFields");
+  if(regular)regular.style.display=isCustom?"none":"block";
+  if(custom)custom.style.display=isCustom?"block":"none";
+  renderInspoPreviews();
+}
+
+function renderInspoPreviews(){
+  const box=$("#inspoPreview");
+  if(!box)return;
+  box.innerHTML=draftInspoPhotos.length
+    ? draftInspoPhotos.map((src,i)=>`<div class=inspo-thumb><img src="${src}" alt="Inspiration ${i+1}"><button type=button onclick="removeInspoPhoto(${i})">×</button></div>`).join("")
+    : '<div class="meta inspo-empty">No inspiration photos added yet.</div>';
+}
+
+function removeInspoPhoto(i){
+  draftInspoPhotos.splice(i,1);
+  renderInspoPreviews();
+}
+
+function imageToInspoDataUrl(file){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onerror=()=>reject(new Error("Could not read image"));
+    reader.onload=()=>{
+      const img=new Image();
+      img.onerror=()=>reject(new Error("Could not process image"));
+      img.onload=()=>{
+        const max=600,scale=Math.min(1,max/Math.max(img.width,img.height));
+        const c=document.createElement("canvas");
+        c.width=Math.max(1,Math.round(img.width*scale));
+        c.height=Math.max(1,Math.round(img.height*scale));
+        c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+        resolve(c.toDataURL("image/jpeg",.64));
+      };
+      img.src=reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function addInspoPhotos(input){
+  const files=[...(input.files||[])];
+  if(!files.length)return;
+  if(draftInspoPhotos.length+files.length>4){
+    alert("You can save up to 4 inspiration photos per custom order.");
+    input.value="";
+    return;
+  }
+  for(const file of files){
+    try{draftInspoPhotos.push(await imageToInspoDataUrl(file))}
+    catch(e){alert("One of those photos could not be added. Try another image.")}
+  }
+  input.value="";
+  renderInspoPreviews();
+}
+
 function newOrder(x={}){
   const customers=C(),items=ITEMS();
   let selectedCustomerId=x.customerId||customers.find(c=>String(c.name||"").trim().toLowerCase()===String(x.customer||"").trim().toLowerCase())?.id||"";
   let selectedItemId=x.itemId||items.find(i=>String(i.name||"").trim().toLowerCase()===String(x.product||"").trim().toLowerCase())?.id||"";
+  const orderType=x.orderType||"Made to Order";
+  draftInspoPhotos=Array.isArray(x.inspirationPhotos)?[...x.inspirationPhotos]:[];
+
   const customerOptions=customers.length
     ? `<option value="">Select a customer</option>${customers.map(c=>`<option value="${c.id}" ${selectedCustomerId===c.id?"selected":""}>${esc(c.name)}${c.phone?" · "+esc(c.phone):""}</option>`).join("")}`
     : `<option value="">No customers saved yet</option>`;
   const itemOptions=items.length
     ? `<option value="">Select an item</option>${items.map(i=>`<option value="${i.id}" ${selectedItemId===i.id?"selected":""}>${esc(i.name)} · ${M(i.price)}</option>`).join("")}`
     : `<option value="">No items saved yet</option>`;
+
   openF(`<h2>${x.id?"Edit":"New"} Order</h2>
   <label>Customer</label>
   <select id=oc ${customers.length?"":"disabled"}>${customerOptions}</select>
   ${customers.length?"":'<div class=customer-help>Add a customer first, then return to New Order.</div>'}
-  <label>Item</label>
-  <select id=op ${items.length?"":"disabled"} onchange="fillOrderItem(this.value)">${itemOptions}</select>
-  ${items.length?"":'<div class=customer-help>Add an item first, then return to New Order.</div>'}
+
+  <label>Order type</label>
+  <select id=otype onchange="toggleCustomOrder()">
+    <option ${orderType==="Made to Order"?"selected":""}>Made to Order</option>
+    <option ${orderType==="Custom"?"selected":""}>Custom</option>
+  </select>
+
+  <div id=regularOrderFields>
+    <label>Item</label>
+    <select id=op ${items.length?"":"disabled"} onchange="fillOrderItem(this.value)">${itemOptions}</select>
+    ${items.length?"":'<div class=customer-help>Add an item first for made-to-order orders.</div>'}
+  </div>
+
+  <div id=customOrderFields class=custom-order-panel>
+    <label>Custom order name</label>
+    <input id=customTitle value="${orderType==="Custom"?esc(x.product||""):""}" placeholder="e.g. Pink birthday crochet dress">
+
+    <label>What does the client want?</label>
+    <textarea id=customDetails placeholder="Design details, changes, special requests…">${esc(x.customDetails||"")}</textarea>
+
+    <label>Inspiration photos <span class=meta>(up to 4)</span></label>
+    <div id=inspoPreview class=inspo-grid></div>
+    <input id=inspoFiles type=file accept="image/*" multiple onchange="addInspoPhotos(this)">
+  </div>
+
   <div class=row><div><label>Size</label><input id=os list=orderSizeList value="${esc(x.size||"")}"><datalist id=orderSizeList></datalist></div><div><label>Color</label><input id=ocol value="${esc(x.color||"")}"></div></div>
   <div class=row><div><label>Price</label><input id=opr type=number value="${x.price||""}"></div><div><label>Paid</label><input id=opa type=number value="${x.paid||0}"></div></div>
   <label>Where was this order placed?</label><select id=osrc>${["Not set","Website","Instagram","WhatsApp","In person","Phone","Other"].map(z=>`<option ${x.source==z?"selected":""}>${z}</option>`).join("")}</select>
@@ -477,22 +566,69 @@ function newOrder(x={}){
   <label>Status</label><select id=ost>${["New","In Studio","Ready","Delivered"].map(z=>`<option ${x.status==z?"selected":""}>${z}</option>`).join("")}</select>
   <label>Private notes</label><textarea id=on>${esc(x.notes||"")}</textarea>
   ${x.id?'<label>Reason for edit</label><input id=reason placeholder="Reason required">':""}
-  <button class=primary onclick="saveOrder('${x.id||""}')" ${customers.length&&items.length?"":"disabled"}>Save Order</button>
+  <button class=primary onclick="saveOrder('${x.id||""}')" ${customers.length?"":"disabled"}>Save Order</button>
   ${x.id?`<button class=invoice-btn onclick="openInvoice('${x.id}')">Create Invoice</button><button class=danger onclick="delOrder('${x.id}')">Delete Order</button>`:""}`);
-  if(selectedItemId)fillOrderItem(selectedItemId);
+
+  toggleCustomOrder();
+  if(orderType!=="Custom"&&selectedItemId)fillOrderItem(selectedItemId);
 }
 function saveOrder(id){
   let a=O(),old=a.find(x=>x.id==id);
   if(old&&!$("#reason").value.trim())return alert("Add a reason for the edit.");
+
   const customer=C().find(c=>c.id===oc.value);
   if(!customer)return alert("Select a customer.");
-  const item=itemById(op.value);
-  if(!item)return alert("Select an item.");
+
+  const orderType=otype.value;
+  const isCustom=orderType==="Custom";
+  let item=null,product="",itemId="";
+
+  if(isCustom){
+    product=customTitle.value.trim()||"Custom Order";
+  }else{
+    item=itemById(op.value);
+    if(!item)return alert("Select an item.");
+    product=item.name;
+    itemId=item.id;
+  }
+
   let seq=+localStorage.getItem("ah_seq")||0,
-  x={id:id||crypto.randomUUID(),no:old?.no||"AM-"+String(seq+1).padStart(4,"0"),customerId:customer.id,customer:customer.name,itemId:item.id,product:item.name,size:os.value,color:ocol.value,price:+opr.value||0,paid:+opa.value||0,source:osrc.value,due:od.value,payment:opay.value,delivery:odel.value,status:ost.value,notes:on.value,created:old?.created||new Date().toISOString(),history:old?.history||[]};
-  if(old){x.history.push({at:new Date().toISOString(),reason:reason.value});a=a.map(z=>z.id==id?x:z)}
-  else{localStorage.setItem("ah_seq",seq+1);a.push(x)}
-  S("orders",a);dlg.close();render()
+  x={
+    id:id||crypto.randomUUID(),
+    no:old?.no||"AM-"+String(seq+1).padStart(4,"0"),
+    customerId:customer.id,
+    customer:customer.name,
+    itemId,
+    product,
+    orderType,
+    customDetails:isCustom?customDetails.value.trim():"",
+    inspirationPhotos:isCustom?[...draftInspoPhotos]:[],
+    size:os.value,
+    color:ocol.value,
+    price:+opr.value||0,
+    paid:+opa.value||0,
+    source:osrc.value,
+    due:od.value,
+    payment:opay.value,
+    delivery:odel.value,
+    status:ost.value,
+    notes:on.value,
+    created:old?.created||new Date().toISOString(),
+    history:old?.history||[]
+  };
+
+  if(old){
+    x.history.push({at:new Date().toISOString(),reason:reason.value});
+    a=a.map(z=>z.id==id?x:z);
+  }else{
+    localStorage.setItem("ah_seq",seq+1);
+    a.push(x);
+  }
+
+  try{S("orders",a)}
+  catch(e){return alert("Those photos are too large for this device. Remove one inspiration photo and try again.")}
+  dlg.close();
+  render();
 }
 function editOrder(id){newOrder(O().find(x=>x.id==id))}
 
