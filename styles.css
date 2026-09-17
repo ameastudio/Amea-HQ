@@ -215,3 +215,29 @@ nav button span{
   font-weight:800;
   letter-spacing:.8px;
 }
+
+.settings-card{padding:17px}
+.settings-title{margin-bottom:14px}
+.settings-title b,.settings-title span{display:block}
+.settings-title b{font-size:14px}
+.settings-title span{font-size:10px;color:var(--m);margin-top:4px;line-height:1.45}
+
+.invoice-head{display:flex;justify-content:space-between;gap:18px;align-items:flex-start}
+.invoice-logo{display:block;width:115px;max-height:55px;object-fit:contain;object-position:left center}
+.invoice-contact{margin-top:9px}
+.invoice-contact span{display:block;font-size:9px;line-height:1.45;color:var(--m)}
+.invoice-title-wrap{text-align:right}
+.invoice-title{font-family:Georgia,serif;font-size:20px;letter-spacing:4px;color:var(--h)}
+.invoice-number{margin-top:8px}
+.invoice-info{grid-template-columns:1fr 1fr}
+.invoice-description{line-height:1.45;max-width:310px}
+@media(max-width:420px){
+  .invoice-head{gap:10px}
+  .invoice-logo{width:95px}
+  .invoice-title{font-size:17px;letter-spacing:3px}
+}
+
+.invoice-meta-single{
+  grid-template-columns:1fr;
+  max-width:220px;
+}

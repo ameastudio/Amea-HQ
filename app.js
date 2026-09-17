@@ -197,19 +197,26 @@ async function syncSettingsInitial(){
 
   if(data){
     localStorage.setItem("ah_settings",JSON.stringify({
+      businessName:data.business_name||"Améa",
       email:data.business_email||"",
       phone:data.phone||"",
+      website:data.website||"",
       instagram:data.instagram||"",
+      address:data.address||"",
+      invoiceNote:data.invoice_note||"Thank you for choosing Améa ♡",
       delivery:Array.isArray(data.delivery_methods)?data.delivery_methods:["Pickup","Delivery"]
     }));
   }else{
     const row={
       owner_id:user.id,
-      business_name:"Améa",
+      business_name:local.businessName||"Améa",
       currency:"JMD",
       business_email:local.email||null,
       phone:local.phone||null,
+      website:local.website||null,
       instagram:local.instagram||null,
+      address:local.address||null,
+      invoice_note:local.invoiceNote||"Thank you for choosing Améa ♡",
       delivery_methods:Array.isArray(local.delivery)?local.delivery:["Pickup","Delivery"]
     };
     const {error:insertError}=await cloud.from("business_settings").upsert(row,{onConflict:"owner_id"});
@@ -238,8 +245,15 @@ async function pushSettingsToCloud(v){
   const {data:{user}}=await cloud.auth.getUser();
   if(!user)return;
   const row={
-    owner_id:user.id,business_name:"Améa",currency:"JMD",
-    business_email:v.email||null,phone:v.phone||null,instagram:v.instagram||null,
+    owner_id:user.id,
+    business_name:v.businessName||"Améa",
+    currency:"JMD",
+    business_email:v.email||null,
+    phone:v.phone||null,
+    website:v.website||null,
+    instagram:v.instagram||null,
+    address:v.address||null,
+    invoice_note:v.invoiceNote||"Thank you for choosing Améa ♡",
     delivery_methods:Array.isArray(v.delivery)?v.delivery:["Pickup","Delivery"]
   };
   const {error}=await cloud.from("business_settings").upsert(row,{onConflict:"owner_id"});
@@ -371,7 +385,51 @@ else if(cur=="more"){
 else if(cur=="expenses")v.innerHTML=`<div class=top><h2>Expenses</h2><div class=top-actions><button onclick=manageSuppliers()>Suppliers</button><button onclick=newExpense()>＋ Add</button></div></div>${E().slice().reverse().map(x=>`<div class=item><div class=top><b>${x.category}</b><span class=money>${M(x.amount)}</span></div><div class=meta>${x.date}${x.supplier?" · Supplier: "+x.supplier:""}${x.note?" · "+x.note:""}</div></div>`).join("")||'<div class=empty>No expenses yet.</div>'}`;
 else if(cur=="analytics"){renderAnalytics("month")}
 else if(cur=="calendar")v.innerHTML=`<div class=top><h2>Calendar</h2><button onclick=ics()>Add .ics</button></div>${O().filter(x=>x.due).sort((a,b)=>a.due.localeCompare(b.due)).map(x=>`<div class=item><b>${x.due}</b><div class=meta>${x.no} · ${x.customer} · ${x.product} · ${x.delivery}</div></div>`).join("")||'<div class=empty>No due dates yet.</div>'}`;
-else if(cur=="settings"){let s=G("settings",{});v.innerHTML=`<h2>Settings</h2><div class=card><label>Email</label><input id=se value="${s.email||""}"><label>WhatsApp / phone</label><input id=sp value="${s.phone||""}"><label>Instagram</label><input id=si value="${s.instagram||""}"><label>Delivery options</label><input id=sd value="${(s.delivery||["Pickup","Delivery"]).join(", ")}"><button class=primary onclick=saveSettings()>Save</button></div><div class="section quick"><button onclick=notify()>Allow Notifications</button><button onclick=backup()>Export Backup</button></div><p class=meta>Your HQ data is synced to your private cloud account. Device storage is kept as a local copy too.</p>`}}
+else if(cur=="settings"){
+  let s=G("settings",{});
+  v.innerHTML=`<h2>Settings</h2>
+
+  <div class="card settings-card">
+    <div class=settings-title>
+      <div>
+        <b>Business & Invoice Info</b>
+        <span>These details automatically appear on your invoices.</span>
+      </div>
+    </div>
+
+    <label>Business name</label>
+    <input id=sbn value="${esc(s.businessName||"Améa")}" placeholder="Améa">
+
+    <label>Business email</label>
+    <input id=se type=email value="${esc(s.email||"")}" placeholder="Add when ready">
+
+    <label>Phone / WhatsApp</label>
+    <input id=sp value="${esc(s.phone||"")}" placeholder="Add when ready">
+
+    <label>Website</label>
+    <input id=sw value="${esc(s.website||"")}" placeholder="Add later">
+
+    <label>Instagram</label>
+    <input id=si value="${esc(s.instagram||"")}" placeholder="@ameastudio">
+
+    <label>Business address <span class=meta>(optional)</span></label>
+    <textarea id=sa placeholder="Leave blank if you don't want an address on invoices">${esc(s.address||"")}</textarea>
+
+    <label>Invoice closing message</label>
+    <input id=sin value="${esc(s.invoiceNote||"Thank you for choosing Améa ♡")}" placeholder="Thank you for choosing Améa ♡">
+
+    <label>Delivery options</label>
+    <input id=sd value="${esc((s.delivery||["Pickup","Delivery"]).join(", "))}">
+
+    <button class=primary onclick=saveSettings()>Save Business Info</button>
+  </div>
+
+  <div class="section quick">
+    <button onclick=notify()>Allow Notifications</button>
+    <button onclick=backup()>Export Backup</button>
+  </div>
+  <p class=meta>Your HQ data is synced to your private cloud account. Device storage is kept as a local copy too.</p>`
+}}
 function list(a){return a.map(x=>`<div class=item onclick="editOrder('${x.id}')"><div class=top><b>${x.no} · ${x.customer}</b><span class=badge>${x.status}</span></div><div class=meta>${x.orderType==="Custom"?'<span class="custom-order-tag">CUSTOM</span> ':""}${esc(x.product)} · ${esc(x.size||"—")} · ${esc(x.color||"—")}<br>Placed via: ${esc(x.source||"Not set")} · Payment: ${esc(x.payment||"—")} · Delivery: ${esc(x.delivery||"—")}<br>Due: ${esc(x.due||"—")}</div><div class=money>${M(x.paid)} paid · ${M(Math.max(0,x.price-x.paid))} balance</div></div>`).join("")}
 function searchO(q){q=q.toLowerCase();$("#ol").innerHTML=list(O().filter(x=>JSON.stringify(x).toLowerCase().includes(q)))}
 function openF(h){$("#form").innerHTML=h;if(!dlg.open)dlg.showModal()}function openAddMenu(){openF(`<h2>Add to Améa HQ</h2><div class=add-menu><button onclick="newOrder()">＋ New Order</button><button onclick="newCustomer()">＋ Customer</button><button onclick="newItem()">＋ Item</button><button onclick="newExpense()">＋ Expense</button><button onclick="newInventory()">＋ Inventory</button></div>`)}
@@ -639,32 +697,66 @@ function invoiceMarkup(id,printMode=false){
   const c=customerForOrder(o),s=G("settings",{}),balance=Math.max(0,(+o.price||0)-(+o.paid||0));
   const created=o.created?new Date(o.created):new Date();
   const issued=created.toLocaleDateString("en-JM",{year:"numeric",month:"short",day:"numeric"});
+  const businessName=s.businessName||"Améa";
+  const logoUrl=new URL("amea-logo.png",window.location.href).href;
+  const contact=[
+    s.email&&`<span>${esc(s.email)}</span>`,
+    s.phone&&`<span>${esc(s.phone)}</span>`,
+    s.website&&`<span>${esc(s.website)}</span>`,
+    s.instagram&&`<span>${esc(s.instagram)}</span>`,
+    s.address&&`<span>${esc(s.address)}</span>`
+  ].filter(Boolean).join("");
+
   return `<div class="invoice-sheet ${printMode?"print-mode":""}">
     <div class=invoice-head>
-      <div><div class=invoice-brand>améa</div><div class=invoice-sub>INVOICE</div></div>
-      <div class=invoice-number><b>${esc("INV-"+o.no)}</b><span>${esc(issued)}</span></div>
+      <div class=invoice-logo-wrap>
+        <img class=invoice-logo src="${logoUrl}" alt="${esc(businessName)}">
+        <div class=invoice-contact>${contact||'<span>Business contact information</span>'}</div>
+      </div>
+      <div class=invoice-title-wrap>
+        <div class=invoice-title>INVOICE</div>
+        <div class=invoice-number><b>${esc("INV-"+o.no)}</b><span>${esc(issued)}</span></div>
+      </div>
     </div>
+
     <div class=invoice-rule></div>
+
     <div class=invoice-info>
-      <div><small>BILL TO</small><b>${esc(o.customer)}</b>${c.email?`<span>${esc(c.email)}</span>`:""}${c.phone?`<span>${esc(c.phone)}</span>`:""}</div>
-      <div><small>FROM</small><b>Améa</b>${s.email?`<span>${esc(s.email)}</span>`:""}${s.phone?`<span>${esc(s.phone)}</span>`:""}${s.instagram?`<span>${esc(s.instagram)}</span>`:""}</div>
+      <div>
+        <small>BILL TO</small>
+        <b>${esc(o.customer)}</b>
+        ${c.email?`<span>${esc(c.email)}</span>`:""}
+        ${c.phone?`<span>${esc(c.phone)}</span>`:""}
+      </div>
+      <div>
+        <small>ORDER DETAILS</small>
+        <span>${esc(o.orderType||"Made to Order")}</span>
+        ${o.due?`<span>Due ${esc(o.due)}</span>`:""}
+        ${o.delivery?`<span>${esc(o.delivery)}</span>`:""}
+      </div>
     </div>
+
     <div class=invoice-line-head><span>ITEM</span><span>AMOUNT</span></div>
     <div class=invoice-line>
-      <div><b>${esc(o.product)}</b><span>${esc([o.size&&"Size "+o.size,o.color&&o.color].filter(Boolean).join(" · "))}</span></div>
+      <div>
+        <b>${esc(o.product)}</b>
+        <span>${esc([o.size&&"Size "+o.size,o.color&&o.color].filter(Boolean).join(" · "))}</span>
+        ${o.orderType==="Custom"&&o.customDetails?`<span class=invoice-description>${esc(o.customDetails)}</span>`:""}
+      </div>
       <b>${M(o.price)}</b>
     </div>
+
     <div class=invoice-totals>
       <div><span>Total</span><b>${M(o.price)}</b></div>
       <div><span>Paid</span><b>${M(o.paid)}</b></div>
       <div class=invoice-balance><span>Balance</span><b>${M(balance)}</b></div>
     </div>
-    <div class=invoice-meta>
-      <div><small>PAYMENT METHOD</small><span>${esc(o.payment||"—")}</span></div>
-      <div><small>FULFILMENT</small><span>${esc(o.delivery||"—")}</span></div>
-      ${o.due?`<div><small>DUE DATE</small><span>${esc(o.due)}</span></div>`:""}
+
+    <div class=invoice-meta invoice-meta-single>
+      <div><small>ORDER NUMBER</small><span>${esc(o.no)}</span></div>
     </div>
-    <p class=invoice-thanks>Thank you for choosing Améa ♡</p>
+
+    <p class=invoice-thanks>${esc(s.invoiceNote||"Thank you for choosing Améa ♡")}</p>
   </div>`;
 }
 function openInvoice(id){
@@ -675,7 +767,7 @@ function printInvoice(id){
   const w=window.open("","_blank");
   if(!w)return alert("Allow pop-ups for Améa HQ to print the invoice.");
   w.document.write(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Améa Invoice</title><style>
-  *{box-sizing:border-box}body{margin:0;background:#fff;color:#51283d;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.invoice-sheet{max-width:760px;margin:0 auto;padding:42px}.invoice-head{display:flex;justify-content:space-between;align-items:flex-start}.invoice-brand{font-family:Georgia,serif;font-size:48px;color:#f04e94;line-height:1}.invoice-sub{letter-spacing:4px;font-size:10px;margin-top:8px;color:#9a6a80}.invoice-number{text-align:right}.invoice-number b,.invoice-number span{display:block}.invoice-number span{color:#9a6a80;font-size:12px;margin-top:5px}.invoice-rule{height:1px;background:#f1d7e3;margin:26px 0}.invoice-info{display:grid;grid-template-columns:1fr 1fr;gap:35px}.invoice-info small,.invoice-meta small{display:block;color:#a76f88;font-size:9px;letter-spacing:1.5px;margin-bottom:7px}.invoice-info b,.invoice-info span{display:block;margin:3px 0}.invoice-info span{font-size:12px;color:#7e5b6b}.invoice-line-head,.invoice-line{display:grid;grid-template-columns:1fr auto;gap:20px}.invoice-line-head{margin-top:34px;padding:10px 0;border-bottom:1px solid #f1d7e3;color:#a76f88;font-size:9px;letter-spacing:1.3px}.invoice-line{padding:18px 0;border-bottom:1px solid #f1d7e3}.invoice-line span{display:block;color:#8c6677;font-size:12px;margin-top:5px}.invoice-totals{margin:24px 0 0 auto;max-width:300px}.invoice-totals>div{display:flex;justify-content:space-between;padding:7px 0}.invoice-balance{border-top:1px solid #f1d7e3;margin-top:6px;padding-top:13px!important;color:#e73984}.invoice-meta{display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin-top:35px;padding-top:20px;border-top:1px solid #f1d7e3}.invoice-meta span{font-size:12px}.invoice-thanks{text-align:center;margin-top:44px;color:#e64d90}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}.invoice-sheet{padding:20px}}</style></head><body>${body}<script>window.onload=()=>setTimeout(()=>window.print(),150)<\/script></body></html>`);
+  *{box-sizing:border-box}body{margin:0;background:#fff;color:#51283d;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.invoice-sheet{max-width:760px;margin:0 auto;padding:42px}.invoice-head{display:flex;justify-content:space-between;gap:36px;align-items:flex-start}.invoice-logo{display:block;width:150px;max-height:70px;object-fit:contain;object-position:left center}.invoice-contact{margin-top:12px}.invoice-contact span{display:block;color:#866273;font-size:11px;line-height:1.55}.invoice-title-wrap{text-align:right}.invoice-title{font-family:Georgia,serif;font-size:31px;letter-spacing:6px;color:#f04e94}.invoice-number{margin-top:12px}.invoice-number b,.invoice-number span{display:block}.invoice-number span{color:#9a6a80;font-size:12px;margin-top:5px}.invoice-rule{height:1px;background:#f1d7e3;margin:26px 0}.invoice-info{display:grid;grid-template-columns:1fr 1fr;gap:35px}.invoice-info small,.invoice-meta small{display:block;color:#a76f88;font-size:9px;letter-spacing:1.5px;margin-bottom:7px}.invoice-info b,.invoice-info span{display:block;margin:3px 0}.invoice-info span{font-size:12px;color:#7e5b6b}.invoice-line-head,.invoice-line{display:grid;grid-template-columns:1fr auto;gap:20px}.invoice-line-head{margin-top:34px;padding:10px 0;border-bottom:1px solid #f1d7e3;color:#a76f88;font-size:9px;letter-spacing:1.3px}.invoice-line{padding:18px 0;border-bottom:1px solid #f1d7e3}.invoice-line span{display:block;color:#8c6677;font-size:12px;margin-top:5px}.invoice-description{max-width:450px;line-height:1.5}.invoice-totals{margin:24px 0 0 auto;max-width:300px}.invoice-totals>div{display:flex;justify-content:space-between;padding:7px 0}.invoice-balance{border-top:1px solid #f1d7e3;margin-top:6px;padding-top:13px!important;color:#e73984}.invoice-meta{display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin-top:35px;padding-top:20px;border-top:1px solid #f1d7e3}.invoice-meta span{font-size:12px}.invoice-thanks{text-align:center;margin-top:44px;color:#e64d90}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}.invoice-sheet{padding:20px}}</style></head><body>${body}<script>window.onload=()=>setTimeout(()=>window.print(),150)<\/script></body></html>`);
   w.document.close();
 }
 async function shareInvoice(id){
@@ -859,7 +951,19 @@ function renderAnalytics(range="month",selectedMonth=currentMonthKey()){
   </div>`;
 }
 
-function saveSettings(){S("settings",{email:se.value,phone:sp.value,instagram:si.value,delivery:sd.value.split(",").map(x=>x.trim()).filter(Boolean)});alert("Saved 💗")}
+function saveSettings(){
+  S("settings",{
+    businessName:sbn.value.trim()||"Améa",
+    email:se.value.trim(),
+    phone:sp.value.trim(),
+    website:sw.value.trim(),
+    instagram:si.value.trim(),
+    address:sa.value.trim(),
+    invoiceNote:sin.value.trim()||"Thank you for choosing Améa ♡",
+    delivery:sd.value.split(",").map(x=>x.trim()).filter(Boolean)
+  });
+  alert("Business info saved 💗");
+}
 function notify(){Notification.requestPermission().then(x=>alert(x=="granted"?"Notifications allowed 💗":"Notifications not enabled."))}
 function dl(n,d,t){let a=document.createElement("a");a.href=URL.createObjectURL(new Blob([d],{type:t}));a.download=n;a.click()}function backup(){dl("amea-hq-backup.json",JSON.stringify({orders:O(),customers:C(),items:ITEMS(),inventory:I(),expenses:E(),suppliers:SUP(),settings:G("settings",{}),deleted:G("deleted")},null,2),"application/json")}
 function ics(){let a=["BEGIN:VCALENDAR","VERSION:2.0"];O().filter(x=>x.due).forEach(x=>a.push("BEGIN:VEVENT",`UID:${x.id}@ameahq`,`DTSTART;VALUE=DATE:${x.due.replaceAll("-","")}`,`SUMMARY:${x.no} - ${x.customer} - ${x.product}`,"END:VEVENT"));a.push("END:VCALENDAR");dl("amea-orders.ics",a.join("\r\n"),"text/calendar")}
