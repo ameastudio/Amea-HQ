@@ -7,3 +7,7 @@ html,body{min-height:100%;overscroll-behavior:none}
 .segmented{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;background:#fff0f6;padding:5px;border-radius:14px;margin:10px 0 18px}
 .segmented button{border:0;background:transparent;padding:10px 6px;border-radius:10px;color:#a35475;font-size:11px}
 .segmented button.active{background:#ff4f9a;color:#fff}
+
+.add-menu{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.add-menu button{min-height:74px;border:1px solid #f2c7d9;background:#fff5f9;color:#a93f70;border-radius:16px;font-weight:700}
+@media(max-width:420px){.add-menu{grid-template-columns:1fr 1fr}}
