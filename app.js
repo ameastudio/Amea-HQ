@@ -6,7 +6,23 @@ function S(k,v){
   if(cloudReady)queueCloudSync(k,v);
 }
 let cur="home";const O=()=>G("orders"),C=()=>G("customers"),I=()=>G("inventory"),E=()=>G("expenses"),SUP=()=>G("suppliers"),ITEMS=()=>G("items");const M=n=>new Intl.NumberFormat("en-JM",{style:"currency",currency:"JMD",maximumFractionDigits:0}).format(+n||0);
-function greeting(){let h=new Date().getHours();return h<12?"Good morning":h<18?"Good afternoon":"Good evening"}
+function jamaicaHour(){
+  try{
+    const parts=new Intl.DateTimeFormat("en-US",{timeZone:"America/Jamaica",hour:"2-digit",hour12:false}).formatToParts(new Date());
+    const raw=Number(parts.find(p=>p.type==="hour")?.value);
+    return raw===24?0:raw;
+  }catch(e){
+    return new Date().getHours();
+  }
+}
+function greeting(){
+  const h=jamaicaHour();
+  return h<5?"Good night":h<12?"Good morning":h<17?"Good afternoon":h<21?"Good evening":"Good night";
+}
+function refreshHomeGreeting(){
+  const el=$("#homeGreeting");
+  if(el)el.textContent=`${greeting()}, Améa Boss ✨`;
+}
 
 const SUPABASE_URL="https://ndmrwfctiomruibiczrj.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY="sb_publishable_3YRAOX1udY5SkPugRSy8WQ__aTUzl3y";
@@ -326,7 +342,74 @@ function customerStatusText(c){
   return n===0?"No purchases yet":n===1?"1 purchase":"Returning customer · "+n+" purchases";
 }
 
-function page(x){cur=x;render()}function render(){document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===cur));let v=$("#view");if(cur=="home"){let o=O(),e=E(),now=new Date(),mo=o.filter(x=>new Date(x.created).getMonth()==now.getMonth()),sales=mo.reduce((a,x)=>a+x.paid,0),out=mo.reduce((a,x)=>a+Math.max(0,x.price-x.paid),0),ex=e.filter(x=>new Date(x.date).getMonth()==now.getMonth()).reduce((a,x)=>a+x.amount,0),today=new Date().toISOString().slice(0,10);v.innerHTML=`<div class=hero><h2>${greeting()}, Améa Boss ✨</h2><div class=meta>Everything in your studio, in one pretty place.</div></div><div class=grid><div class=card>Sales<b>${M(sales)}</b></div><div class=card>Orders<b>${mo.length}</b></div><div class=card>Outstanding<b>${M(out)}</b></div><div class=card>Expenses<b>${M(ex)}</b></div></div><div class=section><h3>Today</h3><div class=card>${list(O().filter(x=>x.due==today),true)||'<div class=meta>No orders due today 💗</div>'}</div></div><div class=section><h3>Quick Actions</h3><div class=quick><button onclick=newOrder()>＋ New Order</button><button onclick=newCustomer()>＋ Customer</button><button onclick=newExpense()>＋ Expense</button><button onclick="page('calendar')">♡ Calendar</button></div></div><div class=section><h3>Recent Orders</h3>${list(O().slice(-5).reverse())||'<div class=empty>No orders yet.</div>'}</div>`}
+let homeAnalyticsMode="months";
+
+function startOfWeek(date){
+  const d=new Date(date);
+  d.setHours(0,0,0,0);
+  const day=d.getDay();
+  const diff=(day===0?-6:1-day);
+  d.setDate(d.getDate()+diff);
+  return d;
+}
+function homeMonthActivity(){
+  const now=new Date(),orders=O(),rows=[];
+  for(let offset=5;offset>=0;offset--){
+    const d=new Date(now.getFullYear(),now.getMonth()-offset,1);
+    const y=d.getFullYear(),m=d.getMonth();
+    const count=orders.filter(o=>{
+      const od=new Date(o.created);
+      return !Number.isNaN(od.getTime())&&od.getFullYear()===y&&od.getMonth()===m;
+    }).length;
+    rows.push({
+      label:d.toLocaleDateString("en-JM",{month:"short"}),
+      full:d.toLocaleDateString("en-JM",{month:"long",year:"numeric"}),
+      count
+    });
+  }
+  return rows;
+}
+function homeWeekActivity(){
+  const current=startOfWeek(new Date()),orders=O(),rows=[];
+  for(let offset=5;offset>=0;offset--){
+    const start=new Date(current);
+    start.setDate(start.getDate()-(offset*7));
+    const end=new Date(start);
+    end.setDate(end.getDate()+7);
+    const count=orders.filter(o=>{
+      const od=new Date(o.created);
+      return !Number.isNaN(od.getTime())&&od>=start&&od<end;
+    }).length;
+    rows.push({
+      label:start.toLocaleDateString("en-JM",{month:"short",day:"numeric"}),
+      full:"Week of "+start.toLocaleDateString("en-JM",{month:"short",day:"numeric",year:"numeric"}),
+      count
+    });
+  }
+  return rows;
+}
+function homeActivityMarkup(mode=homeAnalyticsMode){
+  const rows=mode==="weeks"?homeWeekActivity():homeMonthActivity();
+  const max=Math.max(1,...rows.map(x=>x.count));
+  const best=rows.reduce((a,b)=>b.count>a.count?b:a,rows[0]);
+  const total=rows.reduce((sum,x)=>sum+x.count,0);
+  return `<div class=activity-summary>${total?`Best period: <b>${esc(best.full)} · ${best.count} order${best.count===1?"":"s"}</b>`:"No orders in these periods yet."}</div>
+    <div class=activity-chart>
+      ${rows.map(x=>`<div class=activity-col title="${esc(x.full)}">
+        <span class=activity-count>${x.count}</span>
+        <div class=activity-track><div class=activity-bar style="height:${x.count?Math.max(12,Math.round((x.count/max)*100)):4}%"></div></div>
+        <span class=activity-label>${esc(x.label)}</span>
+      </div>`).join("")}
+    </div>`;
+}
+function setHomeAnalytics(mode){
+  homeAnalyticsMode=mode==="weeks"?"weeks":"months";
+  document.querySelectorAll("[data-home-analytics]").forEach(btn=>btn.classList.toggle("active",btn.dataset.homeAnalytics===homeAnalyticsMode));
+  const box=$("#homeAnalytics");
+  if(box)box.innerHTML=homeActivityMarkup(homeAnalyticsMode);
+}
+
+function page(x){cur=x;render()}function render(){document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===cur));let v=$("#view");if(cur=="home"){let o=O(),e=E(),now=new Date(),mo=o.filter(x=>new Date(x.created).getMonth()==now.getMonth()),sales=mo.reduce((a,x)=>a+x.paid,0),out=mo.reduce((a,x)=>a+Math.max(0,x.price-x.paid),0),ex=e.filter(x=>new Date(x.date).getMonth()==now.getMonth()).reduce((a,x)=>a+x.amount,0),today=new Date().toISOString().slice(0,10);v.innerHTML=`<div class=hero><h2 id=homeGreeting>${greeting()}, Améa Boss ✨</h2><div class=meta>Everything in your studio, in one pretty place.</div></div><div class=grid><div class=card>Sales<b>${M(sales)}</b></div><div class=card>Orders<b>${mo.length}</b></div><div class=card>Outstanding<b>${M(out)}</b></div><div class=card>Expenses<b>${M(ex)}</b></div></div><div class=section><h3>Today</h3><div class=card>${list(O().filter(x=>x.due==today),true)||'<div class=meta>No orders due today 💗</div>'}</div></div><div class="section home-analytics-section"><div class=analytics-home-head><div><h3>Order Activity</h3><div class=meta>See which weeks or months bring in the most orders.</div></div><div class=analytics-home-toggle><button data-home-analytics=months class="${homeAnalyticsMode==="months"?"active":""}" onclick="setHomeAnalytics('months')">Months</button><button data-home-analytics=weeks class="${homeAnalyticsMode==="weeks"?"active":""}" onclick="setHomeAnalytics('weeks')">Weeks</button></div></div><div id=homeAnalytics>${homeActivityMarkup(homeAnalyticsMode)}</div></div><div class=section><h3>Recent Orders</h3>${list(O().slice(-5).reverse())||'<div class=empty>No orders yet.</div>'}</div>`}
 else if(cur=="orders")v.innerHTML=`<h2>Orders</h2><input placeholder="Search orders, customers, products…" oninput="searchO(this.value)"><div id=ol>${list(O().slice().reverse())||'<div class=empty>No orders yet.</div>'}</div>`;
 else if(cur=="customers")v.innerHTML=`<div class=top><h2>Customers</h2><button onclick=newCustomer()>＋ Add</button></div>${C().map(x=>{let st=customerStats(x),last=st.last?st.last.toLocaleDateString("en-JM",{day:"numeric",month:"short",year:"numeric"}):"";return `<div class="item customer-row" onclick="openCustomer('${x.id}')"><div class=top><b>${esc(x.name)}</b><span class="customer-badge ${st.orders.length?"returning":"new"}">${st.orders.length?"RETURNING":"NEW"}</span></div><div class=meta>${esc(x.phone||"")}${x.email?" · "+esc(x.email):""}<br><b>${customerStatusText(x)}</b>${st.orders.length?` · ${M(st.paid)} lifetime`:""}${last?`<br>Last order: ${last}`:""}</div><div class=customer-chevron>View customer →</div></div>`}).join("")||'<div class=empty>No customers yet.</div>'}`;
 else if(cur=="invoices"){
@@ -335,8 +418,8 @@ else if(cur=="invoices"){
   ${orders.length?orders.map(o=>{
     const bal=Math.max(0,(+o.price||0)-(+o.paid||0));
     return `<div class=item>
-      <div class=top><b>${esc("INV-"+o.no)}</b><span class="badge">${bal>0?"Balance due":"Paid"}</span></div>
-      <div class=meta>${esc(o.customer||"")} · ${esc(o.product||"")}<br>Total: ${M(o.price)} · Paid: ${M(o.paid)} · Balance: ${M(bal)}</div>
+      <div class=top><b>${esc("INV-"+o.no)}</b><span class="badge invoice-status ${bal>0?"due":"paid"}">${bal>0?"Balance due":"Paid"}</span></div>
+      <div class=meta>${esc(o.customer||"")} · ${esc(o.product||"")}<br>Total: ${M(o.price)} · <span class=invoice-paid-text>Paid: ${M(o.paid)}</span> · <span class=invoice-due-text>Balance: ${M(bal)}</span></div>
       <button class=invoice-list-btn onclick="openInvoice('${o.id}')">Open Invoice</button>
     </div>`
   }).join(""):'<div class=empty>No invoices yet. Create an order first.</div>'}`;
@@ -513,6 +596,46 @@ function fillOrderItem(id){
 }
 
 let draftInspoPhotos=[];
+let activeOrderBase={};
+let pendingOrderReturn=null;
+
+function captureOrderDraft(){
+  const base={...activeOrderBase};
+  const type=$("#otype")?.value||base.orderType||"Made to Order";
+  const itemId=$("#op")?.value||base.itemId||"";
+  const selectedItem=itemById(itemId);
+  return {
+    ...base,
+    customerId:$("#oc")?.value||base.customerId||"",
+    itemId,
+    product:type==="Custom"?($("#customTitle")?.value.trim()||base.product||""):(selectedItem?.name||base.product||""),
+    orderType:type,
+    customDetails:$("#customDetails")?.value||base.customDetails||"",
+    inspirationPhotos:[...draftInspoPhotos],
+    size:$("#os")?.value||"",
+    color:$("#ocol")?.value||"",
+    price:+($("#opr")?.value||0),
+    paid:+($("#opa")?.value||0),
+    source:$("#osrc")?.value||"Not set",
+    due:$("#od")?.value||"",
+    payment:$("#opay")?.value||"",
+    delivery:$("#odel")?.value||"",
+    status:$("#ost")?.value||"New",
+    notes:$("#on")?.value||"",
+    _reason:$("#reason")?.value||""
+  };
+}
+function addCustomerFromOrder(){
+  pendingOrderReturn=captureOrderDraft();
+  newCustomer("",true);
+}
+function returnToOrderFromCustomer(){
+  const draft=pendingOrderReturn;
+  pendingOrderReturn=null;
+  if(draft)newOrder(draft);
+  else{dlg.close();render()}
+}
+
 
 function toggleCustomOrder(){
   const isCustom=$("#otype")?.value==="Custom";
@@ -573,6 +696,7 @@ async function addInspoPhotos(input){
 }
 
 function newOrder(x={}){
+  activeOrderBase={...x};
   const customers=C(),items=ITEMS();
   let selectedCustomerId=x.customerId||customers.find(c=>String(c.name||"").trim().toLowerCase()===String(x.customer||"").trim().toLowerCase())?.id||"";
   let selectedItemId=x.itemId||items.find(i=>String(i.name||"").trim().toLowerCase()===String(x.product||"").trim().toLowerCase())?.id||"";
@@ -587,7 +711,7 @@ function newOrder(x={}){
     : `<option value="">No items saved yet</option>`;
 
   openF(`<h2>${x.id?"Edit":"New"} Order</h2>
-  <label>Customer</label>
+  <div class=customer-select-head><label>Customer</label><button type=button class=inline-plus onclick=addCustomerFromOrder() aria-label="Add new customer">＋</button></div>
   <select id=oc ${customers.length?"":"disabled"}>${customerOptions}</select>
   ${customers.length?"":'<div class=customer-help>Add a customer first, then return to New Order.</div>'}
 
@@ -607,8 +731,8 @@ function newOrder(x={}){
     <label>Custom order name</label>
     <input id=customTitle value="${orderType==="Custom"?esc(x.product||""):""}" placeholder="e.g. Pink birthday crochet dress">
 
-    <label>What does the client want?</label>
-    <textarea id=customDetails placeholder="Design details, changes, special requests…">${esc(x.customDetails||"")}</textarea>
+    <label>What does the client want? <span class=private-field-note>PRIVATE · not shown on invoice</span></label>
+    <textarea id=customDetails placeholder="Design details, changes, reminders, special requests…">${esc(x.customDetails||"")}</textarea>
 
     <label>Inspiration photos <span class=meta>(up to 4)</span></label>
     <div id=inspoPreview class=inspo-grid></div>
@@ -629,6 +753,7 @@ function newOrder(x={}){
 
   toggleCustomOrder();
   if(orderType!=="Custom"&&selectedItemId)fillOrderItem(selectedItemId);
+  if($("#reason")&&x._reason)$("#reason").value=x._reason;
 }
 function saveOrder(id){
   let a=O(),old=a.find(x=>x.id==id);
@@ -741,15 +866,14 @@ function invoiceMarkup(id,printMode=false){
       <div>
         <b>${esc(o.product)}</b>
         <span>${esc([o.size&&"Size "+o.size,o.color&&o.color].filter(Boolean).join(" · "))}</span>
-        ${o.orderType==="Custom"&&o.customDetails?`<span class=invoice-description>${esc(o.customDetails)}</span>`:""}
       </div>
       <b>${M(o.price)}</b>
     </div>
 
     <div class=invoice-totals>
       <div><span>Total</span><b>${M(o.price)}</b></div>
-      <div><span>Paid</span><b>${M(o.paid)}</b></div>
-      <div class=invoice-balance><span>Balance</span><b>${M(balance)}</b></div>
+      <div class=invoice-paid><span>Paid</span><b>${M(o.paid)}</b></div>
+      <div class=invoice-balance><span>Balance Due</span><b>${M(balance)}</b></div>
     </div>
 
     <div class=invoice-meta invoice-meta-single>
@@ -767,7 +891,7 @@ function printInvoice(id){
   const w=window.open("","_blank");
   if(!w)return alert("Allow pop-ups for Améa HQ to print the invoice.");
   w.document.write(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Améa Invoice</title><style>
-  *{box-sizing:border-box}body{margin:0;background:#fff;color:#51283d;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.invoice-sheet{max-width:760px;margin:0 auto;padding:42px}.invoice-head{display:flex;justify-content:space-between;gap:36px;align-items:flex-start}.invoice-logo{display:block;width:150px;max-height:70px;object-fit:contain;object-position:left center}.invoice-contact{margin-top:12px}.invoice-contact span{display:block;color:#866273;font-size:11px;line-height:1.55}.invoice-title-wrap{text-align:right}.invoice-title{font-family:Georgia,serif;font-size:31px;letter-spacing:6px;color:#f04e94}.invoice-number{margin-top:12px}.invoice-number b,.invoice-number span{display:block}.invoice-number span{color:#9a6a80;font-size:12px;margin-top:5px}.invoice-rule{height:1px;background:#f1d7e3;margin:26px 0}.invoice-info{display:grid;grid-template-columns:1fr 1fr;gap:35px}.invoice-info small,.invoice-meta small{display:block;color:#a76f88;font-size:9px;letter-spacing:1.5px;margin-bottom:7px}.invoice-info b,.invoice-info span{display:block;margin:3px 0}.invoice-info span{font-size:12px;color:#7e5b6b}.invoice-line-head,.invoice-line{display:grid;grid-template-columns:1fr auto;gap:20px}.invoice-line-head{margin-top:34px;padding:10px 0;border-bottom:1px solid #f1d7e3;color:#a76f88;font-size:9px;letter-spacing:1.3px}.invoice-line{padding:18px 0;border-bottom:1px solid #f1d7e3}.invoice-line span{display:block;color:#8c6677;font-size:12px;margin-top:5px}.invoice-description{max-width:450px;line-height:1.5}.invoice-totals{margin:24px 0 0 auto;max-width:300px}.invoice-totals>div{display:flex;justify-content:space-between;padding:7px 0}.invoice-balance{border-top:1px solid #f1d7e3;margin-top:6px;padding-top:13px!important;color:#e73984}.invoice-meta{display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin-top:35px;padding-top:20px;border-top:1px solid #f1d7e3}.invoice-meta span{font-size:12px}.invoice-thanks{text-align:center;margin-top:44px;color:#e64d90}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}.invoice-sheet{padding:20px}}</style></head><body>${body}<script>window.onload=()=>setTimeout(()=>window.print(),150)<\/script></body></html>`);
+  *{box-sizing:border-box}body{margin:0;background:#fff;color:#51283d;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.invoice-sheet{max-width:760px;margin:0 auto;padding:42px}.invoice-head{display:flex;justify-content:space-between;gap:36px;align-items:flex-start}.invoice-logo{display:block;width:150px;max-height:70px;object-fit:contain;object-position:left center}.invoice-contact{margin-top:12px}.invoice-contact span{display:block;color:#866273;font-size:11px;line-height:1.55}.invoice-title-wrap{text-align:right}.invoice-title{font-family:Georgia,serif;font-size:31px;letter-spacing:6px;color:#f04e94}.invoice-number{margin-top:12px}.invoice-number b,.invoice-number span{display:block}.invoice-number span{color:#9a6a80;font-size:12px;margin-top:5px}.invoice-rule{height:1px;background:#f1d7e3;margin:26px 0}.invoice-info{display:grid;grid-template-columns:1fr 1fr;gap:35px}.invoice-info small,.invoice-meta small{display:block;color:#a76f88;font-size:9px;letter-spacing:1.5px;margin-bottom:7px}.invoice-info b,.invoice-info span{display:block;margin:3px 0}.invoice-info span{font-size:12px;color:#7e5b6b}.invoice-line-head,.invoice-line{display:grid;grid-template-columns:1fr auto;gap:20px}.invoice-line-head{margin-top:34px;padding:10px 0;border-bottom:1px solid #f1d7e3;color:#a76f88;font-size:9px;letter-spacing:1.3px}.invoice-line{padding:18px 0;border-bottom:1px solid #f1d7e3}.invoice-line span{display:block;color:#8c6677;font-size:12px;margin-top:5px}.invoice-description{max-width:450px;line-height:1.5}.invoice-totals{margin:24px 0 0 auto;max-width:300px}.invoice-totals>div{display:flex;justify-content:space-between;padding:7px 0}.invoice-paid{color:#2f7d50;font-weight:700}.invoice-balance{border-top:1px solid #f1d7e3;margin-top:6px;padding-top:13px!important;color:#c83568;font-weight:700}.invoice-meta{display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin-top:35px;padding-top:20px;border-top:1px solid #f1d7e3}.invoice-meta span{font-size:12px}.invoice-thanks{text-align:center;margin-top:44px;color:#e64d90}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}.invoice-sheet{padding:20px}}</style></head><body>${body}<script>window.onload=()=>setTimeout(()=>window.print(),150)<\/script></body></html>`);
   w.document.close();
 }
 async function shareInvoice(id){
@@ -834,7 +958,7 @@ function openCustomer(id){
   </div>`)
 }
 
-function newCustomer(id=""){
+function newCustomer(id="",returnToOrder=false){
   const c=id?C().find(x=>x.id===id):{};
   openF(`<h2>${id?"Edit":"Add"} Customer</h2>
     <label>Name</label><input id=cn value="${esc(c?.name||"")}">
@@ -843,12 +967,12 @@ function newCustomer(id=""){
     <label>Instagram</label><input id=ci value="${esc(c?.instagram||"")}">
     <label>Measurements</label><textarea id=cm>${esc(c?.measurements||"")}</textarea>
     <label>Private notes</label><textarea id=cno>${esc(c?.notes||"")}</textarea>
-    <button class=primary onclick="saveCustomer('${id}')">${id?"Save Changes":"Save Customer"}</button>
-    ${id?`<button class=secondary-btn onclick="openCustomer('${id}')">Cancel</button>`:""}
+    <button class=primary onclick="saveCustomer('${id}',${returnToOrder})">${id?"Save Changes":"Save Customer"}</button>
+    ${returnToOrder?`<button class=secondary-btn onclick=returnToOrderFromCustomer()>Back to Order</button>`:(id?`<button class=secondary-btn onclick="openCustomer('${id}')">Cancel</button>`:"")}
   `)
 }
 
-function saveCustomer(id=""){
+function saveCustomer(id="",returnToOrder=false){
   const name=cn.value.trim();
   if(!name)return alert("Add the customer's name.");
   let a=C(),old=id?a.find(x=>x.id===id):null;
@@ -867,6 +991,13 @@ function saveCustomer(id=""){
   // Keep existing order names in sync if the customer's name changes.
   if(id&&old&&old.name!==name){
     S("orders",O().map(o=>o.customerId===id?{...o,customer:name}:o));
+  }
+
+  if(returnToOrder){
+    const draft=pendingOrderReturn||{};
+    pendingOrderReturn=null;
+    newOrder({...draft,customerId:updated.id,customer:updated.name});
+    return;
   }
 
   dlg.close();
@@ -968,4 +1099,7 @@ function notify(){Notification.requestPermission().then(x=>alert(x=="granted"?"N
 function dl(n,d,t){let a=document.createElement("a");a.href=URL.createObjectURL(new Blob([d],{type:t}));a.download=n;a.click()}function backup(){dl("amea-hq-backup.json",JSON.stringify({orders:O(),customers:C(),items:ITEMS(),inventory:I(),expenses:E(),suppliers:SUP(),settings:G("settings",{}),deleted:G("deleted")},null,2),"application/json")}
 function ics(){let a=["BEGIN:VCALENDAR","VERSION:2.0"];O().filter(x=>x.due).forEach(x=>a.push("BEGIN:VEVENT",`UID:${x.id}@ameahq`,`DTSTART;VALUE=DATE:${x.due.replaceAll("-","")}`,`SUMMARY:${x.no} - ${x.customer} - ${x.product}`,"END:VEVENT"));a.push("END:VCALENDAR");dl("amea-orders.ics",a.join("\r\n"),"text/calendar")}
 if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
+setInterval(refreshHomeGreeting,60000);
+window.addEventListener("focus",refreshHomeGreeting);
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)refreshHomeGreeting()});
 window.addEventListener("DOMContentLoaded",startHQ);

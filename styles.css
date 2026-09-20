@@ -241,3 +241,141 @@ nav button span{
   grid-template-columns:1fr;
   max-width:220px;
 }
+
+
+/* ===== Améa HQ home + order workflow refinements ===== */
+.customer-select-head{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:10px;
+  margin-top:7px;
+}
+.customer-select-head label{margin:0}
+.inline-plus{
+  width:34px;
+  height:34px;
+  padding:0;
+  border-radius:50%;
+  background:var(--p);
+  color:#fff;
+  font-size:21px;
+  font-weight:700;
+  line-height:1;
+  flex:0 0 34px;
+}
+.private-field-note{
+  margin-left:5px;
+  color:var(--g);
+  font-size:8px;
+  letter-spacing:.5px;
+  white-space:nowrap;
+}
+
+.analytics-home-head{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:11px;
+}
+.analytics-home-head h3{margin:0 0 3px}
+.analytics-home-toggle{
+  display:flex;
+  gap:5px;
+  flex:0 0 auto;
+}
+.analytics-home-toggle button{
+  padding:7px 9px;
+  border:1px solid #f2c7d9;
+  background:#fff;
+  font-size:10px;
+  font-weight:700;
+}
+.analytics-home-toggle button.active{
+  background:var(--p);
+  color:#fff;
+  border-color:var(--p);
+}
+.activity-summary{
+  padding:10px 12px;
+  border:1px solid #ffe0ec;
+  border-radius:13px;
+  background:#fff8fc;
+  color:var(--m);
+  font-size:11px;
+  line-height:1.4;
+}
+.activity-summary b{color:var(--t)}
+.activity-chart{
+  height:168px;
+  display:grid;
+  grid-template-columns:repeat(6,minmax(0,1fr));
+  align-items:end;
+  gap:7px;
+  padding:15px 2px 0;
+}
+.activity-col{
+  height:100%;
+  display:grid;
+  grid-template-rows:18px 1fr 20px;
+  align-items:end;
+  min-width:0;
+  text-align:center;
+}
+.activity-count{
+  font-size:10px;
+  font-weight:800;
+  color:var(--t);
+}
+.activity-track{
+  width:100%;
+  height:100%;
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  border-radius:10px;
+  background:#fff2f7;
+  overflow:hidden;
+}
+.activity-bar{
+  width:100%;
+  min-height:4px;
+  border-radius:10px 10px 5px 5px;
+  background:linear-gradient(180deg,var(--p),#f7b3cf);
+}
+.activity-label{
+  padding-top:5px;
+  font-size:9px;
+  color:var(--m);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.invoice-paid,
+.invoice-paid-text{
+  color:#2f7d50 !important;
+  font-weight:800;
+}
+.invoice-balance,
+.invoice-due-text{
+  color:#c83568 !important;
+  font-weight:800;
+}
+.invoice-status.paid{
+  background:#eef8f2;
+  color:#2f7d50;
+}
+.invoice-status.due{
+  background:#fff0f5;
+  color:#c83568;
+}
+
+@media(max-width:420px){
+  .analytics-home-head{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+  .analytics-home-toggle{align-self:flex-start}
+}
