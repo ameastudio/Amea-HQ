@@ -307,50 +307,65 @@ nav button span{
   line-height:1.4;
 }
 .activity-summary b{color:var(--t)}
-.activity-chart{
-  height:168px;
-  display:grid;
-  grid-template-columns:repeat(6,minmax(0,1fr));
-  align-items:end;
-  gap:7px;
-  padding:15px 2px 0;
+.activity-chart-card{
+  position:relative;
+  margin-top:12px;
+  padding:8px 6px 2px;
+  border:1px solid #f4d9e5;
+  border-radius:16px;
+  background:linear-gradient(180deg,#fff 0%,#fff9fc 100%);
+  box-shadow:0 8px 22px rgba(79,29,49,.04);
+  overflow:hidden;
 }
-.activity-col{
-  height:100%;
-  display:grid;
-  grid-template-rows:18px 1fr 20px;
-  align-items:end;
-  min-width:0;
-  text-align:center;
+.activity-axis-title{
+  position:absolute;
+  left:10px;
+  top:8px;
+  z-index:2;
+  color:var(--m);
+  font-size:9px;
+  font-weight:700;
+  letter-spacing:.35px;
+  text-transform:uppercase;
 }
-.activity-count{
+.activity-line-chart{
+  display:block;
+  width:100%;
+  height:auto;
+  min-height:185px;
+  overflow:visible;
+}
+.activity-gridline{
+  stroke:#f0dde5;
+  stroke-width:1;
+  stroke-dasharray:3 4;
+}
+.activity-y-label,
+.activity-x-label{
+  fill:#876d78;
+  font-size:9px;
+  font-weight:600;
+}
+.activity-area{
+  fill:#f8dce8;
+  fill-opacity:.62;
+}
+.activity-line{
+  fill:none;
+  stroke:var(--p);
+  stroke-width:3.5;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+.activity-point circle{
+  fill:#fff;
+  stroke:var(--p);
+  stroke-width:3;
+}
+.activity-value{
+  fill:var(--t);
   font-size:10px;
   font-weight:800;
-  color:var(--t);
-}
-.activity-track{
-  width:100%;
-  height:100%;
-  display:flex;
-  align-items:flex-end;
-  justify-content:center;
-  border-radius:10px;
-  background:#fff2f7;
-  overflow:hidden;
-}
-.activity-bar{
-  width:100%;
-  min-height:4px;
-  border-radius:10px 10px 5px 5px;
-  background:linear-gradient(180deg,var(--p),#f7b3cf);
-}
-.activity-label{
-  padding-top:5px;
-  font-size:9px;
-  color:var(--m);
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
 }
 
 .invoice-paid,
@@ -378,4 +393,200 @@ nav button span{
     flex-direction:column;
   }
   .analytics-home-toggle{align-self:flex-start}
+}
+
+
+/* ===== Full business analytics ===== */
+.analytics-intro{
+  margin:-5px 0 12px;
+  color:var(--m);
+  font-size:12px;
+  line-height:1.55;
+}
+.analytics-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.analytics-kpi{
+  position:relative;
+  overflow:hidden;
+  background:linear-gradient(180deg,#fff,#fffafd);
+}
+.analytics-kpi:before{
+  content:"";
+  position:absolute;
+  left:0;top:0;bottom:0;
+  width:4px;
+  background:#f1dbe5;
+}
+.analytics-kpi.received:before{background:#2f7d50}
+.analytics-kpi.booked:before{background:var(--g)}
+.analytics-kpi.expense:before{background:#d85d72}
+.analytics-kpi.profit:before{background:var(--p)}
+.analytics-kpi.outstanding:before{background:#c83568}
+.analytics-kpi span,.average-card span{
+  color:var(--m);
+  font-size:10px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.35px;
+}
+.analytics-kpi b,.average-card b{font-size:18px}
+.analytics-average-grid{
+  grid-template-columns:repeat(2,minmax(0,1fr));
+}
+.average-card{
+  background:linear-gradient(145deg,#fff9fc,#fff);
+}
+.analytics-section-head{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  align-items:flex-end;
+  margin-bottom:8px;
+}
+.analytics-section-head h3{margin:0 0 2px}
+.analytics-chart-shell{
+  border:1px solid #f3d9e5;
+  border-radius:18px;
+  background:#fff;
+  padding:11px 8px 2px;
+  box-shadow:0 8px 22px rgba(79,29,49,.04);
+}
+.analytics-legend{
+  display:flex;
+  gap:14px;
+  flex-wrap:wrap;
+  padding:0 7px 6px;
+  color:var(--m);
+  font-size:10px;
+  font-weight:700;
+}
+.analytics-legend span{display:flex;align-items:center;gap:5px}
+.analytics-legend i{
+  display:inline-block;
+  width:9px;height:9px;
+  border-radius:3px;
+}
+.legend-revenue{background:var(--p)}
+.legend-expense{background:var(--g)}
+.analytics-chart-scroll{
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+}
+.analytics-main-chart{
+  display:block;
+  min-width:650px;
+  width:100%;
+  height:auto;
+}
+.analytics-gridline{
+  stroke:#f0dde5;
+  stroke-width:1;
+  stroke-dasharray:3 4;
+}
+.analytics-axis-label{
+  fill:#876d78;
+  font-size:10px;
+  font-weight:600;
+}
+.analytics-bar-revenue{fill:var(--p)}
+.analytics-bar-expense{fill:var(--g)}
+.analytics-highlight-grid{
+  display:grid;
+  gap:8px;
+}
+.analytics-highlight{
+  border:1px solid #f0d9e3;
+  border-radius:16px;
+  padding:13px 14px;
+  background:linear-gradient(135deg,#fffafd,#fff);
+}
+.analytics-highlight span{
+  display:block;
+  color:var(--m);
+  font-size:9px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.5px;
+}
+.analytics-highlight b{
+  display:block;
+  margin-top:4px;
+  color:var(--t);
+  font-size:13px;
+}
+.analytics-highlight strong{
+  display:block;
+  margin-top:4px;
+  color:var(--h);
+  font-size:18px;
+}
+.annual-table-wrap{
+  overflow-x:auto;
+  border:1px solid #f3d9e5;
+  border-radius:16px;
+  background:#fff;
+}
+.annual-table{
+  width:100%;
+  min-width:560px;
+  border-collapse:collapse;
+  font-size:11px;
+}
+.annual-table th,.annual-table td{
+  padding:11px 10px;
+  text-align:right;
+  border-bottom:1px solid #f7e7ee;
+  white-space:nowrap;
+}
+.annual-table th:first-child,.annual-table td:first-child{text-align:left}
+.annual-table th{
+  color:var(--m);
+  font-size:9px;
+  text-transform:uppercase;
+  letter-spacing:.4px;
+  background:#fff8fc;
+}
+.annual-table .positive{color:#2f7d50;font-weight:800}
+.annual-table .negative{color:#c83568;font-weight:800}
+.analytics-mini-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.analytics-subtitle{
+  margin:15px 0 4px;
+  color:var(--m);
+  font-size:10px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.4px;
+}
+.analytics-rank{
+  padding:10px 1px 9px;
+  border-bottom:1px solid #f7e5ed;
+}
+.analytics-rank .top{
+  align-items:center;
+  font-size:11px;
+}
+.analytics-rank .top span{
+  color:var(--m);
+  text-align:right;
+}
+.analytics-rank-track{
+  margin-top:7px;
+  height:6px;
+  border-radius:999px;
+  background:#fff0f6;
+  overflow:hidden;
+}
+.analytics-rank-fill{
+  height:100%;
+  border-radius:999px;
+}
+.analytics-rank-fill.pink{background:linear-gradient(90deg,var(--p),#f8a7c9)}
+.analytics-rank-fill.gold{background:linear-gradient(90deg,var(--g),#e8c77d)}
+.analytics-note{
+  margin:22px 0 5px;
+  padding:12px 13px;
+  border-radius:15px;
+  background:#fff5f9;
+  color:var(--m);
+  font-size:10px;
+  line-height:1.55;
 }

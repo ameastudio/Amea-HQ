@@ -390,16 +390,46 @@ function homeWeekActivity(){
 }
 function homeActivityMarkup(mode=homeAnalyticsMode){
   const rows=mode==="weeks"?homeWeekActivity():homeMonthActivity();
-  const max=Math.max(1,...rows.map(x=>x.count));
+  const maxCount=Math.max(1,...rows.map(x=>x.count));
+  const chartMax=Math.max(4,Math.ceil(maxCount/4)*4);
   const best=rows.reduce((a,b)=>b.count>a.count?b:a,rows[0]);
   const total=rows.reduce((sum,x)=>sum+x.count,0);
+
+  const W=340,H=188,left=35,right=12,top=16,bottom=34;
+  const plotW=W-left-right,plotH=H-top-bottom;
+  const xAt=i=>left+(rows.length===1?plotW/2:(plotW*i/(rows.length-1)));
+  const yAt=n=>top+plotH-(n/chartMax)*plotH;
+  const points=rows.map((r,i)=>`${xAt(i).toFixed(1)},${yAt(r.count).toFixed(1)}`).join(" ");
+  const areaPoints=`${left},${top+plotH} ${points} ${left+plotW},${top+plotH}`;
+
+  const grid=[0,1,2,3,4].map(i=>{
+    const val=Math.round(chartMax-(chartMax*i/4));
+    const y=top+(plotH*i/4);
+    return `<line x1="${left}" y1="${y}" x2="${left+plotW}" y2="${y}" class=activity-gridline></line>
+      <text x="${left-8}" y="${y+3}" text-anchor=end class=activity-y-label>${val}</text>`;
+  }).join("");
+
+  const dots=rows.map((r,i)=>{
+    const x=xAt(i),y=yAt(r.count);
+    return `<g class=activity-point>
+      <circle cx="${x}" cy="${y}" r="5"></circle>
+      <text x="${x}" y="${Math.max(10,y-10)}" text-anchor=middle class=activity-value>${r.count}</text>
+      <title>${esc(r.full)}: ${r.count} order${r.count===1?"":"s"}</title>
+    </g>`;
+  }).join("");
+
+  const labels=rows.map((r,i)=>`<text x="${xAt(i)}" y="${H-10}" text-anchor=middle class=activity-x-label>${esc(r.label)}</text>`).join("");
+
   return `<div class=activity-summary>${total?`Best period: <b>${esc(best.full)} · ${best.count} order${best.count===1?"":"s"}</b>`:"No orders in these periods yet."}</div>
-    <div class=activity-chart>
-      ${rows.map(x=>`<div class=activity-col title="${esc(x.full)}">
-        <span class=activity-count>${x.count}</span>
-        <div class=activity-track><div class=activity-bar style="height:${x.count?Math.max(12,Math.round((x.count/max)*100)):4}%"></div></div>
-        <span class=activity-label>${esc(x.label)}</span>
-      </div>`).join("")}
+    <div class=activity-chart-card>
+      <div class=activity-axis-title>Orders</div>
+      <svg class=activity-line-chart viewBox="0 0 ${W} ${H}" role=img aria-label="Order activity chart">
+        ${grid}
+        <polygon points="${areaPoints}" class=activity-area></polygon>
+        <polyline points="${points}" class=activity-line></polyline>
+        ${dots}
+        ${labels}
+      </svg>
     </div>`;
 }
 function setHomeAnalytics(mode){
@@ -1040,6 +1070,155 @@ function monthLabel(key){
   const [y,m]=key.split("-").map(Number);
   return new Date(y,m-1,1).toLocaleDateString("en-JM",{month:"long",year:"numeric"});
 }
+function analyticsDate(value){
+  if(!value)return null;
+  const d=new Date(value);
+  return Number.isNaN(d.getTime())?null:d;
+}
+function monthsBetweenInclusive(a,b){
+  if(!a||!b)return 1;
+  return Math.max(1,(b.getFullYear()-a.getFullYear())*12+(b.getMonth()-a.getMonth())+1);
+}
+function yearsBetweenInclusive(a,b){
+  if(!a||!b)return 1;
+  return Math.max(1,b.getFullYear()-a.getFullYear()+1);
+}
+function weeksBetweenInclusive(a,b){
+  if(!a||!b)return 1;
+  const days=Math.max(0,(b-a)/86400000);
+  return Math.max(1,Math.ceil((days+1)/7));
+}
+function moneyShort(n){
+  n=+n||0;
+  if(Math.abs(n)>=1000000)return "$"+(n/1000000).toFixed(1).replace(".0","")+"M";
+  if(Math.abs(n)>=1000)return "$"+(n/1000).toFixed(1).replace(".0","")+"K";
+  return "$"+Math.round(n);
+}
+function analyticsSpan(){
+  const dates=[
+    ...O().map(x=>analyticsDate(x.created)),
+    ...E().map(x=>analyticsDate(x.date))
+  ].filter(Boolean).sort((a,b)=>a-b);
+  return {first:dates[0]||new Date(),last:new Date()};
+}
+function allTimeAverageStats(){
+  const span=analyticsSpan();
+  const received=O().reduce((a,x)=>a+(+x.paid||0),0);
+  return {
+    received,
+    week:received/weeksBetweenInclusive(span.first,span.last),
+    month:received/monthsBetweenInclusive(span.first,span.last),
+    year:received/yearsBetweenInclusive(span.first,span.last),
+    first:span.first
+  };
+}
+function analyticsMonthRows(count=12){
+  const now=new Date(),rows=[];
+  for(let offset=count-1;offset>=0;offset--){
+    const d=new Date(now.getFullYear(),now.getMonth()-offset,1);
+    const y=d.getFullYear(),m=d.getMonth();
+    const orders=O().filter(o=>{
+      const od=analyticsDate(o.created);
+      return od&&od.getFullYear()===y&&od.getMonth()===m;
+    });
+    const expenses=E().filter(e=>{
+      const ed=analyticsDate(e.date);
+      return ed&&ed.getFullYear()===y&&ed.getMonth()===m;
+    });
+    rows.push({
+      key:`${y}-${String(m+1).padStart(2,"0")}`,
+      label:d.toLocaleDateString("en-JM",{month:"short"}),
+      full:d.toLocaleDateString("en-JM",{month:"long",year:"numeric"}),
+      revenue:orders.reduce((a,x)=>a+(+x.paid||0),0),
+      booked:orders.reduce((a,x)=>a+(+x.price||0),0),
+      expenses:expenses.reduce((a,x)=>a+(+x.amount||0),0),
+      orders:orders.length
+    });
+  }
+  return rows;
+}
+function analyticsTrendChart(){
+  const rows=analyticsMonthRows(12);
+  const max=Math.max(1,...rows.flatMap(x=>[x.revenue,x.expenses]));
+  const W=700,H=255,left=54,right=15,top=30,bottom=45,plotW=W-left-right,plotH=H-top-bottom;
+  const group=plotW/rows.length,barW=Math.max(8,Math.min(17,group*.28));
+  const yAt=n=>top+plotH-(n/max)*plotH;
+  const grid=[0,1,2,3,4].map(i=>{
+    const val=max-(max*i/4),y=top+(plotH*i/4);
+    return `<line x1="${left}" y1="${y}" x2="${left+plotW}" y2="${y}" class=analytics-gridline></line>
+      <text x="${left-9}" y="${y+3}" text-anchor=end class=analytics-axis-label>${moneyShort(val)}</text>`;
+  }).join("");
+  const bars=rows.map((r,i)=>{
+    const cx=left+group*i+group/2;
+    const revH=(r.revenue/max)*plotH,exH=(r.expenses/max)*plotH;
+    return `<g>
+      <rect x="${cx-barW-2}" y="${top+plotH-revH}" width="${barW}" height="${Math.max(1,revH)}" rx="4" class=analytics-bar-revenue><title>${esc(r.full)} received: ${M(r.revenue)}</title></rect>
+      <rect x="${cx+2}" y="${top+plotH-exH}" width="${barW}" height="${Math.max(1,exH)}" rx="4" class=analytics-bar-expense><title>${esc(r.full)} expenses: ${M(r.expenses)}</title></rect>
+      <text x="${cx}" y="${H-20}" text-anchor=middle class=analytics-axis-label>${esc(r.label)}</text>
+    </g>`;
+  }).join("");
+  return `<div class=analytics-chart-shell>
+    <div class=analytics-legend><span><i class=legend-revenue></i>Payments received</span><span><i class=legend-expense></i>Expenses</span></div>
+    <div class=analytics-chart-scroll><svg class=analytics-main-chart viewBox="0 0 ${W} ${H}" role=img aria-label="Payments received and expenses by month">${grid}${bars}</svg></div>
+  </div>`;
+}
+function startOfAnalyticsWeek(date){
+  const d=new Date(date);
+  d.setHours(0,0,0,0);
+  const day=d.getDay(),diff=day===0?-6:1-day;
+  d.setDate(d.getDate()+diff);
+  return d;
+}
+function bestBusinessPeriods(){
+  const orders=O(),weekMap={},monthMap={},yearMap={};
+  orders.forEach(o=>{
+    const d=analyticsDate(o.created); if(!d)return;
+    const revenue=+o.paid||0;
+    const ws=startOfAnalyticsWeek(d);
+    const wk=`${ws.getFullYear()}-${String(ws.getMonth()+1).padStart(2,"0")}-${String(ws.getDate()).padStart(2,"0")}`;
+    const mk=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
+    const yk=String(d.getFullYear());
+    weekMap[wk]=(weekMap[wk]||0)+revenue;
+    monthMap[mk]=(monthMap[mk]||0)+revenue;
+    yearMap[yk]=(yearMap[yk]||0)+revenue;
+  });
+  const best=(obj)=>Object.entries(obj).sort((a,b)=>b[1]-a[1])[0]||["",0];
+  const [weekKey,weekValue]=best(weekMap);
+  const [monthKey,monthValue]=best(monthMap);
+  const [yearKey,yearValue]=best(yearMap);
+  return {
+    weekKey,weekValue,
+    monthKey,monthValue,
+    yearKey,yearValue
+  };
+}
+function formatWeekKey(key){
+  if(!key)return "—";
+  const d=new Date(key+"T00:00:00");
+  return "Week of "+d.toLocaleDateString("en-JM",{month:"short",day:"numeric",year:"numeric"});
+}
+function annualSummaryRows(){
+  const years=new Set();
+  O().forEach(o=>{const d=analyticsDate(o.created);if(d)years.add(d.getFullYear())});
+  E().forEach(e=>{const d=analyticsDate(e.date);if(d)years.add(d.getFullYear())});
+  if(!years.size)years.add(new Date().getFullYear());
+  return [...years].sort((a,b)=>b-a).map(year=>{
+    const orders=O().filter(o=>analyticsDate(o.created)?.getFullYear()===year);
+    const expenses=E().filter(e=>analyticsDate(e.date)?.getFullYear()===year);
+    const revenue=orders.reduce((a,x)=>a+(+x.paid||0),0);
+    const booked=orders.reduce((a,x)=>a+(+x.price||0),0);
+    const ex=expenses.reduce((a,x)=>a+(+x.amount||0),0);
+    return {year,revenue,booked,expenses:ex,profit:revenue-ex,orders:orders.length};
+  });
+}
+function analyticsProgressRows(entries,total,type="pink"){
+  if(!entries.length)return '<div class=empty>No data for this period yet.</div>';
+  const max=Math.max(1,...entries.map(x=>x[1]));
+  return entries.map(([name,value,detail])=>`<div class=analytics-rank>
+    <div class=top><b>${esc(name)}</b><span>${detail||value}</span></div>
+    <div class=analytics-rank-track><div class="analytics-rank-fill ${type}" style="width:${Math.max(4,(value/max)*100)}%"></div></div>
+  </div>`).join("");
+}
 function renderAnalytics(range="month",selectedMonth=currentMonthKey()){
   const now=new Date();
   const monthKey=selectedMonth||currentMonthKey();
@@ -1050,36 +1229,161 @@ function renderAnalytics(range="month",selectedMonth=currentMonthKey()){
     const d=new Date(dateString);
     return !Number.isNaN(d.getTime())&&d.getFullYear()==now.getFullYear();
   };
-  const orders=O().filter(x=>inRange(x.created));
-  const expenses=E().filter(x=>inRange(x.date));
-  const sales=orders.reduce((a,x)=>a+(+x.paid||0),0);
+
+  const allOrders=O(),allExpenses=E();
+  const orders=allOrders.filter(x=>inRange(x.created));
+  const expenses=allExpenses.filter(x=>inRange(x.date));
+  const received=orders.reduce((a,x)=>a+(+x.paid||0),0);
+  const booked=orders.reduce((a,x)=>a+(+x.price||0),0);
   const ex=expenses.reduce((a,x)=>a+(+x.amount||0),0);
+  const net=received-ex;
   const outstanding=orders.reduce((a,x)=>a+Math.max(0,(+x.price||0)-(+x.paid||0)),0);
-  const sourceCounts={};
-  orders.forEach(x=>{let s=x.source||"Not set";sourceCounts[s]=(sourceCounts[s]||0)+1});
-  const topSources=Object.entries(sourceCounts).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const avgOrder=orders.length?booked/orders.length:0;
+  const margin=received?((net/received)*100):0;
+
+  const sourceCounts={},productStats={},statusCounts={},expenseCats={},customerStats={},paymentCounts={};
+  orders.forEach(x=>{
+    const src=x.source||"Not set";
+    sourceCounts[src]=(sourceCounts[src]||0)+1;
+    const prod=x.product||"Unnamed item";
+    if(!productStats[prod])productStats[prod]={orders:0,revenue:0};
+    productStats[prod].orders++;
+    productStats[prod].revenue+=(+x.paid||0);
+    const st=x.status||"New";
+    statusCounts[st]=(statusCounts[st]||0)+1;
+    const pay=x.payment||"Not set";
+    paymentCounts[pay]=(paymentCounts[pay]||0)+1;
+    const cid=x.customerId||x.customer||"Unknown";
+    if(!customerStats[cid])customerStats[cid]={name:x.customer||"Customer",orders:0,revenue:0};
+    customerStats[cid].orders++;
+    customerStats[cid].revenue+=(+x.paid||0);
+  });
+  expenses.forEach(x=>{
+    const cat=x.category||"Other";
+    expenseCats[cat]=(expenseCats[cat]||0)+(+x.amount||0);
+  });
+
+  const topSources=Object.entries(sourceCounts).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([n,v])=>[n,v,`${v} order${v===1?"":"s"}`]);
+  const topProducts=Object.entries(productStats).sort((a,b)=>b[1].revenue-a[1].revenue).slice(0,5).map(([n,v])=>[n,v.revenue,`${v.orders} order${v.orders===1?"":"s"} · ${M(v.revenue)}`]);
+  const topCustomers=Object.values(customerStats).sort((a,b)=>b.revenue-a.revenue).slice(0,5).map(v=>[v.name,v.revenue,`${v.orders} order${v.orders===1?"":"s"} · ${M(v.revenue)}`]);
+  const expenseRows=Object.entries(expenseCats).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([n,v])=>[n,v,M(v)]);
+  const statusRows=Object.entries(statusCounts).sort((a,b)=>b[1]-a[1]).map(([n,v])=>[n,v,`${v}`]);
+  const paymentRows=Object.entries(paymentCounts).sort((a,b)=>b[1]-a[1]).map(([n,v])=>[n,v,`${v}`]);
+
+  const allCustomerOrders={};
+  allOrders.forEach(x=>{
+    const cid=x.customerId||x.customer||"Unknown";
+    allCustomerOrders[cid]=(allCustomerOrders[cid]||0)+1;
+  });
+  const customerIds=Object.keys(allCustomerOrders);
+  const repeatCustomers=customerIds.filter(id=>allCustomerOrders[id]>1).length;
+  const repeatRate=customerIds.length?(repeatCustomers/customerIds.length*100):0;
+  const uniquePeriodCustomers=new Set(orders.map(x=>x.customerId||x.customer).filter(Boolean)).size;
+
+  const averages=allTimeAverageStats();
+  const best=bestBusinessPeriods();
+  const annualRows=annualSummaryRows();
   const title=range=="month"?monthLabel(monthKey):range=="year"?String(now.getFullYear()):"All Time";
+
   $("#view").innerHTML=`<h2>Analytics</h2>
+  <div class=analytics-intro>Full business performance from the orders and expenses saved in Améa HQ.</div>
+
   <div class=analytics-picker>
     <label>Choose a month</label>
     <input id=analyticsMonth type=month value="${monthKey}" onchange="renderAnalytics('month',this.value)">
   </div>
+
   <div class=segmented>
     <button class="${range=="month"&&monthKey==currentMonthKey()?"active":""}" onclick="renderAnalytics('month',currentMonthKey())">This Month</button>
     <button class="${range=="year"?"active":""}" onclick="renderAnalytics('year','${monthKey}')">This Year</button>
     <button class="${range=="all"?"active":""}" onclick="renderAnalytics('all','${monthKey}')">All Time</button>
   </div>
+
   <div class=analytics-period>Viewing <b>${title}</b></div>
-  <div class=grid>
-    <div class=card>Payments<b>${M(sales)}</b></div>
-    <div class=card>Expenses<b>${M(ex)}</b></div>
-    <div class=card>Est. Profit<b>${M(sales-ex)}</b></div>
-    <div class=card>Orders<b>${orders.length}</b></div>
-    <div class=card>Outstanding<b>${M(outstanding)}</b></div>
+
+  <div class="grid analytics-kpi-grid">
+    <div class="card analytics-kpi received"><span>Payments received</span><b>${M(received)}</b></div>
+    <div class="card analytics-kpi booked"><span>Booked sales</span><b>${M(booked)}</b></div>
+    <div class="card analytics-kpi expense"><span>Expenses</span><b>${M(ex)}</b></div>
+    <div class="card analytics-kpi profit"><span>Est. cash profit</span><b>${M(net)}</b></div>
+    <div class="card analytics-kpi outstanding"><span>Outstanding</span><b>${M(outstanding)}</b></div>
+    <div class="card analytics-kpi"><span>Orders</span><b>${orders.length}</b></div>
+    <div class="card analytics-kpi"><span>Avg. order value</span><b>${M(avgOrder)}</b></div>
+    <div class="card analytics-kpi"><span>Est. margin</span><b>${margin.toFixed(1)}%</b></div>
   </div>
-  <div class=section><h3>Where orders came from</h3>
-    ${topSources.length?topSources.map(([name,count])=>`<div class=item><div class=top><b>${name}</b><span>${count} order${count==1?"":"s"}</span></div></div>`).join(""):'<div class=empty>No order-source data for this period yet.</div>'}
-  </div>`;
+
+  <div class=section>
+    <div class=analytics-section-head><div><h3>Average money received</h3><div class=meta>Based on your full recorded business history, including quiet periods.</div></div></div>
+    <div class="grid analytics-average-grid">
+      <div class="card average-card"><span>Per week</span><b>${M(averages.week)}</b></div>
+      <div class="card average-card"><span>Per month</span><b>${M(averages.month)}</b></div>
+      <div class="card average-card"><span>Per year</span><b>${M(averages.year)}</b></div>
+      <div class="card average-card"><span>Lifetime received</span><b>${M(averages.received)}</b></div>
+    </div>
+  </div>
+
+  <div class=section>
+    <div class=analytics-section-head><div><h3>12-month money trend</h3><div class=meta>Payments received compared with expenses.</div></div></div>
+    ${analyticsTrendChart()}
+  </div>
+
+  <div class=section>
+    <h3>Strongest periods</h3>
+    <div class=analytics-highlight-grid>
+      <div class=analytics-highlight><span>Best week</span><b>${best.weekKey?formatWeekKey(best.weekKey):"—"}</b><strong>${M(best.weekValue)}</strong></div>
+      <div class=analytics-highlight><span>Best month</span><b>${best.monthKey?monthLabel(best.monthKey):"—"}</b><strong>${M(best.monthValue)}</strong></div>
+      <div class=analytics-highlight><span>Best year</span><b>${best.yearKey||"—"}</b><strong>${M(best.yearValue)}</strong></div>
+    </div>
+  </div>
+
+  <div class=section>
+    <h3>Annual summary</h3>
+    <div class=annual-table-wrap>
+      <table class=annual-table>
+        <thead><tr><th>Year</th><th>Received</th><th>Expenses</th><th>Profit</th><th>Orders</th></tr></thead>
+        <tbody>${annualRows.map(r=>`<tr><td><b>${r.year}</b></td><td>${M(r.revenue)}</td><td>${M(r.expenses)}</td><td class="${r.profit>=0?"positive":"negative"}">${M(r.profit)}</td><td>${r.orders}</td></tr>`).join("")}</tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class=section>
+    <h3>Customers</h3>
+    <div class="grid analytics-mini-grid">
+      <div class=card>Customers this period<b>${uniquePeriodCustomers}</b></div>
+      <div class=card>Repeat customers<b>${repeatCustomers}</b></div>
+      <div class=card>Repeat rate<b>${repeatRate.toFixed(0)}%</b></div>
+      <div class=card>Avg. received/order<b>${M(orders.length?received/orders.length:0)}</b></div>
+    </div>
+    <div class=analytics-subtitle>Top customers</div>
+    ${analyticsProgressRows(topCustomers,received,"gold")}
+  </div>
+
+  <div class=section>
+    <h3>Top products</h3>
+    ${analyticsProgressRows(topProducts,received,"pink")}
+  </div>
+
+  <div class=section>
+    <h3>Order status</h3>
+    ${analyticsProgressRows(statusRows,orders.length,"pink")}
+  </div>
+
+  <div class=section>
+    <h3>Where orders came from</h3>
+    ${analyticsProgressRows(topSources,orders.length,"gold")}
+  </div>
+
+  <div class=section>
+    <h3>Payment methods</h3>
+    ${analyticsProgressRows(paymentRows,orders.length,"pink")}
+  </div>
+
+  <div class=section>
+    <h3>Expense breakdown</h3>
+    ${analyticsProgressRows(expenseRows,ex,"gold")}
+  </div>
+
+  <div class=analytics-note>“Payments received” uses the Paid amount saved on each order. “Est. cash profit” is payments received minus recorded expenses.</div>`;
 }
 
 function saveSettings(){
