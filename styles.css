@@ -668,3 +668,107 @@ nav button span{
   .studio-cost-fields{grid-template-columns:1fr}
   .studio-measure-edit{grid-template-columns:1.2fr .65fr .65fr 34px;gap:4px}
 }
+
+
+/* ===== Studio-only workspace ===== */
+body.studio-mode #app>header{display:none}
+body.studio-mode main{padding-top:12px}
+body.studio-mode .studio-page,
+body.studio-mode .studio-detail,
+body.studio-mode .studio-subpage{padding-top:2px}
+.studio-brand-line span{color:var(--g);font-weight:900;letter-spacing:2.5px;font-size:10px}
+
+/* ===== Quick row builder ===== */
+.studio-quick-row-builder{
+  margin:14px 0;
+  padding:13px;
+  border:1px solid #f3d7e3;
+  border-radius:18px;
+  background:linear-gradient(145deg,#fff9fc,#fff);
+}
+.studio-builder-title{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.studio-builder-title>div{display:flex;flex-direction:column}
+.studio-builder-title span{color:var(--m);font-size:10px;margin-top:2px}
+.studio-mic-btn{width:38px;height:38px;padding:0;border-radius:50%;font-size:17px;background:#f9d8e6}
+.studio-builder-grid{display:grid;grid-template-columns:.8fr 1.5fr .8fr;gap:7px;margin-top:10px}
+.studio-builder-grid label{margin:0}
+.studio-builder-grid select{margin-top:4px;padding:10px 8px}
+.studio-builder-segments{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.studio-builder-segments span{
+  display:flex;align-items:center;gap:5px;padding:6px 8px;border-radius:999px;background:#fff0f6;
+  color:var(--t);font-size:10px;font-weight:800
+}
+.studio-builder-segments span button{padding:0;background:none;font-size:12px}
+.studio-builder-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:9px}
+.studio-builder-actions .studio-row-add{background:var(--p);color:white;font-weight:800}
+.studio-builder-shortcuts{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:7px}
+.studio-builder-shortcuts details{border:1px solid #f2dbe5;border-radius:13px;background:white;padding:0}
+.studio-builder-shortcuts summary{list-style:none;padding:10px;font-size:11px;font-weight:700;cursor:pointer}
+.studio-repeat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;padding:0 8px 8px}
+.studio-repeat-grid label{margin:0;font-size:9px}
+.studio-repeat-grid select{padding:8px 5px}
+.studio-repeat-add{margin:0 8px 8px;width:calc(100% - 16px);background:var(--g);color:white;font-weight:800}
+.studio-step-edit{border:1px solid #f3dfe8;border-radius:15px;padding:10px;margin-top:8px;background:white}
+.studio-step-edit-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.studio-step-edit-head>div{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:800}
+.studio-step-edit-head select{width:82px;margin:0;padding:8px}
+.studio-step-edit-head button{padding:7px 9px;font-size:10px}
+.studio-segment-edit{display:grid;grid-template-columns:1.6fr .8fr 34px;gap:6px;margin-top:7px}
+.studio-segment-edit select{margin:0;padding:9px 7px}
+.studio-segment-edit button{padding:0}
+.studio-step-edit>[data-step-note]{margin-top:7px}
+
+/* ===== Multi-item orders ===== */
+.order-items-heading{display:flex;justify-content:space-between;align-items:end;gap:8px;margin-top:14px}
+.order-items-heading h3{margin:0}
+.order-items-heading span{display:block;color:var(--m);font-size:10px;margin-top:2px}
+.order-items-heading button{background:#fff0f6;color:var(--h);font-size:11px;font-weight:800}
+.order-line-card{
+  margin-top:10px;padding:12px;border:1px solid #f2d7e3;border-radius:18px;background:linear-gradient(145deg,#fff,#fff9fc)
+}
+.order-line-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.order-line-head>div{display:flex;flex-direction:column}
+.order-line-head span{font-size:8px;color:var(--g);font-weight:900;letter-spacing:1px}
+.order-line-head b{font-size:13px}
+.order-line-head>button{font-size:10px;padding:7px 9px;background:#fff0f2;color:#a61d38}
+.order-total-box{
+  display:flex;justify-content:space-between;align-items:center;margin:11px 0 15px;padding:12px 14px;
+  border-radius:15px;background:#fff0f6;border:1px solid #f5cadc
+}
+.order-total-box span{font-size:11px;font-weight:800;color:var(--m)}
+.order-total-box b{font-size:18px;color:var(--h)}
+.multi-order-tag{display:inline-block;background:#fff0f6;color:var(--h);font-size:8px;font-weight:900;padding:3px 6px;border-radius:999px;letter-spacing:.5px}
+.pattern-work-btn,.order-work-quick{background:#f4ead6;color:#7a5821;font-weight:800}
+.pattern-work-btn{width:100%;margin-top:8px}
+.order-work-quick{margin-top:8px;padding:8px 10px;font-size:10px}
+.pattern-choice-btn{width:100%;display:flex;justify-content:space-between;align-items:center;margin-top:7px;text-align:left}
+.pattern-choice-btn span{color:var(--m);font-size:11px}
+
+/* ===== Order-specific pattern tracker ===== */
+.tracker-head span{color:var(--g);font-size:9px;font-weight:900;letter-spacing:1px}
+.tracker-head h2{margin:4px 0}
+.tracker-head p{margin:0;color:var(--m);font-size:11px}
+.tracker-progress{margin:15px 0 8px;padding:12px;border-radius:15px;background:#fff7fb;border:1px solid #f2d9e4}
+.tracker-progress>div:first-child{display:flex;justify-content:space-between;font-size:11px}
+.tracker-progress-track{height:8px;border-radius:999px;background:#f3e4eb;margin-top:8px;overflow:hidden}
+.tracker-progress-track i{display:block;height:100%;background:linear-gradient(90deg,var(--p),var(--g));border-radius:999px}
+.tracker-tip{padding:9px 11px;background:#fff0f6;border-radius:12px;color:var(--m);font-size:11px}
+.tracker-section-title{margin:16px 0 6px;color:var(--g);font-size:10px;font-weight:900;letter-spacing:1px;text-transform:uppercase}
+.tracker-row{
+  display:flex;align-items:flex-start;gap:10px;margin:0;padding:10px 7px;border-bottom:1px solid #f4e2ea;color:var(--t)
+}
+.tracker-row input{width:22px;height:22px;flex:0 0 22px;margin:1px 0}
+.tracker-row>div{display:flex;flex-direction:column;gap:2px}
+.tracker-row b{font-size:12px}
+.tracker-row span{font-size:11px;color:var(--m);line-height:1.45}
+.tracker-row.done{opacity:.58;background:#fbf8fa}
+.tracker-row.done b,.tracker-row.done span{text-decoration:line-through}
+
+/* invoice multi-line spacing */
+.invoice-line+.invoice-line{border-top:1px solid #f7e2eb}
+
+@media(max-width:420px){
+  .studio-builder-grid{grid-template-columns:.75fr 1.35fr .75fr}
+  .studio-builder-shortcuts{grid-template-columns:1fr}
+  .order-items-heading{align-items:flex-start;flex-direction:column}
+}

@@ -232,6 +232,8 @@ function localToRemote(kind,x){
     order_type:x.orderType||"Made to Order",
     custom_details:x.customDetails||null,
     inspiration_photos:Array.isArray(x.inspirationPhotos)?x.inspirationPhotos:[],
+    order_items:Array.isArray(x.items)?x.items:[],
+    pattern_progress:x.patternProgress&&typeof x.patternProgress==="object"?x.patternProgress:{},
     created_at:x.created||new Date().toISOString()
   };
   if(kind==="expenses")return {
@@ -269,6 +271,8 @@ function remoteToLocal(kind,x){
     orderType:x.order_type||"Made to Order",
     customDetails:x.custom_details||"",
     inspirationPhotos:Array.isArray(x.inspiration_photos)?x.inspiration_photos:[],
+    items:Array.isArray(x.order_items)?x.order_items:[],
+    patternProgress:x.pattern_progress&&typeof x.pattern_progress==="object"?x.pattern_progress:{},
     created:x.created_at
   };
   if(kind==="expenses")return {
@@ -567,12 +571,12 @@ function studioDefaultPattern(){
     knit:{machine:"",mode:"Panel",rowCount:"",tension:"",notes:""},
     materials:[{text:""}],materialNotes:"",sizes:["S"],linkedModelId:"",
     measurements:[{name:"Bust",value:"",unit:"in"}],
-    instructions:[{name:"Main Section",yarnOverride:"",hookOverride:"",measurementNotes:"",steps:[{label:"Row 1",text:""}]}],
+    instructions:[{name:"Main Section",yarnOverride:"",hookOverride:"",measurementNotes:"",steps:[]}],
     notes:"",costing:{enabled:false,yarn:"",labor:"",other:""}
   };
 }
 function studioLogoBlock(subtitle="Crochet Studio"){
-  return `<div class=studio-brand><div class=studio-brand-line><img src="amea-logo.png" alt="Améa"><span>HQ</span></div><div class=studio-subtitle>${esc(subtitle)}</div></div>`;
+  return `<div class=studio-brand><div class=studio-brand-line><img src="amea-logo.png" alt="Améa"><span>STUDIO</span></div><div class=studio-subtitle>${esc(subtitle)}</div></div>`;
 }
 function renderStudio(){
   if(studioPatternId)return renderStudioPattern(studioPatternId);
@@ -687,7 +691,7 @@ function renderStudioPattern(id){
       ${(x.instructions||[]).map((s,si)=>`<div class=studio-instruction-section>
         <div class=studio-instruction-title><span>${String(si+1).padStart(2,"0")}</span><h4>${esc(s.name||"Section")}</h4></div>
         ${(s.yarnOverride||s.hookOverride||s.measurementNotes)?`<div class=studio-section-overrides>${s.yarnOverride?`<span><b>Yarn:</b> ${esc(s.yarnOverride)}</span>`:""}${s.hookOverride?`<span><b>${x.technique==="Knit"?"Machine/settings":"Hook"}:</b> ${esc(s.hookOverride)}</span>`:""}${s.measurementNotes?`<span><b>Measurements:</b> ${esc(s.measurementNotes)}</span>`:""}</div>`:""}
-        ${(s.steps||[]).filter(st=>st.label||st.text).map(st=>`<div class=studio-step><b>${esc(st.label||"Step")}</b><p>${esc(st.text||"")}</p></div>`).join("")||'<div class=meta>No steps yet.</div>'}
+        ${(s.steps||[]).slice().sort((a,b)=>studioStepRowNumber(a,1)-studioStepRowNumber(b,1)).filter(st=>st.label||st.text||st.rowNumber||studioStepSegments(st).length).map((st,i)=>`<div class=studio-step><b>Row ${studioStepRowNumber(st,i+1)}</b><p>${studioStepReadable(st)}</p></div>`).join("")||'<div class=meta>No rows yet.</div>'}
       </div>`).join("")||'<div class=meta>No instructions added.</div>'}
     </section>
 
@@ -760,10 +764,59 @@ function studioMaterialRow(m={}){
 function studioMeasurementRow(m={}){
   return `<div class="studio-measure-edit" data-measure-row><input data-measure-name placeholder="Measurement" value="${esc(m.name||"")}"><input data-measure-value placeholder="Value" value="${esc(m.value||"")}"><select data-measure-unit><option ${m.unit==="in"?"selected":""}>in</option><option ${m.unit==="cm"?"selected":""}>cm</option><option ${m.unit==="st"?"selected":""}>st</option><option ${m.unit==="rows"?"selected":""}>rows</option></select><button type=button onclick="this.parentElement.remove()">×</button></div>`;
 }
-function studioStepRow(st={}){
-  return `<div class=studio-step-edit data-step-row><div class=studio-two><input data-step-label placeholder="Row 1 / Step 1" value="${esc(st.label||"")}"><button type=button onclick="this.closest('[data-step-row]').remove()">Remove</button></div><textarea data-step-text placeholder="Write exactly what you did…">${esc(st.text||"")}</textarea></div>`;
+
+function studioNumberOptions(selected="",max=300){
+  const n=Number(selected)||1;
+  let out="";
+  for(let i=1;i<=max;i++)out+=`<option value="${i}" ${i===n?"selected":""}>${i}</option>`;
+  return out;
+}
+function studioStitchOptions(selected=""){
+  const stitches=[
+    ["SC","Single Crochet (SC)"],["HDC","Half Double Crochet (HDC)"],["DC","Double Crochet (DC)"],
+    ["TR","Treble Crochet (TR)"],["SL ST","Slip Stitch (SL ST)"],["CH","Chain (CH)"],
+    ["INC","Increase (INC)"],["DEC","Decrease (DEC)"],["BLO","Back Loop Only (BLO)"],
+    ["FLO","Front Loop Only (FLO)"],["OTHER","Other / note"]
+  ];
+  return stitches.map(([v,l])=>`<option value="${v}" ${selected===v?"selected":""}>${l}</option>`).join("");
+}
+function studioStepRowNumber(st={},fallback=1){
+  if(+st.rowNumber)return +st.rowNumber;
+  const m=String(st.label||"").match(/row\s*(\d+)/i);
+  return m?+m[1]:fallback;
+}
+function studioStepSegments(st={}){
+  if(Array.isArray(st.segments)&&st.segments.length)return st.segments;
+  return [];
+}
+function studioStepReadable(st={}){
+  const segs=studioStepSegments(st);
+  const built=segs.map(s=>`${esc(s.stitch||"Stitch")} × ${esc(s.count||"—")}`).join(" · ");
+  return [built,st.note||(!segs.length?st.text:"")].filter(Boolean).join(" — ")||"No stitch details";
+}
+function studioSegmentEdit(seg={}){
+  return `<div class=studio-segment-edit data-segment-row>
+    <select data-segment-stitch>${studioStitchOptions(seg.stitch||"SC")}</select>
+    <select data-segment-count>${studioNumberOptions(seg.count||1,500)}</select>
+    <button type=button onclick="this.closest('[data-segment-row]').remove()">×</button>
+  </div>`;
+}
+function studioStepRow(st={},fallback=1){
+  const rowNumber=studioStepRowNumber(st,fallback);
+  const segments=studioStepSegments(st);
+  return `<div class=studio-step-edit data-step-row data-step-id="${esc(st.id||crypto.randomUUID())}">
+    <div class=studio-step-edit-head>
+      <div><span>Row</span><select data-step-rownum>${studioNumberOptions(rowNumber,300)}</select></div>
+      <button type=button onclick="this.closest('[data-step-row]').remove()">Remove</button>
+    </div>
+    <div data-segment-list>${(segments.length?segments:[{stitch:"SC",count:1}]).map(studioSegmentEdit).join("")}</div>
+    <button type=button class=studio-add-line onclick=studioAddSegmentToSavedRow(this)>＋ Add Stitch</button>
+    <input data-step-note placeholder="Row note (optional)" value="${esc(st.note||(!segments.length?st.text||"":""))}">
+  </div>`;
 }
 function studioSectionEditor(s={},index=0){
+  const steps=(s.steps||[{}]).slice().sort((a,b)=>studioStepRowNumber(a,1)-studioStepRowNumber(b,1));
+  const next=Math.max(0,...steps.map((st,i)=>studioStepRowNumber(st,i+1)))+1;
   return `<div class=studio-section-edit data-section-row>
     <div class=studio-editor-row-head><b>Section ${index+1}</b><button type=button onclick="this.closest('[data-section-row]').remove()">×</button></div>
     <input data-section-name placeholder="e.g. TOP, SKIRT, BODY, STRAPS" value="${esc(s.name||"")}">
@@ -772,9 +825,108 @@ function studioSectionEditor(s={},index=0){
       <input data-section-hook placeholder="Different hook / machine settings" value="${esc(s.hookOverride||"")}">
       <input data-section-measure placeholder="Measurement notes for this section" value="${esc(s.measurementNotes||"")}">
     </details>
-    <div data-step-list>${(s.steps||[{}]).map(st=>studioStepRow(st)).join("")}</div>
-    <button type=button class=studio-add-line onclick=studioAddStep(this)>＋ Add Row / Step</button>
+
+    <div class=studio-quick-row-builder>
+      <div class=studio-builder-title><div><b>Quick Row Builder</b><span>Choose instead of stopping to type.</span></div><button type=button class=studio-mic-btn onclick=studioVoiceRow(this) title="Speak a row">🎙</button></div>
+      <div class=studio-builder-grid>
+        <label>Row #<select data-builder-row>${studioNumberOptions(next,300)}</select></label>
+        <label>Stitch<select data-builder-stitch>${studioStitchOptions("SC")}</select></label>
+        <label>Amount<select data-builder-count>${studioNumberOptions(1,500)}</select></label>
+      </div>
+      <div class=studio-builder-segments data-builder-segments></div>
+      <div class=studio-builder-actions>
+        <button type=button onclick=studioBuilderAddStitch(this)>＋ Add Stitch</button>
+        <button type=button class=studio-row-add onclick=studioBuilderAddRow(this)>Add Row</button>
+      </div>
+      <div class=studio-builder-shortcuts>
+        <button type=button onclick=studioSameAsPrevious(this)>↻ Same as Previous</button>
+        <details><summary>Repeat Multiple Rows</summary>
+          <div class=studio-repeat-grid>
+            <label>From<select data-repeat-from>${studioNumberOptions(Math.max(1,next-1),300)}</select></label>
+            <label>To<select data-repeat-to>${studioNumberOptions(Math.min(300,next+4),300)}</select></label>
+            <label>Use same as<select data-repeat-source>${studioNumberOptions(Math.max(1,next-1),300)}</select></label>
+          </div>
+          <button type=button class=studio-repeat-add onclick=studioRepeatMultipleRows(this)>Add Repeated Rows</button>
+        </details>
+      </div>
+    </div>
+
+    <div data-step-list>${steps.map((st,i)=>studioStepRow(st,i+1)).join("")}</div>
   </div>`;
+}
+function studioAddSegmentToSavedRow(btn){
+  const list=btn.closest("[data-step-row]")?.querySelector("[data-segment-list]");
+  if(list)list.insertAdjacentHTML("beforeend",studioSegmentEdit({stitch:"SC",count:1}));
+}
+function studioBuilderAddStitch(btn){
+  const sec=btn.closest("[data-section-row]");
+  if(!sec)return;
+  const stitch=sec.querySelector("[data-builder-stitch]")?.value||"SC";
+  const count=sec.querySelector("[data-builder-count]")?.value||"1";
+  const box=sec.querySelector("[data-builder-segments]");
+  if(box)box.insertAdjacentHTML("beforeend",`<span data-pending-segment data-stitch="${esc(stitch)}" data-count="${esc(count)}">${esc(stitch)} × ${esc(count)} <button type=button onclick="this.parentElement.remove()">×</button></span>`);
+}
+function studioPendingSegments(sec){
+  const chips=[...sec.querySelectorAll("[data-pending-segment]")].map(x=>({stitch:x.dataset.stitch,count:+x.dataset.count||1}));
+  if(chips.length)return chips;
+  return [{stitch:sec.querySelector("[data-builder-stitch]")?.value||"SC",count:+(sec.querySelector("[data-builder-count]")?.value||1)}];
+}
+function studioBuilderAddRow(btn){
+  const sec=btn.closest("[data-section-row]");if(!sec)return;
+  const row=+(sec.querySelector("[data-builder-row]")?.value||1);
+  const segs=studioPendingSegments(sec);
+  const list=sec.querySelector("[data-step-list]");
+  list?.insertAdjacentHTML("beforeend",studioStepRow({id:crypto.randomUUID(),rowNumber:row,segments:segs,note:""},row));
+  const pending=sec.querySelector("[data-builder-segments]");if(pending)pending.innerHTML="";
+  const rowSelect=sec.querySelector("[data-builder-row]");
+  if(rowSelect)rowSelect.value=String(Math.min(300,row+1));
+}
+function studioSameAsPrevious(btn){
+  const sec=btn.closest("[data-section-row]");if(!sec)return;
+  const rows=[...sec.querySelectorAll("[data-step-row]")];
+  if(!rows.length)return alert("Add a row first.");
+  const last=rows[rows.length-1];
+  const lastNum=+(last.querySelector("[data-step-rownum]")?.value||rows.length);
+  const segs=[...last.querySelectorAll("[data-segment-row]")].map(r=>({stitch:r.querySelector("[data-segment-stitch]")?.value||"SC",count:+(r.querySelector("[data-segment-count]")?.value||1)}));
+  const note=last.querySelector("[data-step-note]")?.value||"";
+  sec.querySelector("[data-step-list]")?.insertAdjacentHTML("beforeend",studioStepRow({id:crypto.randomUUID(),rowNumber:lastNum+1,segments:segs,note},lastNum+1));
+  const rowSelect=sec.querySelector("[data-builder-row]");if(rowSelect)rowSelect.value=String(Math.min(300,lastNum+2));
+}
+function studioRepeatMultipleRows(btn){
+  const sec=btn.closest("[data-section-row]");if(!sec)return;
+  const box=btn.closest("details");
+  const from=+(box.querySelector("[data-repeat-from]")?.value||1),to=+(box.querySelector("[data-repeat-to]")?.value||from),source=+(box.querySelector("[data-repeat-source]")?.value||from);
+  if(to<from)return alert("The To row needs to be the same or higher than From.");
+  const sourceRow=[...sec.querySelectorAll("[data-step-row]")].find(r=>+(r.querySelector("[data-step-rownum]")?.value||0)===source);
+  if(!sourceRow)return alert("That source row is not in this section yet.");
+  const segs=[...sourceRow.querySelectorAll("[data-segment-row]")].map(r=>({stitch:r.querySelector("[data-segment-stitch]")?.value||"SC",count:+(r.querySelector("[data-segment-count]")?.value||1)}));
+  const note=sourceRow.querySelector("[data-step-note]")?.value||"";
+  const list=sec.querySelector("[data-step-list]");
+  for(let n=from;n<=to;n++){
+    if([...sec.querySelectorAll("[data-step-row]")].some(r=>+(r.querySelector("[data-step-rownum]")?.value||0)===n))continue;
+    list?.insertAdjacentHTML("beforeend",studioStepRow({id:crypto.randomUUID(),rowNumber:n,segments:segs,note},n));
+  }
+  const rowSelect=sec.querySelector("[data-builder-row]");if(rowSelect)rowSelect.value=String(Math.min(300,to+1));
+  box.open=false;
+}
+function studioVoiceRow(btn){
+  const Recognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!Recognition)return alert("Voice row entry is not available in this browser yet. The dropdowns will still work.");
+  const sec=btn.closest("[data-section-row]");
+  const r=new Recognition();r.lang="en-US";r.interimResults=false;r.maxAlternatives=1;
+  btn.textContent="…";
+  r.onend=()=>btn.textContent="🎙";
+  r.onerror=()=>alert("I couldn't catch that. Try again or use the dropdowns.");
+  r.onresult=e=>{
+    const heard=e.results?.[0]?.[0]?.transcript||"";
+    const rowMatch=heard.match(/row\s+(\d+)/i),numMatch=heard.match(/(\d+)\s+(single|half double|double|treble|slip|chain|increase|decrease)/i);
+    const phrase=(numMatch?.[2]||"").toLowerCase();
+    const map={"single":"SC","half double":"HDC","double":"DC","treble":"TR","slip":"SL ST","chain":"CH","increase":"INC","decrease":"DEC"};
+    if(rowMatch)sec.querySelector("[data-builder-row]").value=rowMatch[1];
+    if(numMatch){sec.querySelector("[data-builder-count]").value=numMatch[1];sec.querySelector("[data-builder-stitch]").value=map[phrase]||"SC";}
+    if(!rowMatch&&!numMatch)alert(`I heard: "${heard}". Check the dropdowns before adding the row.`);
+  };
+  r.start();
 }
 function studioFillYarnFromLibrary(sel){
   const y=studioYarnById(sel.value),row=sel.closest("[data-yarn-row]");if(!y||!row)return;
@@ -787,7 +939,6 @@ function studioAddYarn(){const box=$("#studioYarnList");if(box)box.insertAdjacen
 function studioAddMaterial(){const box=$("#studioMaterialList");if(box)box.insertAdjacentHTML("beforeend",studioMaterialRow())}
 function studioAddMeasurement(){const box=$("#studioMeasurementList");if(box)box.insertAdjacentHTML("beforeend",studioMeasurementRow({unit:"in"}))}
 function studioAddSection(){const box=$("#studioSectionList");if(box)box.insertAdjacentHTML("beforeend",studioSectionEditor({},box.querySelectorAll("[data-section-row]").length))}
-function studioAddStep(btn){const box=btn.closest("[data-section-row]").querySelector("[data-step-list]");box.insertAdjacentHTML("beforeend",studioStepRow())}
 function studioToggleTechnique(){
   const knit=$("#studioTechniqueEdit")?.value==="Knit";
   if($("#studioCrochetFields"))$("#studioCrochetFields").style.display=knit?"none":"block";
@@ -846,7 +997,7 @@ function editStudioPattern(id=""){
 
     <div class=studio-editor-block><div class=studio-editor-row-head><h3>Measurements</h3><button type=button onclick=studioAddMeasurement()>＋ Add Measurement</button></div><div id=studioMeasurementList>${(x.measurements?.length?x.measurements:[{name:"Bust",unit:"in"}]).map(studioMeasurementRow).join("")}</div></div>
 
-    <div class=studio-editor-block><div class=studio-editor-row-head><h3>Pattern Instructions</h3><button type=button onclick=studioAddSection()>＋ Section</button></div><div id=studioSectionList>${(x.instructions?.length?x.instructions:[{name:"Main Section",steps:[{label:"Row 1",text:""}]}]).map(studioSectionEditor).join("")}</div></div>
+    <div class=studio-editor-block><div class=studio-editor-row-head><h3>Pattern Instructions</h3><button type=button onclick=studioAddSection()>＋ Section</button></div><div id=studioSectionList>${(x.instructions?.length?x.instructions:[{name:"Main Section",steps:[]}]).map(studioSectionEditor).join("")}</div></div>
 
     <div class=studio-editor-block><h3>Notes</h3><textarea id=studioPatternNotes placeholder="Anything else you want to remember…">${esc(x.notes||"")}</textarea></div>
 
@@ -883,10 +1034,15 @@ function collectStudioInstructions(){
     yarnOverride:sec.querySelector("[data-section-yarn]")?.value.trim()||"",
     hookOverride:sec.querySelector("[data-section-hook]")?.value.trim()||"",
     measurementNotes:sec.querySelector("[data-section-measure]")?.value.trim()||"",
-    steps:[...sec.querySelectorAll("[data-step-row]")].map(st=>({
-      label:st.querySelector("[data-step-label]")?.value.trim()||"",
-      text:st.querySelector("[data-step-text]")?.value.trim()||""
-    })).filter(st=>st.label||st.text)
+    steps:[...sec.querySelectorAll("[data-step-row]")].map((st,i)=>({
+      id:st.dataset.stepId||crypto.randomUUID(),
+      rowNumber:+(st.querySelector("[data-step-rownum]")?.value||i+1),
+      segments:[...st.querySelectorAll("[data-segment-row]")].map(r=>({
+        stitch:r.querySelector("[data-segment-stitch]")?.value||"SC",
+        count:+(r.querySelector("[data-segment-count]")?.value||1)
+      })),
+      note:st.querySelector("[data-step-note]")?.value.trim()||""
+    })).sort((a,b)=>a.rowNumber-b.rowNumber)
   }));
 }
 function saveStudioPattern(id=""){
@@ -995,11 +1151,11 @@ function calculateStudioGauge(){
 function exportStudioPatternPDF(id){
   const x=studioPatternById(id);if(!x||x.status!=="Final")return alert("Only Final patterns can be exported.");
   const model=studioModelById(x.linkedModelId);
-  const rows=(x.instructions||[]).map((s,i)=>`<section><h2>${String(i+1).padStart(2,"0")} · ${esc(s.name||"Section")}</h2>${(s.yarnOverride||s.hookOverride||s.measurementNotes)?`<div class=over>${s.yarnOverride?`<b>Yarn:</b> ${esc(s.yarnOverride)} `:""}${s.hookOverride?`<b>Hook/settings:</b> ${esc(s.hookOverride)} `:""}${s.measurementNotes?`<b>Measurements:</b> ${esc(s.measurementNotes)}`:""}</div>`:""}${(s.steps||[]).map(st=>`<div class=step><b>${esc(st.label||"Step")}</b><p>${esc(st.text||"")}</p></div>`).join("")}</section>`).join("");
+  const rows=(x.instructions||[]).map((s,i)=>`<section><h2>${String(i+1).padStart(2,"0")} · ${esc(s.name||"Section")}</h2>${(s.yarnOverride||s.hookOverride||s.measurementNotes)?`<div class=over>${s.yarnOverride?`<b>Yarn:</b> ${esc(s.yarnOverride)} `:""}${s.hookOverride?`<b>Hook/settings:</b> ${esc(s.hookOverride)} `:""}${s.measurementNotes?`<b>Measurements:</b> ${esc(s.measurementNotes)}`:""}</div>`:""}${(s.steps||[]).slice().sort((a,b)=>studioStepRowNumber(a,1)-studioStepRowNumber(b,1)).map((st,i)=>`<div class=step><b>Row ${studioStepRowNumber(st,i+1)}</b><p>${studioStepReadable(st)}</p></div>`).join("")}</section>`).join("");
   const win=window.open("","_blank");if(!win)return alert("Allow pop-ups so I can open the PDF layout.");
   win.document.write(`<!doctype html><html><head><meta charset=utf-8><title>${esc(x.name)} · Améa Pattern</title><style>
     @page{margin:16mm}*{box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#5a2440;line-height:1.5;margin:0}.head{border-bottom:2px solid #b88935;padding-bottom:18px;margin-bottom:24px;display:flex;justify-content:space-between;align-items:end}.logo{height:46px;max-width:170px;object-fit:contain}.hq{color:#b88935;font-size:11px;font-weight:800;letter-spacing:2px}.eyebrow{font-size:9px;letter-spacing:2px;color:#b88935;font-weight:800}h1{font-family:Georgia,serif;color:#f52578;margin:3px 0 5px;font-size:30px}h2{font-family:Georgia,serif;color:#f52578;font-size:18px;margin:24px 0 8px}.meta{color:#93677c;font-size:11px}.hero{display:grid;grid-template-columns:145px 1fr;gap:20px;align-items:start}.hero img.photo{width:145px;height:145px;object-fit:cover;border-radius:18px}.box{background:#fff8fc;border:1px solid #f1d7e3;border-radius:14px;padding:12px;margin:12px 0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.line{padding:5px 0;border-bottom:1px solid #f5e5ec}.step{padding:9px 0;border-bottom:1px solid #f2dde6}.step p{margin:3px 0 0;white-space:pre-wrap}.over{background:#fff6fa;padding:9px;border-radius:10px;font-size:10px}.extra{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.extra img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:12px}.footer{margin-top:30px;border-top:1px solid #e9d4dc;padding-top:10px;color:#93677c;font-size:9px;text-align:center}@media print{button{display:none}}</style></head><body>
-    <div class=head><div><img class=logo src="${AMEA_LOGO_DATA}"><div class=hq>HQ · CROCHET STUDIO</div></div><div class=eyebrow>FINAL PATTERN</div></div>
+    <div class=head><div><img class=logo src="${AMEA_LOGO_DATA}"><div class=hq>AMÉA STUDIO · PATTERN</div></div><div class=eyebrow>FINAL PATTERN</div></div>
     <div class=hero>${x.mainPhoto?`<img class=photo src="${x.mainPhoto}">`:""}<div><div class=eyebrow>${esc(x.technique)} · ${esc(x.category)}</div><h1>${esc(x.name)}</h1><div class=meta>${x.collection?esc(x.collection)+" · ":""}Sizes: ${esc((x.sizes||[]).join(", ")||"—")}${model?" · Model: "+esc(model.name):""}</div></div></div>
     <div class=box><h2>Materials</h2>${(x.materials||[]).map(m=>`<div class=line>□ ${esc(m.text)}</div>`).join("")||"—"}${x.materialNotes?`<p>${esc(x.materialNotes)}</p>`:""}</div>
     <div class=box><h2>Yarn & ${x.technique==="Knit"?"Machine":"Hook"}</h2>${(x.yarns||[]).map(y=>`<div class=line><b>${esc(studioYarnSummary(y))}</b>${y.amount?" · "+esc(y.amount):""}</div>`).join("")}${x.technique==="Crochet"?`<p><b>Hook:</b> ${esc(x.hookSize||"—")}</p>`:`<div class=grid><div><b>Machine:</b> ${esc(x.knit?.machine||"—")}</div><div><b>Mode:</b> ${esc(x.knit?.mode||"—")}</div><div><b>Rows:</b> ${esc(x.knit?.rowCount||"—")}</div><div><b>Tension:</b> ${esc(x.knit?.tension||"—")}</div></div>`}</div>
@@ -1007,12 +1163,12 @@ function exportStudioPatternPDF(id){
     ${rows}
     ${(x.extraPhotos||[]).length?`<section><h2>Reference Photos</h2><div class=extra>${x.extraPhotos.map(p=>`<img src="${p}">`).join("")}</div></section>`:""}
     ${x.notes?`<section><h2>Notes</h2><p>${esc(x.notes)}</p></section>`:""}
-    <div class=footer>Améa · Final pattern exported from Améa HQ</div>
+    <div class=footer>Améa Studio · Final pattern</div>
     <script>window.onload=()=>setTimeout(()=>window.print(),250)<\/script></body></html>`);
   win.document.close();
 }
 
-function page(x){cur=x;render()}function render(){document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===cur));let v=$("#view");if(cur=="home"){let o=O(),e=E(),now=new Date(),mo=o.filter(x=>new Date(x.created).getMonth()==now.getMonth()),sales=mo.reduce((a,x)=>a+x.paid,0),out=mo.reduce((a,x)=>a+Math.max(0,x.price-x.paid),0),ex=e.filter(x=>new Date(x.date).getMonth()==now.getMonth()).reduce((a,x)=>a+x.amount,0),today=new Date().toISOString().slice(0,10);v.innerHTML=`<div class=hero><h2 id=homeGreeting>${greeting()}, Améa Boss ✨</h2><div class=meta>Everything in your studio, in one pretty place.</div></div><div class=grid><div class=card>Sales<b>${M(sales)}</b></div><div class=card>Orders<b>${mo.length}</b></div><div class=card>Outstanding<b>${M(out)}</b></div><div class=card>Expenses<b>${M(ex)}</b></div></div><div class=section><h3>Today</h3><div class=card>${list(O().filter(x=>x.due==today),true)||'<div class=meta>No orders due today 💗</div>'}</div></div><button class=studio-home-shortcut onclick="page(\'crochet\')"><div><span class=studio-home-eyebrow>AMÉA HQ</span><b>Crochet Studio</b><small>Patterns · Yarn · Models · Calculator</small></div><span class=studio-home-arrow>→</span></button><div class="section home-analytics-section"><div class=analytics-home-head><div><h3>Order Activity</h3><div class=meta>See which weeks or months bring in the most orders.</div></div><div class=analytics-home-toggle><button data-home-analytics=months class="${homeAnalyticsMode==="months"?"active":""}" onclick="setHomeAnalytics('months')">Months</button><button data-home-analytics=weeks class="${homeAnalyticsMode==="weeks"?"active":""}" onclick="setHomeAnalytics('weeks')">Weeks</button></div></div><div id=homeAnalytics>${homeActivityMarkup(homeAnalyticsMode)}</div></div><div class=section><h3>Recent Orders</h3>${list(O().slice(-5).reverse())||'<div class=empty>No orders yet.</div>'}</div>`}
+function page(x){cur=x;render()}function render(){document.body.classList.toggle("studio-mode",cur==="crochet");document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===cur));let v=$("#view");if(cur=="home"){let o=O(),e=E(),now=new Date(),mo=o.filter(x=>new Date(x.created).getMonth()==now.getMonth()),sales=mo.reduce((a,x)=>a+x.paid,0),out=mo.reduce((a,x)=>a+Math.max(0,x.price-x.paid),0),ex=e.filter(x=>new Date(x.date).getMonth()==now.getMonth()).reduce((a,x)=>a+x.amount,0),today=new Date().toISOString().slice(0,10);v.innerHTML=`<div class=hero><h2 id=homeGreeting>${greeting()}, Améa Boss ✨</h2><div class=meta>Everything in your studio, in one pretty place.</div></div><div class=grid><div class=card>Sales<b>${M(sales)}</b></div><div class=card>Orders<b>${mo.length}</b></div><div class=card>Outstanding<b>${M(out)}</b></div><div class=card>Expenses<b>${M(ex)}</b></div></div><div class=section><h3>Today</h3><div class=card>${list(O().filter(x=>x.due==today),true)||'<div class=meta>No orders due today 💗</div>'}</div></div><button class=studio-home-shortcut onclick="page(\'crochet\')"><div><span class=studio-home-eyebrow>AMÉA HQ</span><b>Crochet Studio</b><small>Patterns · Yarn · Models · Calculator</small></div><span class=studio-home-arrow>→</span></button><div class="section home-analytics-section"><div class=analytics-home-head><div><h3>Order Activity</h3><div class=meta>See which weeks or months bring in the most orders.</div></div><div class=analytics-home-toggle><button data-home-analytics=months class="${homeAnalyticsMode==="months"?"active":""}" onclick="setHomeAnalytics('months')">Months</button><button data-home-analytics=weeks class="${homeAnalyticsMode==="weeks"?"active":""}" onclick="setHomeAnalytics('weeks')">Weeks</button></div></div><div id=homeAnalytics>${homeActivityMarkup(homeAnalyticsMode)}</div></div><div class=section><h3>Recent Orders</h3>${list(O().slice(-5).reverse())||'<div class=empty>No orders yet.</div>'}</div>`}
 else if(cur=="orders")v.innerHTML=`<h2>Orders</h2><input placeholder="Search orders, customers, products…" oninput="searchO(this.value)"><div id=ol>${list(O().slice().reverse())||'<div class=empty>No orders yet.</div>'}</div>`;
 else if(cur=="customers")v.innerHTML=`<div class=top><h2>Customers</h2><button onclick=newCustomer()>＋ Add</button></div>${C().map(x=>{let st=customerStats(x),last=st.last?st.last.toLocaleDateString("en-JM",{day:"numeric",month:"short",year:"numeric"}):"";return `<div class="item customer-row" onclick="openCustomer('${x.id}')"><div class=top><b>${esc(x.name)}</b><span class="customer-badge ${st.orders.length?"returning":"new"}">${st.orders.length?"RETURNING":"NEW"}</span></div><div class=meta>${esc(x.phone||"")}${x.email?" · "+esc(x.email):""}<br><b>${customerStatusText(x)}</b>${st.orders.length?` · ${M(st.paid)} lifetime`:""}${last?`<br>Last order: ${last}`:""}</div><div class=customer-chevron>View customer →</div></div>`}).join("")||'<div class=empty>No customers yet.</div>'}`;
 else if(cur=="invoices"){
@@ -1022,7 +1178,7 @@ else if(cur=="invoices"){
     const bal=Math.max(0,(+o.price||0)-(+o.paid||0));
     return `<div class=item>
       <div class=top><b>${esc("INV-"+o.no)}</b><span class="badge invoice-status ${bal>0?"due":"paid"}">${bal>0?"Balance due":"Paid"}</span></div>
-      <div class=meta>${esc(o.customer||"")} · ${esc(o.product||"")}<br>Total: ${M(o.price)} · <span class=invoice-paid-text>Paid: ${M(o.paid)}</span> · <span class=invoice-due-text>Balance: ${M(bal)}</span></div>
+      <div class=meta>${esc(o.customer||"")} · ${esc(orderSummaryProduct(orderItemsFor(o)))}<br>Total: ${M(o.price)} · <span class=invoice-paid-text>Paid: ${M(o.paid)}</span> · <span class=invoice-due-text>Balance: ${M(bal)}</span></div>
       <button class=invoice-list-btn onclick="openInvoice('${o.id}')">Open Invoice</button>
     </div>`
   }).join(""):'<div class=empty>No invoices yet. Create an order first.</div>'}`;
@@ -1118,7 +1274,11 @@ else if(cur=="settings"){
   </div>
   <p class=meta>Your HQ data is synced to your private cloud account. Device storage is kept as a local copy too.</p>`
 }}
-function list(a){return a.map(x=>`<div class=item onclick="editOrder('${x.id}')"><div class=top><b>${x.no} · ${x.customer}</b><span class=badge>${x.status}</span></div><div class=meta>${x.orderType==="Custom"?'<span class="custom-order-tag">CUSTOM</span> ':""}${esc(x.product)} · ${esc(x.size||"—")} · ${esc(x.color||"—")}<br>Placed via: ${esc(x.source||"Not set")} · Payment: ${esc(x.payment||"—")} · Delivery: ${esc(x.delivery||"—")}<br>Due: ${esc(x.due||"—")}</div><div class=money>${M(x.paid)} paid · ${M(Math.max(0,x.price-x.paid))} balance</div></div>`).join("")}
+function list(a){return a.map(x=>{
+  const items=orderItemsFor(x);
+  const summary=items.map(it=>orderItemLabel(it)).join(" · ");
+  return `<div class=item onclick="editOrder('${x.id}')"><div class=top><b>${x.no} · ${x.customer}</b><span class=badge>${x.status}</span></div><div class=meta>${items.length>1?'<span class="multi-order-tag">MULTI-ITEM</span> ':""}${esc(summary||x.product)}<br>Placed via: ${esc(x.source||"Not set")} · Payment: ${esc(x.payment||"—")} · Delivery: ${esc(x.delivery||"—")}<br>Due: ${esc(x.due||"—")}</div><div class=money>${M(x.paid)} paid · ${M(Math.max(0,x.price-x.paid))} balance</div>${orderHasPattern(x)?`<button class=order-work-quick onclick="event.stopPropagation();openOrderPatternChooser('${x.id}')">✓ Work on Pattern</button>`:""}</div>`;
+}).join("")}
 function searchO(q){q=q.toLowerCase();$("#ol").innerHTML=list(O().filter(x=>JSON.stringify(x).toLowerCase().includes(q)))}
 function openF(h){$("#form").innerHTML=h;if(!dlg.open)dlg.showModal()}function openAddMenu(){openF(`<h2>Add to Améa HQ</h2><div class=add-menu><button onclick="newOrder()">＋ New Order</button><button onclick="newCustomer()">＋ Customer</button><button onclick="newItem()">＋ Item</button><button onclick="newExpense()">＋ Expense</button><button onclick="newInventory()">＋ Inventory</button><button onclick="dlg.close();page(\'crochet\');setTimeout(newStudioPattern,0)">＋ Pattern</button></div>`)}
 function dels(){return G("settings",{}).delivery||["Pickup","Delivery"]}
@@ -1187,6 +1347,149 @@ function deleteItem(id){
   if(O().some(o=>o.itemId===id))return alert("This item is already used on an order, so it can't be deleted yet.");
   if(confirm("Delete this item?")){S("items",ITEMS().filter(x=>x.id!==id));deleteCloudRow("items",id);dlg.close();page("items")}
 }
+
+function orderItemsFor(o={}){
+  if(Array.isArray(o.items)&&o.items.length)return o.items.map((it,i)=>({
+    lineId:it.lineId||crypto.randomUUID(),type:it.type||it.orderType||"Made to Order",
+    itemId:it.itemId||"",name:it.name||it.product||"Item",size:it.size||"",color:it.color||"",
+    price:+it.price||0,details:it.details||it.customDetails||"",patternId:it.patternId||""
+  }));
+  if(o.product||o.itemId||o.price)return [{
+    lineId:crypto.randomUUID(),type:o.orderType||"Made to Order",itemId:o.itemId||"",name:o.product||"Item",
+    size:o.size||"",color:o.color||"",price:+o.price||0,details:o.customDetails||"",patternId:""
+  }];
+  return [{lineId:crypto.randomUUID(),type:"Made to Order",itemId:"",name:"",size:"",color:"",price:0,details:"",patternId:""}];
+}
+function orderItemLabel(it){return it.name||itemById(it.itemId)?.name||"Item"}
+function orderItemsTotal(items){return (items||[]).reduce((a,it)=>a+(+it.price||0),0)}
+function orderSummaryProduct(items){
+  const good=(items||[]).filter(x=>orderItemLabel(x));
+  if(!good.length)return "Order";
+  return good.length===1?orderItemLabel(good[0]):`${orderItemLabel(good[0])} + ${good.length-1} more`;
+}
+function finalPatternOptions(selected=""){
+  return `<option value="">No pattern linked</option>${PATTERNS().filter(p=>p.status==="Final").map(p=>`<option value="${p.id}" ${selected===p.id?"selected":""}>${esc(p.name)} · ${esc(p.technique)}</option>`).join("")}`;
+}
+function orderLineCard(it={},index=0){
+  const items=ITEMS(),type=it.type||"Made to Order";
+  const catalogOptions=`<option value="">Select item</option>${items.map(i=>`<option value="${i.id}" ${it.itemId===i.id?"selected":""}>${esc(i.name)} · ${M(i.price)}</option>`).join("")}`;
+  return `<div class=order-line-card data-order-line data-line-id="${esc(it.lineId||crypto.randomUUID())}">
+    <div class=order-line-head><div><span>ITEM ${index+1}</span><b>${esc(it.name||"New item")}</b></div>${index?`<button type=button onclick=removeOrderLine(this)>Remove</button>`:""}</div>
+    <label>Item type</label><select data-line-type onchange=toggleOrderLine(this)><option ${type==="Made to Order"?"selected":""}>Made to Order</option><option ${type==="Custom"?"selected":""}>Custom</option></select>
+    <div data-line-catalog>
+      <label>Item</label><select data-line-item onchange=fillOrderLineCatalog(this)>${catalogOptions}</select>
+    </div>
+    <div data-line-custom>
+      <label>Custom item name</label><input data-line-name value="${esc(type==="Custom"?it.name||"":"")}" placeholder="e.g. Matching crochet hat">
+    </div>
+    <div class=row><div><label>Size</label><input data-line-size value="${esc(it.size||"")}"></div><div><label>Colour</label><input data-line-color value="${esc(it.color||"")}"></div></div>
+    <label>Price</label><input data-line-price type=number value="${it.price||""}" oninput=refreshOrderTotal()>
+    <label>Pattern used <span class=meta>(optional)</span></label><select data-line-pattern>${finalPatternOptions(it.patternId||"")}</select>
+    <label>Private item notes <span class=private-field-note>NOT ON INVOICE</span></label>
+    <textarea data-line-details placeholder="Changes, reminders, special requests…">${esc(it.details||"")}</textarea>
+  </div>`;
+}
+function renderOrderLines(items){
+  const box=$("#orderLines");if(!box)return;
+  box.innerHTML=(items||[]).map(orderLineCard).join("");
+  box.querySelectorAll("[data-order-line]").forEach(line=>toggleOrderLine(line.querySelector("[data-line-type]"),false));
+  refreshOrderTotal();
+}
+function addOrderLine(){
+  const box=$("#orderLines");if(!box)return;
+  const idx=box.querySelectorAll("[data-order-line]").length;
+  box.insertAdjacentHTML("beforeend",orderLineCard({lineId:crypto.randomUUID(),type:"Made to Order"},idx));
+  toggleOrderLine(box.lastElementChild.querySelector("[data-line-type]"),false);
+  refreshOrderTotal();
+}
+function removeOrderLine(btn){
+  btn.closest("[data-order-line]")?.remove();
+  [...document.querySelectorAll("[data-order-line]")].forEach((line,i)=>{
+    const tag=line.querySelector(".order-line-head span");if(tag)tag.textContent=`ITEM ${i+1}`;
+  });
+  refreshOrderTotal();
+}
+function toggleOrderLine(sel,clear=true){
+  const line=sel?.closest("[data-order-line]");if(!line)return;
+  const custom=sel.value==="Custom";
+  const cat=line.querySelector("[data-line-catalog]"),cus=line.querySelector("[data-line-custom]");
+  if(cat)cat.style.display=custom?"none":"block";
+  if(cus)cus.style.display=custom?"block":"none";
+  if(clear&&custom){const name=line.querySelector("[data-line-name]");if(name&&!name.value)name.focus();}
+}
+function fillOrderLineCatalog(sel){
+  const line=sel.closest("[data-order-line]"),item=itemById(sel.value);if(!line||!item)return;
+  line.querySelector("[data-line-price]").value=item.price||0;
+  const head=line.querySelector(".order-line-head b");if(head)head.textContent=item.name;
+  refreshOrderTotal();
+}
+function collectOrderItems(){
+  return [...document.querySelectorAll("[data-order-line]")].map((line,i)=>{
+    const type=line.querySelector("[data-line-type]")?.value||"Made to Order";
+    const itemId=type==="Custom"?"":line.querySelector("[data-line-item]")?.value||"";
+    const item=itemById(itemId);
+    const name=type==="Custom"?(line.querySelector("[data-line-name]")?.value.trim()||`Custom item ${i+1}`):(item?.name||"");
+    return {
+      lineId:line.dataset.lineId||crypto.randomUUID(),type,itemId,name,
+      size:line.querySelector("[data-line-size]")?.value.trim()||"",
+      color:line.querySelector("[data-line-color]")?.value.trim()||"",
+      price:+(line.querySelector("[data-line-price]")?.value||0),
+      patternId:line.querySelector("[data-line-pattern]")?.value||"",
+      details:line.querySelector("[data-line-details]")?.value.trim()||""
+    };
+  });
+}
+function refreshOrderTotal(){
+  const total=collectOrderItems().reduce((a,x)=>a+x.price,0);
+  const el=$("#orderItemsTotal");if(el)el.textContent=M(total);
+}
+function orderHasPattern(o){return orderItemsFor(o).some(it=>it.patternId)}
+function patternProgressFor(o,lineId){return (o.patternProgress&&o.patternProgress[lineId])||{}}
+function patternRowsForTracker(pattern){
+  const out=[];
+  (pattern?.instructions||[]).forEach((sec,si)=>{
+    (sec.steps||[]).slice().sort((a,b)=>studioStepRowNumber(a,1)-studioStepRowNumber(b,1)).forEach((st,i)=>{
+      const row=studioStepRowNumber(st,i+1);
+      out.push({key:`${si}:${st.id||row+":"+i}`,section:sec.name||`Section ${si+1}`,row,st});
+    });
+  });
+  return out;
+}
+function openOrderPatternChooser(orderId){
+  const o=O().find(x=>x.id===orderId);if(!o)return;
+  const linked=orderItemsFor(o).filter(it=>it.patternId&&studioPatternById(it.patternId));
+  if(!linked.length)return alert("Link a Final pattern to an item in this order first.");
+  if(linked.length===1)return openOrderPatternTracker(orderId,linked[0].lineId);
+  openF(`<button class=close onclick=dlg.close()>×</button><h2>Choose Item Pattern</h2>${linked.map(it=>`<button class=pattern-choice-btn onclick="openOrderPatternTracker('${orderId}','${it.lineId}')"><b>${esc(orderItemLabel(it))}</b><span>${esc(studioPatternById(it.patternId)?.name||"Pattern")}</span></button>`).join("")}`);
+}
+function openOrderPatternTracker(orderId,lineId){
+  const o=O().find(x=>x.id===orderId);if(!o)return;
+  const it=orderItemsFor(o).find(x=>x.lineId===lineId);if(!it)return;
+  const p=studioPatternById(it.patternId);if(!p)return alert("That linked pattern is no longer available.");
+  const rows=patternRowsForTracker(p),progress=patternProgressFor(o,lineId),done=rows.filter(r=>progress[r.key]).length;
+  const pct=rows.length?Math.round(done/rows.length*100):0;
+  let currentSection="";
+  const markup=rows.map(r=>{
+    const sectionHead=r.section!==currentSection?(currentSection=r.section,`<div class=tracker-section-title>${esc(r.section)}</div>`):"";
+    return `${sectionHead}<label class="tracker-row ${progress[r.key]?"done":""}">
+      <input type=checkbox ${progress[r.key]?"checked":""} onchange="toggleOrderPatternRow('${orderId}','${lineId}','${encodeURIComponent(r.key)}',this.checked)">
+      <div><b>Row ${r.row}</b><span>${studioStepReadable(r.st)}</span></div>
+    </label>`;
+  }).join("");
+  openF(`<button class=close onclick=dlg.close()>×</button><div class=tracker-head><span>ORDER ${esc(o.no)}</span><h2>${esc(orderItemLabel(it))}</h2><p>${esc(p.name)} · ${esc(p.technique)}</p></div>
+    <div class=tracker-progress><div><b>${done} of ${rows.length} rows done</b><span>${pct}%</span></div><div class=tracker-progress-track><i style="width:${pct}%"></i></div></div>
+    <div class=tracker-tip>${done<rows.length?`Next up: <b>Row ${rows.find(r=>!progress[r.key])?.row||1}</b>`:"Pattern complete 🎉"}</div>
+    <div class=tracker-list>${markup||'<div class=empty>No rows in this pattern yet.</div>'}</div>`);
+}
+function toggleOrderPatternRow(orderId,lineId,keyEncoded,checked){
+  const key=decodeURIComponent(keyEncoded);
+  const orders=O(),o=orders.find(x=>x.id===orderId);if(!o)return;
+  const progress={...(o.patternProgress||{})};
+  progress[lineId]={...(progress[lineId]||{}),[key]:checked};
+  const updated={...o,patternProgress:progress};
+  S("orders",orders.map(x=>x.id===orderId?updated:x));
+  openOrderPatternTracker(orderId,lineId);
+}
 function fillOrderItem(id){
   const item=itemById(id);
   if(!item)return;
@@ -1206,20 +1509,20 @@ let pendingOrderReturn=null;
 
 function captureOrderDraft(){
   const base={...activeOrderBase};
-  const type=$("#otype")?.value||base.orderType||"Made to Order";
-  const itemId=$("#op")?.value||base.itemId||"";
-  const selectedItem=itemById(itemId);
+  const items=collectOrderItems();
+  const first=items[0]||{};
   return {
     ...base,
     customerId:$("#oc")?.value||base.customerId||"",
-    itemId,
-    product:type==="Custom"?($("#customTitle")?.value.trim()||base.product||""):(selectedItem?.name||base.product||""),
-    orderType:type,
-    customDetails:$("#customDetails")?.value||base.customDetails||"",
+    items,
+    itemId:first.itemId||"",
+    product:orderSummaryProduct(items),
+    orderType:items.length>1?"Multiple Items":first.type||"Made to Order",
+    customDetails:first.details||"",
     inspirationPhotos:[...draftInspoPhotos],
-    size:$("#os")?.value||"",
-    color:$("#ocol")?.value||"",
-    price:+($("#opr")?.value||0),
+    size:first.size||"",
+    color:first.color||"",
+    price:orderItemsTotal(items),
     paid:+($("#opa")?.value||0),
     source:$("#osrc")?.value||"Not set",
     due:$("#od")?.value||"",
@@ -1239,15 +1542,6 @@ function returnToOrderFromCustomer(){
   pendingOrderReturn=null;
   if(draft)newOrder(draft);
   else{dlg.close();render()}
-}
-
-
-function toggleCustomOrder(){
-  const isCustom=$("#otype")?.value==="Custom";
-  const regular=$("#regularOrderFields"),custom=$("#customOrderFields");
-  if(regular)regular.style.display=isCustom?"none":"block";
-  if(custom)custom.style.display=isCustom?"block":"none";
-  renderInspoPreviews();
 }
 
 function renderInspoPreviews(){
@@ -1302,98 +1596,72 @@ async function addInspoPhotos(input){
 
 function newOrder(x={}){
   activeOrderBase={...x};
-  const customers=C(),items=ITEMS();
-  let selectedCustomerId=x.customerId||customers.find(c=>String(c.name||"").trim().toLowerCase()===String(x.customer||"").trim().toLowerCase())?.id||"";
-  let selectedItemId=x.itemId||items.find(i=>String(i.name||"").trim().toLowerCase()===String(x.product||"").trim().toLowerCase())?.id||"";
-  const orderType=x.orderType||"Made to Order";
-  draftInspoPhotos=Array.isArray(x.inspirationPhotos)?[...x.inspirationPhotos]:[];
-
+  const customers=C();
+  const selectedCustomerId=x.customerId||customers.find(c=>String(c.name||"").trim().toLowerCase()===String(x.customer||"").trim().toLowerCase())?.id||"";
   const customerOptions=customers.length
     ? `<option value="">Select a customer</option>${customers.map(c=>`<option value="${c.id}" ${selectedCustomerId===c.id?"selected":""}>${esc(c.name)}${c.phone?" · "+esc(c.phone):""}</option>`).join("")}`
     : `<option value="">No customers saved yet</option>`;
-  const itemOptions=items.length
-    ? `<option value="">Select an item</option>${items.map(i=>`<option value="${i.id}" ${selectedItemId===i.id?"selected":""}>${esc(i.name)} · ${M(i.price)}</option>`).join("")}`
-    : `<option value="">No items saved yet</option>`;
+  const orderItems=orderItemsFor(x);
+  draftInspoPhotos=Array.isArray(x.inspirationPhotos)?[...x.inspirationPhotos]:[];
 
   openF(`<h2>${x.id?"Edit":"New"} Order</h2>
   <div class=customer-select-head><label>Customer</label><button type=button class=inline-plus onclick=addCustomerFromOrder() aria-label="Add new customer">＋</button></div>
   <select id=oc ${customers.length?"":"disabled"}>${customerOptions}</select>
   ${customers.length?"":'<div class=customer-help>Add a customer first, then return to New Order.</div>'}
 
-  <label>Order type</label>
-  <select id=otype onchange="toggleCustomOrder()">
-    <option ${orderType==="Made to Order"?"selected":""}>Made to Order</option>
-    <option ${orderType==="Custom"?"selected":""}>Custom</option>
-  </select>
+  <div class=order-items-heading><div><h3>Items</h3><span>Add everything they want under one order.</span></div><button type=button onclick=addOrderLine()>＋ Add Another Item</button></div>
+  <div id=orderLines></div>
+  <div class=order-total-box><span>Order Total</span><b id=orderItemsTotal>${M(orderItemsTotal(orderItems))}</b></div>
 
-  <div id=regularOrderFields>
-    <label>Item</label>
-    <select id=op ${items.length?"":"disabled"} onchange="fillOrderItem(this.value)">${itemOptions}</select>
-    ${items.length?"":'<div class=customer-help>Add an item first for made-to-order orders.</div>'}
-  </div>
+  <label>Inspiration photos <span class=meta>(optional · shared with this order)</span></label>
+  <div id=inspoPreview class=inspo-grid></div>
+  <input id=inspoFiles type=file accept="image/*" multiple onchange="addInspoPhotos(this)">
 
-  <div id=customOrderFields class=custom-order-panel>
-    <label>Custom order name</label>
-    <input id=customTitle value="${orderType==="Custom"?esc(x.product||""):""}" placeholder="e.g. Pink birthday crochet dress">
-
-    <label>What does the client want? <span class=private-field-note>PRIVATE · not shown on invoice</span></label>
-    <textarea id=customDetails placeholder="Design details, changes, reminders, special requests…">${esc(x.customDetails||"")}</textarea>
-
-    <label>Inspiration photos <span class=meta>(up to 4)</span></label>
-    <div id=inspoPreview class=inspo-grid></div>
-    <input id=inspoFiles type=file accept="image/*" multiple onchange="addInspoPhotos(this)">
-  </div>
-
-  <div class=row><div><label>Size</label><input id=os list=orderSizeList value="${esc(x.size||"")}"><datalist id=orderSizeList></datalist></div><div><label>Color</label><input id=ocol value="${esc(x.color||"")}"></div></div>
-  <div class=row><div><label>Price</label><input id=opr type=number value="${x.price||""}"></div><div><label>Paid</label><input id=opa type=number value="${x.paid||0}"></div></div>
+  <label>Paid</label><input id=opa type=number value="${x.paid||0}">
   <label>Where was this order placed?</label><select id=osrc>${["Not set","Website","Instagram","WhatsApp","In person","Phone","Other"].map(z=>`<option ${x.source==z?"selected":""}>${z}</option>`).join("")}</select>
   <label>Due date</label><input id=od type=date value="${x.due||""}">
   <label>Payment method</label><select id=opay>${["Cash","Bank transfer","Website"].map(z=>`<option ${x.payment==z?"selected":""}>${z}</option>`).join("")}</select>
   <label>Delivery method</label><select id=odel>${dels().map(z=>`<option ${x.delivery==z?"selected":""}>${z}</option>`).join("")}</select>
   <label>Status</label><select id=ost>${["New","In Studio","Ready","Delivered"].map(z=>`<option ${x.status==z?"selected":""}>${z}</option>`).join("")}</select>
-  <label>Private notes</label><textarea id=on>${esc(x.notes||"")}</textarea>
+  <label>Private order notes</label><textarea id=on>${esc(x.notes||"")}</textarea>
   ${x.id?'<label>Reason for edit</label><input id=reason placeholder="Reason required">':""}
   <button class=primary onclick="saveOrder('${x.id||""}')" ${customers.length?"":"disabled"}>Save Order</button>
+  ${x.id&&orderHasPattern(x)?`<button class=pattern-work-btn onclick="saveOrder('${x.id}',true)">Save & Work on Pattern</button>`:""}
   ${x.id?`<button class=invoice-btn onclick="openInvoice('${x.id}')">Create Invoice</button><button class=danger onclick="delOrder('${x.id}')">Delete Order</button>`:""}`);
 
-  toggleCustomOrder();
-  if(orderType!=="Custom"&&selectedItemId)fillOrderItem(selectedItemId);
+  renderOrderLines(orderItems);
+  renderInspoPreviews();
   if($("#reason")&&x._reason)$("#reason").value=x._reason;
 }
-function saveOrder(id){
+function saveOrder(id,openPatternAfter=false){
   let a=O(),old=a.find(x=>x.id==id);
   if(old&&!$("#reason").value.trim())return alert("Add a reason for the edit.");
 
   const customer=C().find(c=>c.id===oc.value);
   if(!customer)return alert("Select a customer.");
 
-  const orderType=otype.value;
-  const isCustom=orderType==="Custom";
-  let item=null,product="",itemId="";
-
-  if(isCustom){
-    product=customTitle.value.trim()||"Custom Order";
-  }else{
-    item=itemById(op.value);
-    if(!item)return alert("Select an item.");
-    product=item.name;
-    itemId=item.id;
+  const items=collectOrderItems();
+  if(!items.length)return alert("Add at least one item.");
+  for(const it of items){
+    if(it.type!=="Custom"&&!it.itemId)return alert("Select an item for each made-to-order line.");
+    if(!it.name)return alert("Give each custom item a name.");
   }
-
-  let seq=+localStorage.getItem("ah_seq")||0,
-  x={
+  const first=items[0],total=orderItemsTotal(items);
+  let seq=+localStorage.getItem("ah_seq")||0;
+  const x={
     id:id||crypto.randomUUID(),
     no:old?.no||"AM-"+String(seq+1).padStart(4,"0"),
     customerId:customer.id,
     customer:customer.name,
-    itemId,
-    product,
-    orderType,
-    customDetails:isCustom?customDetails.value.trim():"",
-    inspirationPhotos:isCustom?[...draftInspoPhotos]:[],
-    size:os.value,
-    color:ocol.value,
-    price:+opr.value||0,
+    items,
+    itemId:first.itemId||"",
+    product:orderSummaryProduct(items),
+    orderType:items.length>1?"Multiple Items":first.type,
+    customDetails:first.details||"",
+    inspirationPhotos:[...draftInspoPhotos],
+    size:first.size||"",
+    color:first.color||"",
+    price:total,
     paid:+opa.value||0,
     source:osrc.value,
     due:od.value,
@@ -1401,6 +1669,7 @@ function saveOrder(id){
     delivery:odel.value,
     status:ost.value,
     notes:on.value,
+    patternProgress:old?.patternProgress||{},
     created:old?.created||new Date().toISOString(),
     history:old?.history||[]
   };
@@ -1415,6 +1684,10 @@ function saveOrder(id){
 
   try{S("orders",a)}
   catch(e){return alert("Those photos are too large for this device. Remove one inspiration photo and try again.")}
+  if(openPatternAfter&&orderHasPattern(x)){
+    openOrderPatternChooser(x.id);
+    return;
+  }
   dlg.close();
   render();
 }
@@ -1467,13 +1740,13 @@ function invoiceMarkup(id,printMode=false){
     </div>
 
     <div class=invoice-line-head><span>ITEM</span><span>AMOUNT</span></div>
-    <div class=invoice-line>
+    ${orderItemsFor(o).map(it=>`<div class=invoice-line>
       <div>
-        <b>${esc(o.product)}</b>
-        <span>${esc([o.size&&"Size "+o.size,o.color&&o.color].filter(Boolean).join(" · "))}</span>
+        <b>${esc(orderItemLabel(it))}</b>
+        <span>${esc([it.size&&"Size "+it.size,it.color&&it.color].filter(Boolean).join(" · "))}</span>
       </div>
-      <b>${M(o.price)}</b>
-    </div>
+      <b>${M(it.price)}</b>
+    </div>`).join("")}
 
     <div class=invoice-totals>
       <div><span>Total</span><b>${M(o.price)}</b></div>
@@ -1502,7 +1775,8 @@ function printInvoice(id){
 async function shareInvoice(id){
   const o=O().find(x=>x.id==id); if(!o)return;
   const bal=Math.max(0,(+o.price||0)-(+o.paid||0));
-  const text=`Améa Invoice ${"INV-"+o.no}\nCustomer: ${o.customer}\n${o.product}${o.size?" · Size "+o.size:""}${o.color?" · "+o.color:""}\nTotal: ${M(o.price)}\nPaid: ${M(o.paid)}\nBalance: ${M(bal)}\n${o.delivery||""}`;
+  const itemLines=orderItemsFor(o).map(it=>`${orderItemLabel(it)}${it.size?" · Size "+it.size:""}${it.color?" · "+it.color:""} — ${M(it.price)}`).join("\n");
+  const text=`Améa Invoice ${"INV-"+o.no}\nCustomer: ${o.customer}\n${itemLines}\nTotal: ${M(o.price)}\nPaid: ${M(o.paid)}\nBalance: ${M(bal)}\n${o.delivery||""}`;
   if(navigator.share){try{await navigator.share({title:`Améa Invoice ${o.no}`,text});return}catch(e){if(e?.name==="AbortError")return}}
   alert(text);
 }
@@ -1515,8 +1789,9 @@ function openCustomer(id){
   const last=st.last?st.last.toLocaleDateString("en-JM",{day:"numeric",month:"short",year:"numeric"}):"—";
   const history=st.orders.length?st.orders.map(o=>{
     const d=o.created?new Date(o.created).toLocaleDateString("en-JM",{day:"numeric",month:"short",year:"numeric"}):"";
+    const its=orderItemsFor(o);
     return `<button class=customer-order-row onclick="editOrder('${o.id}')">
-      <div><b>${esc(o.no)} · ${esc(o.product)}</b><span>${esc([o.size&&"Size "+o.size,o.color].filter(Boolean).join(" · "))}</span></div>
+      <div><b>${esc(o.no)} · ${esc(orderSummaryProduct(its))}</b><span>${esc(its.map(orderItemLabel).join(" · "))}</span></div>
       <div><b>${M(o.price)}</b><span>${d}</span></div>
     </button>`;
   }).join(""):'<div class=empty>No orders yet.</div>';
@@ -1820,10 +2095,14 @@ function renderAnalytics(range="month",selectedMonth=currentMonthKey()){
   orders.forEach(x=>{
     const src=x.source||"Not set";
     sourceCounts[src]=(sourceCounts[src]||0)+1;
-    const prod=x.product||"Unnamed item";
-    if(!productStats[prod])productStats[prod]={orders:0,revenue:0};
-    productStats[prod].orders++;
-    productStats[prod].revenue+=(+x.paid||0);
+    const lineItems=orderItemsFor(x),totalValue=Math.max(0,orderItemsTotal(lineItems));
+    lineItems.forEach(it=>{
+      const prod=orderItemLabel(it)||"Unnamed item";
+      if(!productStats[prod])productStats[prod]={orders:0,revenue:0};
+      productStats[prod].orders++;
+      const allocated=totalValue>0?(+x.paid||0)*((+it.price||0)/totalValue):0;
+      productStats[prod].revenue+=allocated;
+    });
     const st=x.status||"New";
     statusCounts[st]=(statusCounts[st]||0)+1;
     const pay=x.payment||"Not set";
