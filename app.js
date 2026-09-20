@@ -5,7 +5,10 @@ function S(k,v){
   localStorage.setItem("ah_"+k,JSON.stringify(v));
   if(cloudReady)queueCloudSync(k,v);
 }
-let cur="home";const O=()=>G("orders"),C=()=>G("customers"),I=()=>G("inventory"),E=()=>G("expenses"),SUP=()=>G("suppliers"),ITEMS=()=>G("items");const M=n=>new Intl.NumberFormat("en-JM",{style:"currency",currency:"JMD",maximumFractionDigits:0}).format(+n||0);
+let cur="home";const O=()=>G("orders"),C=()=>G("customers"),I=()=>G("inventory"),E=()=>G("expenses"),SUP=()=>G("suppliers"),ITEMS=()=>G("items"),
+PATTERNS=()=>G("studio_patterns"),MODELS=()=>G("studio_models"),YARNS=()=>G("studio_yarns"),VERSIONS=()=>G("studio_versions");
+const M=n=>new Intl.NumberFormat("en-JM",{style:"currency",currency:"JMD",maximumFractionDigits:0}).format(+n||0);
+const AMEA_LOGO_DATA="data:image/png;base64,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";
 function jamaicaHour(){
   try{
     const parts=new Intl.DateTimeFormat("en-US",{timeZone:"America/Jamaica",hour:"2-digit",hour12:false}).formatToParts(new Date());
@@ -46,6 +49,7 @@ function showHQ(){
   const auth=$("#auth-screen"),app=$("#app");
   if(auth)auth.style.display="none";
   if(app)app.style.display="block";
+  setTimeout(applyAmeaBrandHeader,0);
 }
 
 async function loginHQ(){
@@ -93,6 +97,98 @@ async function startHQ(){
 
 
 const CLOUD_COLLECTIONS=["customers","items","suppliers","inventory","expenses","orders"];
+
+const STUDIO_COLLECTIONS={
+  studio_patterns:"crochet_patterns",
+  studio_models:"crochet_models",
+  studio_yarns:"crochet_yarns",
+  studio_versions:"crochet_pattern_versions"
+};
+let studioCloudAvailable=true;
+
+function studioLocalToRemote(kind,x){
+  if(kind==="studio_patterns")return {
+    id:x.id,name:x.name||"Untitled Pattern",technique:x.technique||"Crochet",
+    category:x.category||"Other",status:x.status||"Draft",collection_name:x.collection||null,
+    tags:Array.isArray(x.tags)?x.tags:[],pinned:!!x.pinned,main_photo:x.mainPhoto||null,
+    extra_photos:Array.isArray(x.extraPhotos)?x.extraPhotos:[],yarns:Array.isArray(x.yarns)?x.yarns:[],
+    hook_size:x.hookSize||null,knit_details:x.knit||{},materials:Array.isArray(x.materials)?x.materials:[],
+    material_notes:x.materialNotes||null,sizes:Array.isArray(x.sizes)?x.sizes:[],
+    linked_model_id:x.linkedModelId||null,measurements:Array.isArray(x.measurements)?x.measurements:[],
+    instructions:Array.isArray(x.instructions)?x.instructions:[],notes:x.notes||null,costing:x.costing||{},
+    created_at:x.created||new Date().toISOString(),updated_at:x.updated||new Date().toISOString()
+  };
+  if(kind==="studio_models")return {
+    id:x.id,name:x.name||"Model",usual_size:x.usualSize||null,
+    measurements:Array.isArray(x.measurements)?x.measurements:[],notes:x.notes||null,
+    created_at:x.created||new Date().toISOString(),updated_at:x.updated||new Date().toISOString()
+  };
+  if(kind==="studio_yarns")return {
+    id:x.id,brand:x.brand||null,yarn_name:x.yarnName||"Yarn",colour:x.colour||null,
+    weight_type:x.weightType||null,notes:x.notes||null,
+    created_at:x.created||new Date().toISOString(),updated_at:x.updated||new Date().toISOString()
+  };
+  if(kind==="studio_versions")return {
+    id:x.id,pattern_id:x.patternId,version_name:x.name||"Saved Version",
+    snapshot:x.snapshot||{},created_at:x.created||new Date().toISOString()
+  };
+  return x;
+}
+function studioRemoteToLocal(kind,x){
+  if(kind==="studio_patterns")return {
+    id:x.id,name:x.name||"Untitled Pattern",technique:x.technique||"Crochet",
+    category:x.category||"Other",status:x.status||"Draft",collection:x.collection_name||"",
+    tags:Array.isArray(x.tags)?x.tags:[],pinned:!!x.pinned,mainPhoto:x.main_photo||"",
+    extraPhotos:Array.isArray(x.extra_photos)?x.extra_photos:[],yarns:Array.isArray(x.yarns)?x.yarns:[],
+    hookSize:x.hook_size||"",knit:x.knit_details||{},materials:Array.isArray(x.materials)?x.materials:[],
+    materialNotes:x.material_notes||"",sizes:Array.isArray(x.sizes)?x.sizes:[],
+    linkedModelId:x.linked_model_id||"",measurements:Array.isArray(x.measurements)?x.measurements:[],
+    instructions:Array.isArray(x.instructions)?x.instructions:[],notes:x.notes||"",costing:x.costing||{},
+    created:x.created_at,updated:x.updated_at
+  };
+  if(kind==="studio_models")return {
+    id:x.id,name:x.name||"Model",usualSize:x.usual_size||"",
+    measurements:Array.isArray(x.measurements)?x.measurements:[],notes:x.notes||"",
+    created:x.created_at,updated:x.updated_at
+  };
+  if(kind==="studio_yarns")return {
+    id:x.id,brand:x.brand||"",yarnName:x.yarn_name||"Yarn",colour:x.colour||"",
+    weightType:x.weight_type||"",notes:x.notes||"",created:x.created_at,updated:x.updated_at
+  };
+  if(kind==="studio_versions")return {
+    id:x.id,patternId:x.pattern_id,name:x.version_name||"Saved Version",
+    snapshot:x.snapshot||{},created:x.created_at
+  };
+  return x;
+}
+async function studioRemoteRows(kind){
+  const table=STUDIO_COLLECTIONS[kind];
+  const {data,error}=await cloud.from(table).select("*");
+  if(error)throw error;
+  return data||[];
+}
+async function upsertStudioCollection(kind,rows){
+  if(!rows.length||!studioCloudAvailable)return;
+  const table=STUDIO_COLLECTIONS[kind];
+  const payload=rows.map(x=>studioLocalToRemote(kind,x));
+  const {error}=await cloud.from(table).upsert(payload,{onConflict:"id"});
+  if(error)throw error;
+}
+async function initialStudioCloudSync(){
+  studioCloudAvailable=true;
+  for(const kind of Object.keys(STUDIO_COLLECTIONS)){
+    try{
+      const remote=await studioRemoteRows(kind);
+      const local=G(kind,[]);
+      if(remote.length)localStorage.setItem("ah_"+kind,JSON.stringify(remote.map(x=>studioRemoteToLocal(kind,x))));
+      else if(local.length)await upsertStudioCollection(kind,local);
+    }catch(err){
+      studioCloudAvailable=false;
+      console.warn("Crochet Studio cloud is not ready yet.",err);
+      break;
+    }
+  }
+}
 
 function setCloudStatus(text,state="ok"){
   localStorage.setItem("ah_cloud_status",text);
@@ -254,6 +350,7 @@ async function initialCloudSync(){
     }
   }
   await syncSettingsInitial();
+  await initialStudioCloudSync();
   setCloudStatus("Synced ✓","ok");
 }
 
@@ -279,6 +376,10 @@ async function pushSettingsToCloud(v){
 async function pushCollectionToCloud(kind,v){
   if(!cloudReady||!cloud)return;
   if(kind==="settings")return pushSettingsToCloud(v);
+  if(STUDIO_COLLECTIONS[kind]){
+    if(!studioCloudAvailable)return;
+    return upsertStudioCollection(kind,Array.isArray(v)?v:[]);
+  }
   if(!CLOUD_COLLECTIONS.includes(kind))return;
   await upsertCollection(kind,Array.isArray(v)?v:[]);
 }
@@ -439,7 +540,479 @@ function setHomeAnalytics(mode){
   if(box)box.innerHTML=homeActivityMarkup(homeAnalyticsMode);
 }
 
-function page(x){cur=x;render()}function render(){document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===cur));let v=$("#view");if(cur=="home"){let o=O(),e=E(),now=new Date(),mo=o.filter(x=>new Date(x.created).getMonth()==now.getMonth()),sales=mo.reduce((a,x)=>a+x.paid,0),out=mo.reduce((a,x)=>a+Math.max(0,x.price-x.paid),0),ex=e.filter(x=>new Date(x.date).getMonth()==now.getMonth()).reduce((a,x)=>a+x.amount,0),today=new Date().toISOString().slice(0,10);v.innerHTML=`<div class=hero><h2 id=homeGreeting>${greeting()}, Améa Boss ✨</h2><div class=meta>Everything in your studio, in one pretty place.</div></div><div class=grid><div class=card>Sales<b>${M(sales)}</b></div><div class=card>Orders<b>${mo.length}</b></div><div class=card>Outstanding<b>${M(out)}</b></div><div class=card>Expenses<b>${M(ex)}</b></div></div><div class=section><h3>Today</h3><div class=card>${list(O().filter(x=>x.due==today),true)||'<div class=meta>No orders due today 💗</div>'}</div></div><div class="section home-analytics-section"><div class=analytics-home-head><div><h3>Order Activity</h3><div class=meta>See which weeks or months bring in the most orders.</div></div><div class=analytics-home-toggle><button data-home-analytics=months class="${homeAnalyticsMode==="months"?"active":""}" onclick="setHomeAnalytics('months')">Months</button><button data-home-analytics=weeks class="${homeAnalyticsMode==="weeks"?"active":""}" onclick="setHomeAnalytics('weeks')">Weeks</button></div></div><div id=homeAnalytics>${homeActivityMarkup(homeAnalyticsMode)}</div></div><div class=section><h3>Recent Orders</h3>${list(O().slice(-5).reverse())||'<div class=empty>No orders yet.</div>'}</div>`}
+
+function applyAmeaBrandHeader(){
+  const h=document.querySelector("header h1");
+  if(h&&!h.classList.contains("amea-brand-header")){
+    h.classList.add("amea-brand-header");
+    h.innerHTML=`<img src="amea-logo.png" alt="Améa"><small>HQ</small>`;
+  }
+}
+
+let studioPatternId="";
+let studioSub="patterns";
+let studioMainPhoto="";
+let studioExtraPhotos=[];
+
+function studioPatternById(id){return PATTERNS().find(x=>x.id===id)}
+function studioModelById(id){return MODELS().find(x=>x.id===id)}
+function studioYarnById(id){return YARNS().find(x=>x.id===id)}
+function studioCategories(){
+  return ["Bikini","Dress","Top","Skirt","Set","Shorts","Accessories","Other"];
+}
+function studioDefaultPattern(){
+  return {
+    id:"",name:"",technique:"Crochet",category:"Dress",status:"Draft",collection:"",
+    tags:[],pinned:false,mainPhoto:"",extraPhotos:[],yarns:[{}],hookSize:"",
+    knit:{machine:"",mode:"Panel",rowCount:"",tension:"",notes:""},
+    materials:[{text:""}],materialNotes:"",sizes:["S"],linkedModelId:"",
+    measurements:[{name:"Bust",value:"",unit:"in"}],
+    instructions:[{name:"Main Section",yarnOverride:"",hookOverride:"",measurementNotes:"",steps:[{label:"Row 1",text:""}]}],
+    notes:"",costing:{enabled:false,yarn:"",labor:"",other:""}
+  };
+}
+function studioLogoBlock(subtitle="Crochet Studio"){
+  return `<div class=studio-brand><div class=studio-brand-line><img src="amea-logo.png" alt="Améa"><span>HQ</span></div><div class=studio-subtitle>${esc(subtitle)}</div></div>`;
+}
+function renderStudio(){
+  if(studioPatternId)return renderStudioPattern(studioPatternId);
+  if(studioSub==="yarns")return renderStudioYarns();
+  if(studioSub==="models")return renderStudioModels();
+  if(studioSub==="calculator")return renderStudioCalculator();
+  renderStudioLibrary();
+}
+function studioGo(sub="patterns"){
+  studioPatternId="";
+  studioSub=sub;
+  cur="crochet";
+  render();
+}
+function studioBack(){
+  studioPatternId="";
+  studioSub="patterns";
+  page("crochet");
+}
+function renderStudioLibrary(){
+  const v=$("#view");
+  const patterns=PATTERNS().slice().sort((a,b)=>(+!!b.pinned)-(+!!a.pinned)||new Date(b.updated||b.created||0)-new Date(a.updated||a.created||0));
+  const cats=[...new Set(patterns.map(x=>x.category).filter(Boolean))].sort();
+  const cols=[...new Set(patterns.map(x=>x.collection).filter(Boolean))].sort();
+  v.innerHTML=`<div class=studio-page>
+    <div class=studio-topbar>${studioLogoBlock()}<button class=studio-new-btn onclick=newStudioPattern()>＋ New Pattern</button></div>
+    <div class=studio-tool-grid>
+      <button onclick="studioGo('yarns')"><span>🧶</span><b>Yarn Library</b><small>${YARNS().length} saved</small></button>
+      <button onclick="studioGo('models')"><span>♡</span><b>My Models</b><small>${MODELS().length} saved</small></button>
+      <button onclick="studioGo('calculator')"><span>⌁</span><b>Calculator</b><small>Stitches & rows</small></button>
+    </div>
+    <div class=studio-library-head><div><h2>Patterns</h2><div class=meta>${patterns.length} pattern${patterns.length===1?"":"s"} saved</div></div></div>
+    <input id=studioSearch class=studio-search placeholder="Search patterns…" oninput=studioApplyFilters()>
+    <div class=studio-filters>
+      <select id=studioTechnique onchange=studioApplyFilters()><option value="">Crochet + Knit</option><option>Crochet</option><option>Knit</option></select>
+      <select id=studioCategory onchange=studioApplyFilters()><option value="">All categories</option>${cats.map(x=>`<option>${esc(x)}</option>`).join("")}</select>
+      <select id=studioStatus onchange=studioApplyFilters()><option value="">All statuses</option><option>Draft</option><option>Testing</option><option>Final</option></select>
+      <select id=studioCollection onchange=studioApplyFilters()><option value="">All collections</option>${cols.map(x=>`<option>${esc(x)}</option>`).join("")}</select>
+    </div>
+    <div id=studioPatternGrid class=studio-pattern-grid>${studioPatternCards(patterns)}</div>
+  </div>`;
+}
+function studioPatternCards(patterns){
+  if(!patterns.length)return `<div class="empty studio-empty">No patterns yet. Tap <b>＋ New Pattern</b> to create your first one 💗</div>`;
+  return patterns.map(x=>`<button class=studio-pattern-card data-search="${esc([x.name,x.technique,x.category,x.status,x.collection,(x.tags||[]).join(" ")].join(" ").toLowerCase())}" data-technique="${esc(x.technique||"")}" data-category="${esc(x.category||"")}" data-status="${esc(x.status||"")}" data-collection="${esc(x.collection||"")}" onclick="openStudioPattern('${x.id}')">
+    <div class=studio-pattern-photo>${x.mainPhoto?`<img src="${x.mainPhoto}" alt="${esc(x.name)}">`:`<div class=studio-pattern-placeholder><img src="amea-logo.png" alt=""><span>Pattern</span></div>`}${x.pinned?'<span class=studio-pin>★</span>':""}</div>
+    <div class=studio-pattern-copy><b>${esc(x.name||"Untitled Pattern")}</b><span>${esc(x.technique||"Crochet")} • ${esc(x.category||"Other")} • ${esc(x.status||"Draft")}</span></div>
+  </button>`).join("");
+}
+function studioApplyFilters(){
+  const q=($("#studioSearch")?.value||"").trim().toLowerCase();
+  const tech=$("#studioTechnique")?.value||"",cat=$("#studioCategory")?.value||"",status=$("#studioStatus")?.value||"",col=$("#studioCollection")?.value||"";
+  document.querySelectorAll(".studio-pattern-card").forEach(card=>{
+    const show=(!q||card.dataset.search.includes(q))&&(!tech||card.dataset.technique===tech)&&(!cat||card.dataset.category===cat)&&(!status||card.dataset.status===status)&&(!col||card.dataset.collection===col);
+    card.style.display=show?"block":"none";
+  });
+}
+function openStudioPattern(id){
+  studioPatternId=id;
+  studioSub="patterns";
+  cur="crochet";
+  render();
+}
+function studioYarnSummary(y){
+  return [y.brand,y.yarnName,y.colour,y.weightType].filter(Boolean).join(" · ")||"Yarn";
+}
+function studioPatternHeroMeta(x){
+  return `${esc(x.technique||"Crochet")} • ${esc(x.category||"Other")} • ${esc(x.status||"Draft")}`;
+}
+function renderStudioPattern(id){
+  const x=studioPatternById(id);
+  if(!x){studioPatternId="";return renderStudioLibrary()}
+  const model=studioModelById(x.linkedModelId);
+  const versions=VERSIONS().filter(v=>v.patternId===id).sort((a,b)=>new Date(b.created)-new Date(a.created));
+  const cost=x.costing||{},costTotal=(+cost.yarn||0)+(+cost.labor||0)+(+cost.other||0);
+  const v=$("#view");
+  v.innerHTML=`<div class=studio-detail>
+    <div class=studio-detail-nav><button onclick=studioBack()>← Patterns</button><div class=studio-detail-actions><button onclick="toggleStudioPin('${x.id}')">${x.pinned?"★":"☆"}</button><button onclick="editStudioPattern('${x.id}')">Edit</button></div></div>
+    <div class=studio-detail-hero>
+      <div class=studio-detail-photo>${x.mainPhoto?`<img src="${x.mainPhoto}" alt="${esc(x.name)}">`:`<div class=studio-pattern-placeholder><img src="amea-logo.png" alt=""></div>`}</div>
+      <div class=studio-detail-title><div class=studio-eyebrow>PATTERN</div><h2>${esc(x.name)}</h2><div class=studio-meta-strip>${studioPatternHeroMeta(x)}</div>${x.collection?`<div class=studio-collection>${esc(x.collection)}</div>`:""}</div>
+    </div>
+    <div class=studio-action-row>
+      <button onclick="duplicateStudioPattern('${x.id}')">Duplicate</button>
+      <button onclick="saveStudioVersion('${x.id}')">Save Version</button>
+      ${x.status==="Final"?`<button class=studio-gold onclick="exportStudioPatternPDF('${x.id}')">Export PDF</button>`:""}
+    </div>
+
+    <section class=studio-detail-section><h3>Materials</h3>
+      ${(x.materials||[]).filter(m=>m.text).map(m=>`<div class=studio-check>□ ${esc(m.text)}</div>`).join("")||'<div class=meta>No materials added.</div>'}
+      ${x.materialNotes?`<p>${esc(x.materialNotes)}</p>`:""}
+    </section>
+
+    <section class=studio-detail-section><h3>Yarn & ${x.technique==="Knit"?"Machine":"Hook"}</h3>
+      ${(x.yarns||[]).filter(y=>Object.values(y||{}).some(Boolean)).map((y,i)=>`<div class=studio-yarn-detail><b>${i===0?"Main yarn":"Extra yarn / colour"}</b><span>${esc(studioYarnSummary(y))}</span>${y.amount?`<small>Amount: ${esc(y.amount)}</small>`:""}${y.price?`<small>Price: ${M(y.price)}</small>`:""}${y.purchasedAt?`<small>Purchased: ${esc(y.purchasedAt)}</small>`:""}</div>`).join("")||'<div class=meta>No yarn details added.</div>'}
+      ${x.technique==="Crochet"?(x.hookSize?`<div class=studio-detail-line><b>Hook</b><span>${esc(x.hookSize)}</span></div>`:""):`<div class=studio-knit-grid>
+        <div><b>Machine</b><span>${esc(x.knit?.machine||"—")}</span></div>
+        <div><b>Mode</b><span>${esc(x.knit?.mode||"—")}</span></div>
+        <div><b>Rows</b><span>${esc(x.knit?.rowCount||"—")}</span></div>
+        <div><b>Tension / settings</b><span>${esc(x.knit?.tension||"—")}</span></div>
+        ${x.knit?.notes?`<div class=studio-knit-notes><b>Machine notes</b><span>${esc(x.knit.notes)}</span></div>`:""}
+      </div>`}
+    </section>
+
+    <section class=studio-detail-section><h3>Measurements</h3>
+      ${(x.sizes||[]).length?`<div class=studio-size-pills>${x.sizes.map(s=>`<span>${esc(s)}</span>`).join("")}</div>`:""}
+      ${model?`<div class=studio-model-link><b>Model: ${esc(model.name)}</b><span>${esc(model.usualSize||"")}</span></div>`:""}
+      ${(x.measurements||[]).filter(m=>m.name||m.value).map(m=>`<div class=studio-measure-row><b>${esc(m.name||"Measurement")}</b><span>${esc(m.value||"—")} ${esc(m.unit||"")}</span></div>`).join("")||'<div class=meta>No measurements added.</div>'}
+    </section>
+
+    <section class=studio-detail-section><h3>Pattern Instructions</h3>
+      ${(x.instructions||[]).map((s,si)=>`<div class=studio-instruction-section>
+        <div class=studio-instruction-title><span>${String(si+1).padStart(2,"0")}</span><h4>${esc(s.name||"Section")}</h4></div>
+        ${(s.yarnOverride||s.hookOverride||s.measurementNotes)?`<div class=studio-section-overrides>${s.yarnOverride?`<span><b>Yarn:</b> ${esc(s.yarnOverride)}</span>`:""}${s.hookOverride?`<span><b>${x.technique==="Knit"?"Machine/settings":"Hook"}:</b> ${esc(s.hookOverride)}</span>`:""}${s.measurementNotes?`<span><b>Measurements:</b> ${esc(s.measurementNotes)}</span>`:""}</div>`:""}
+        ${(s.steps||[]).filter(st=>st.label||st.text).map(st=>`<div class=studio-step><b>${esc(st.label||"Step")}</b><p>${esc(st.text||"")}</p></div>`).join("")||'<div class=meta>No steps yet.</div>'}
+      </div>`).join("")||'<div class=meta>No instructions added.</div>'}
+    </section>
+
+    ${(x.extraPhotos||[]).length?`<section class=studio-detail-section><h3>Extra Photos</h3><div class=studio-extra-grid>${x.extraPhotos.map(p=>`<img src="${p}" alt="">`).join("")}</div></section>`:""}
+    ${x.notes?`<section class=studio-detail-section><h3>Notes</h3><p>${esc(x.notes)}</p></section>`:""}
+    ${cost.enabled?`<section class=studio-detail-section><h3>Optional Costing</h3><div class=studio-measure-row><b>Yarn</b><span>${M(cost.yarn)}</span></div><div class=studio-measure-row><b>Labour</b><span>${M(cost.labor)}</span></div><div class=studio-measure-row><b>Other</b><span>${M(cost.other)}</span></div><div class="studio-measure-row studio-total"><b>Total cost</b><span>${M(costTotal)}</span></div></section>`:""}
+    <section class=studio-detail-section><div class=top><h3>Saved Versions</h3><span class=meta>${versions.length}</span></div>
+      ${versions.length?versions.map(ver=>`<div class=studio-version-row><div><b>${esc(ver.name)}</b><span>${new Date(ver.created).toLocaleString("en-JM",{dateStyle:"medium",timeStyle:"short"})}</span></div><div><button onclick="previewStudioVersion('${ver.id}')">View</button><button onclick="restoreStudioVersion('${ver.id}')">Restore</button></div></div>`).join(""):'<div class=meta>No versions saved yet. Tap “Save Version” when you want a checkpoint.</div>'}
+    </section>
+    <button class=studio-delete onclick="deleteStudioPattern('${x.id}')">Delete Pattern</button>
+  </div>`;
+}
+function toggleStudioPin(id){
+  const a=PATTERNS().map(x=>x.id===id?{...x,pinned:!x.pinned,updated:new Date().toISOString()}:x);
+  S("studio_patterns",a);renderStudioPattern(id);
+}
+function duplicateStudioPattern(id){
+  const x=studioPatternById(id);if(!x)return;
+  const copy=JSON.parse(JSON.stringify(x));
+  copy.id=crypto.randomUUID();copy.name=x.name+" Copy";copy.status="Draft";copy.pinned=false;
+  copy.created=new Date().toISOString();copy.updated=copy.created;
+  S("studio_patterns",[...PATTERNS(),copy]);
+  studioPatternId=copy.id;render();
+}
+function saveStudioVersion(id){
+  const x=studioPatternById(id);if(!x)return;
+  const name=prompt("Version name",`${x.name} · ${new Date().toLocaleDateString("en-JM",{day:"numeric",month:"short",year:"numeric"})}`);
+  if(!name)return;
+  const ver={id:crypto.randomUUID(),patternId:id,name:name.trim(),snapshot:JSON.parse(JSON.stringify(x)),created:new Date().toISOString()};
+  S("studio_versions",[...VERSIONS(),ver]);
+  renderStudioPattern(id);
+}
+function previewStudioVersion(id){
+  const v=VERSIONS().find(x=>x.id===id);if(!v)return;
+  const x=v.snapshot||{};
+  openF(`<button class=close onclick=dlg.close()>×</button><h2>${esc(v.name)}</h2><div class=meta>Saved ${new Date(v.created).toLocaleString("en-JM",{dateStyle:"medium",timeStyle:"short"})}</div>
+    <div class=version-preview><b>${esc(x.name||"Pattern")}</b><span>${esc(x.technique||"")} • ${esc(x.category||"")} • ${esc(x.status||"")}</span>
+    <p>${(x.instructions||[]).length} section${(x.instructions||[]).length===1?"":"s"} · ${(x.measurements||[]).length} measurement${(x.measurements||[]).length===1?"":"s"}</p></div>`);
+}
+function restoreStudioVersion(id){
+  const ver=VERSIONS().find(x=>x.id===id);if(!ver)return;
+  if(!confirm("Restore this saved version? Your current pattern will be replaced."))return;
+  const snap=JSON.parse(JSON.stringify(ver.snapshot||{}));
+  snap.id=ver.patternId;snap.updated=new Date().toISOString();
+  S("studio_patterns",PATTERNS().map(x=>x.id===ver.patternId?snap:x));
+  dlg.close?.();studioPatternId=ver.patternId;render();
+}
+function deleteStudioPattern(id){
+  if(!confirm("Delete this pattern? This cannot be undone."))return;
+  S("studio_patterns",PATTERNS().filter(x=>x.id!==id));
+  S("studio_versions",VERSIONS().filter(v=>v.patternId!==id));
+  deleteCloudRow("crochet_patterns",id);
+  studioPatternId="";studioSub="patterns";render();
+}
+
+function studioYarnRow(y={},index=0){
+  const lib=YARNS();
+  return `<div class=studio-editor-row data-yarn-row>
+    <div class=studio-editor-row-head><b>${index===0?"Main yarn":"Extra yarn / colour"}</b><button type=button onclick="this.closest('[data-yarn-row]').remove()">×</button></div>
+    <select data-yarn-library onchange=studioFillYarnFromLibrary(this)><option value="">Type custom yarn</option>${lib.map(z=>`<option value="${z.id}" ${y.libraryId===z.id?"selected":""}>${esc(studioYarnSummary(z))}</option>`).join("")}</select>
+    <div class=studio-two><input data-yarn-brand placeholder="Brand" value="${esc(y.brand||"")}"><input data-yarn-name placeholder="Yarn name" value="${esc(y.yarnName||"")}"></div>
+    <div class=studio-two><input data-yarn-colour placeholder="Colour" value="${esc(y.colour||"")}"><input data-yarn-weight placeholder="Weight / type" value="${esc(y.weightType||"")}"></div>
+    <div class=studio-two><input data-yarn-amount placeholder="Amount used" value="${esc(y.amount||"")}"><input data-yarn-price type=number placeholder="Price (optional)" value="${esc(y.price||"")}"></div>
+    <input data-yarn-store placeholder="Where purchased (optional)" value="${esc(y.purchasedAt||"")}">
+  </div>`;
+}
+function studioMaterialRow(m={}){
+  return `<div class="studio-inline-row" data-material-row><input data-material-text placeholder="e.g. 4 mm hook, stitch markers" value="${esc(m.text||"")}"><button type=button onclick="this.parentElement.remove()">×</button></div>`;
+}
+function studioMeasurementRow(m={}){
+  return `<div class="studio-measure-edit" data-measure-row><input data-measure-name placeholder="Measurement" value="${esc(m.name||"")}"><input data-measure-value placeholder="Value" value="${esc(m.value||"")}"><select data-measure-unit><option ${m.unit==="in"?"selected":""}>in</option><option ${m.unit==="cm"?"selected":""}>cm</option><option ${m.unit==="st"?"selected":""}>st</option><option ${m.unit==="rows"?"selected":""}>rows</option></select><button type=button onclick="this.parentElement.remove()">×</button></div>`;
+}
+function studioStepRow(st={}){
+  return `<div class=studio-step-edit data-step-row><div class=studio-two><input data-step-label placeholder="Row 1 / Step 1" value="${esc(st.label||"")}"><button type=button onclick="this.closest('[data-step-row]').remove()">Remove</button></div><textarea data-step-text placeholder="Write exactly what you did…">${esc(st.text||"")}</textarea></div>`;
+}
+function studioSectionEditor(s={},index=0){
+  return `<div class=studio-section-edit data-section-row>
+    <div class=studio-editor-row-head><b>Section ${index+1}</b><button type=button onclick="this.closest('[data-section-row]').remove()">×</button></div>
+    <input data-section-name placeholder="e.g. TOP, SKIRT, BODY, STRAPS" value="${esc(s.name||"")}">
+    <details><summary>Section-specific details (optional)</summary>
+      <input data-section-yarn placeholder="Different yarn/colour for this section" value="${esc(s.yarnOverride||"")}">
+      <input data-section-hook placeholder="Different hook / machine settings" value="${esc(s.hookOverride||"")}">
+      <input data-section-measure placeholder="Measurement notes for this section" value="${esc(s.measurementNotes||"")}">
+    </details>
+    <div data-step-list>${(s.steps||[{}]).map(st=>studioStepRow(st)).join("")}</div>
+    <button type=button class=studio-add-line onclick=studioAddStep(this)>＋ Add Row / Step</button>
+  </div>`;
+}
+function studioFillYarnFromLibrary(sel){
+  const y=studioYarnById(sel.value),row=sel.closest("[data-yarn-row]");if(!y||!row)return;
+  row.querySelector("[data-yarn-brand]").value=y.brand||"";
+  row.querySelector("[data-yarn-name]").value=y.yarnName||"";
+  row.querySelector("[data-yarn-colour]").value=y.colour||"";
+  row.querySelector("[data-yarn-weight]").value=y.weightType||"";
+}
+function studioAddYarn(){const box=$("#studioYarnList");if(box)box.insertAdjacentHTML("beforeend",studioYarnRow({},box.querySelectorAll("[data-yarn-row]").length))}
+function studioAddMaterial(){const box=$("#studioMaterialList");if(box)box.insertAdjacentHTML("beforeend",studioMaterialRow())}
+function studioAddMeasurement(){const box=$("#studioMeasurementList");if(box)box.insertAdjacentHTML("beforeend",studioMeasurementRow({unit:"in"}))}
+function studioAddSection(){const box=$("#studioSectionList");if(box)box.insertAdjacentHTML("beforeend",studioSectionEditor({},box.querySelectorAll("[data-section-row]").length))}
+function studioAddStep(btn){const box=btn.closest("[data-section-row]").querySelector("[data-step-list]");box.insertAdjacentHTML("beforeend",studioStepRow())}
+function studioToggleTechnique(){
+  const knit=$("#studioTechniqueEdit")?.value==="Knit";
+  if($("#studioCrochetFields"))$("#studioCrochetFields").style.display=knit?"none":"block";
+  if($("#studioKnitFields"))$("#studioKnitFields").style.display=knit?"block":"none";
+}
+function studioToggleCost(){
+  if($("#studioCostFields"))$("#studioCostFields").style.display=$("#studioCostEnabled")?.checked?"grid":"none";
+}
+async function studioMainPhotoChanged(input){
+  const f=input.files?.[0];if(!f)return;
+  try{
+    studioMainPhoto=await imageToSmallDataUrl(f);
+    const p=$("#studioMainPreview");if(p){p.src=studioMainPhoto;p.style.display="block"}
+  }catch(e){alert("I couldn't process that photo. Try another image.")}
+}
+async function studioExtraPhotosChanged(input){
+  const files=[...(input.files||[])].slice(0,6);
+  for(const f of files){
+    try{studioExtraPhotos.push(await imageToSmallDataUrl(f))}catch(e){}
+  }
+  studioExtraPhotos=studioExtraPhotos.slice(0,6);
+  studioRenderExtraPreviews();
+  input.value="";
+}
+function studioRenderExtraPreviews(){
+  const box=$("#studioExtraPreview");if(!box)return;
+  box.innerHTML=studioExtraPhotos.map((p,i)=>`<div><img src="${p}" alt=""><button type=button onclick="studioExtraPhotos.splice(${i},1);studioRenderExtraPreviews()">×</button></div>`).join("")||'<span class=meta>No extra photos yet.</span>';
+}
+function newStudioPattern(){editStudioPattern("")}
+function editStudioPattern(id=""){
+  const x=id?JSON.parse(JSON.stringify(studioPatternById(id)||studioDefaultPattern())):studioDefaultPattern();
+  studioMainPhoto=x.mainPhoto||"";studioExtraPhotos=[...(x.extraPhotos||[])];
+  const sizes=["XS","S","M","L","XL"];
+  openF(`<button class=close onclick=dlg.close()>×</button><div class=studio-editor-title>${studioLogoBlock(id?"Edit Pattern":"New Pattern")}</div>
+    <label>Pattern name</label><input id=studioPatternName value="${esc(x.name||"")}" placeholder="e.g. Flora Dress">
+    <div class=studio-three><div><label>Technique</label><select id=studioTechniqueEdit onchange=studioToggleTechnique()><option ${x.technique==="Crochet"?"selected":""}>Crochet</option><option ${x.technique==="Knit"?"selected":""}>Knit</option></select></div>
+    <div><label>Category</label><select id=studioCategoryEdit>${studioCategories().map(z=>`<option ${x.category===z?"selected":""}>${z}</option>`).join("")}</select></div>
+    <div><label>Status</label><select id=studioStatusEdit>${["Draft","Testing","Final"].map(z=>`<option ${x.status===z?"selected":""}>${z}</option>`).join("")}</select></div></div>
+    <div class=studio-two><div><label>Collection <span class=meta>(optional)</span></label><input id=studioCollectionEdit value="${esc(x.collection||"")}" placeholder="e.g. Eden"></div><div><label>Tags</label><input id=studioTags value="${esc((x.tags||[]).join(", "))}" placeholder="floral, summer, fitted"></div></div>
+
+    <div class=studio-editor-block><h3>Photos</h3>
+      ${studioMainPhoto?`<img id=studioMainPreview class=studio-main-preview src="${studioMainPhoto}" alt="">`:`<img id=studioMainPreview class=studio-main-preview style="display:none" alt="">`}
+      <label>Main finished-piece photo</label><input type=file accept="image/*" onchange=studioMainPhotoChanged(this)>
+      <label>Extra / reference photos <span class=meta>(up to 6)</span></label><input type=file accept="image/*" multiple onchange=studioExtraPhotosChanged(this)>
+      <div id=studioExtraPreview class=studio-extra-preview></div>
+    </div>
+
+    <div class=studio-editor-block><div class=studio-editor-row-head><h3>Yarn</h3><button type=button onclick=studioAddYarn()>＋ Add Yarn</button></div><div id=studioYarnList>${(x.yarns?.length?x.yarns:[{}]).map((y,i)=>studioYarnRow(y,i)).join("")}</div></div>
+
+    <div id=studioCrochetFields class=studio-editor-block><h3>Hook</h3><input id=studioHook value="${esc(x.hookSize||"")}" placeholder="e.g. 4 mm"></div>
+    <div id=studioKnitFields class=studio-editor-block><h3>Knit Machine Details</h3><div class=studio-two><input id=studioMachine value="${esc(x.knit?.machine||"")}" placeholder="Machine / size, e.g. Sentro 48"><select id=studioMachineMode><option ${x.knit?.mode==="Panel"?"selected":""}>Panel</option><option ${x.knit?.mode==="Tube"?"selected":""}>Tube</option></select></div><div class=studio-two><input id=studioRowCount value="${esc(x.knit?.rowCount||"")}" placeholder="Row count"><input id=studioTension value="${esc(x.knit?.tension||"")}" placeholder="Tension / settings"></div><textarea id=studioMachineNotes placeholder="Machine notes">${esc(x.knit?.notes||"")}</textarea></div>
+
+    <div class=studio-editor-block><div class=studio-editor-row-head><h3>Materials</h3><button type=button onclick=studioAddMaterial()>＋ Add</button></div><div id=studioMaterialList>${(x.materials?.length?x.materials:[{}]).map(studioMaterialRow).join("")}</div><textarea id=studioMaterialNotes placeholder="Extra materials notes">${esc(x.materialNotes||"")}</textarea></div>
+
+    <div class=studio-editor-block><h3>Sizing & Model</h3><div class=studio-size-checks>${sizes.map(s=>`<label><input type=checkbox value="${s}" ${x.sizes?.includes(s)?"checked":""}> ${s}</label>`).join("")}<label><input id=studioCustomSizeCheck type=checkbox ${x.sizes?.some(s=>!sizes.includes(s))?"checked":""}> Custom</label></div><input id=studioCustomSize value="${esc((x.sizes||[]).filter(s=>!sizes.includes(s)).join(", "))}" placeholder="Custom size name(s), optional"><label>Saved model <span class=meta>(optional)</span></label><select id=studioModel><option value="">No saved model</option>${MODELS().map(m=>`<option value="${m.id}" ${x.linkedModelId===m.id?"selected":""}>${esc(m.name)}${m.usualSize?" · "+esc(m.usualSize):""}</option>`).join("")}</select></div>
+
+    <div class=studio-editor-block><div class=studio-editor-row-head><h3>Measurements</h3><button type=button onclick=studioAddMeasurement()>＋ Add Measurement</button></div><div id=studioMeasurementList>${(x.measurements?.length?x.measurements:[{name:"Bust",unit:"in"}]).map(studioMeasurementRow).join("")}</div></div>
+
+    <div class=studio-editor-block><div class=studio-editor-row-head><h3>Pattern Instructions</h3><button type=button onclick=studioAddSection()>＋ Section</button></div><div id=studioSectionList>${(x.instructions?.length?x.instructions:[{name:"Main Section",steps:[{label:"Row 1",text:""}]}]).map(studioSectionEditor).join("")}</div></div>
+
+    <div class=studio-editor-block><h3>Notes</h3><textarea id=studioPatternNotes placeholder="Anything else you want to remember…">${esc(x.notes||"")}</textarea></div>
+
+    <div class=studio-editor-block><label class=studio-cost-toggle><input id=studioCostEnabled type=checkbox ${x.costing?.enabled?"checked":""} onchange=studioToggleCost()> Track cost for this pattern</label><div id=studioCostFields class=studio-cost-fields><input id=studioCostYarn type=number placeholder="Yarn cost" value="${esc(x.costing?.yarn||"")}"><input id=studioCostLabor type=number placeholder="Labour" value="${esc(x.costing?.labor||"")}"><input id=studioCostOther type=number placeholder="Other cost" value="${esc(x.costing?.other||"")}"></div></div>
+
+    <button class=primary onclick="saveStudioPattern('${id}')">${id?"Save Pattern":"Create Pattern"}</button>`);
+  studioToggleTechnique();studioToggleCost();studioRenderExtraPreviews();
+}
+function collectStudioYarns(){
+  return [...document.querySelectorAll("[data-yarn-row]")].map(row=>({
+    libraryId:row.querySelector("[data-yarn-library]")?.value||"",
+    brand:row.querySelector("[data-yarn-brand]")?.value.trim()||"",
+    yarnName:row.querySelector("[data-yarn-name]")?.value.trim()||"",
+    colour:row.querySelector("[data-yarn-colour]")?.value.trim()||"",
+    weightType:row.querySelector("[data-yarn-weight]")?.value.trim()||"",
+    amount:row.querySelector("[data-yarn-amount]")?.value.trim()||"",
+    price:+(row.querySelector("[data-yarn-price]")?.value||0),
+    purchasedAt:row.querySelector("[data-yarn-store]")?.value.trim()||""
+  })).filter(y=>Object.values(y).some(Boolean));
+}
+function collectStudioMaterials(){
+  return [...document.querySelectorAll("[data-material-row]")].map(row=>({text:row.querySelector("[data-material-text]")?.value.trim()||""})).filter(x=>x.text);
+}
+function collectStudioMeasurements(){
+  return [...document.querySelectorAll("[data-measure-row]")].map(row=>({
+    name:row.querySelector("[data-measure-name]")?.value.trim()||"",
+    value:row.querySelector("[data-measure-value]")?.value.trim()||"",
+    unit:row.querySelector("[data-measure-unit]")?.value||""
+  })).filter(x=>x.name||x.value);
+}
+function collectStudioInstructions(){
+  return [...document.querySelectorAll("[data-section-row]")].map(sec=>({
+    name:sec.querySelector("[data-section-name]")?.value.trim()||"Section",
+    yarnOverride:sec.querySelector("[data-section-yarn]")?.value.trim()||"",
+    hookOverride:sec.querySelector("[data-section-hook]")?.value.trim()||"",
+    measurementNotes:sec.querySelector("[data-section-measure]")?.value.trim()||"",
+    steps:[...sec.querySelectorAll("[data-step-row]")].map(st=>({
+      label:st.querySelector("[data-step-label]")?.value.trim()||"",
+      text:st.querySelector("[data-step-text]")?.value.trim()||""
+    })).filter(st=>st.label||st.text)
+  }));
+}
+function saveStudioPattern(id=""){
+  const name=$("#studioPatternName")?.value.trim();if(!name)return alert("Give the pattern a name.");
+  const now=new Date().toISOString(),old=id?studioPatternById(id):null;
+  const baseSizes=[...document.querySelectorAll(".studio-size-checks input[type=checkbox][value]:checked")].map(x=>x.value);
+  const custom=$("#studioCustomSize")?.value.split(",").map(x=>x.trim()).filter(Boolean)||[];
+  const sizes=[...new Set([...baseSizes,...custom])];
+  const x={
+    id:id||crypto.randomUUID(),name,technique:$("#studioTechniqueEdit").value,category:$("#studioCategoryEdit").value,
+    status:$("#studioStatusEdit").value,collection:$("#studioCollectionEdit").value.trim(),
+    tags:$("#studioTags").value.split(",").map(x=>x.trim()).filter(Boolean),pinned:old?.pinned||false,
+    mainPhoto:studioMainPhoto,extraPhotos:[...studioExtraPhotos],yarns:collectStudioYarns(),
+    hookSize:$("#studioHook")?.value.trim()||"",
+    knit:{machine:$("#studioMachine")?.value.trim()||"",mode:$("#studioMachineMode")?.value||"Panel",rowCount:$("#studioRowCount")?.value.trim()||"",tension:$("#studioTension")?.value.trim()||"",notes:$("#studioMachineNotes")?.value.trim()||""},
+    materials:collectStudioMaterials(),materialNotes:$("#studioMaterialNotes").value.trim(),sizes,
+    linkedModelId:$("#studioModel").value,measurements:collectStudioMeasurements(),instructions:collectStudioInstructions(),
+    notes:$("#studioPatternNotes").value.trim(),
+    costing:{enabled:!!$("#studioCostEnabled")?.checked,yarn:+($("#studioCostYarn")?.value||0),labor:+($("#studioCostLabor")?.value||0),other:+($("#studioCostOther")?.value||0)},
+    created:old?.created||now,updated:now
+  };
+  const a=id?PATTERNS().map(z=>z.id===id?x:z):[...PATTERNS(),x];
+  try{S("studio_patterns",a)}catch(e){return alert("This pattern is too large to save on this device. Try removing an extra photo.")}
+  dlg.close();studioPatternId=x.id;studioSub="patterns";page("crochet");
+}
+
+function renderStudioYarns(){
+  const v=$("#view");
+  v.innerHTML=`<div class=studio-subpage><div class=studio-detail-nav><button onclick="studioGo('patterns')">← Patterns</button><button onclick=newStudioYarn()>＋ Add Yarn</button></div>${studioLogoBlock("Yarn Library")}<div class=meta studio-page-note>Save yarns you use often. You can still type a custom yarn inside any pattern.</div><div class=studio-library-list>${YARNS().map(y=>`<div class=studio-library-item><div><b>${esc(y.yarnName||"Yarn")}</b><span>${esc([y.brand,y.colour,y.weightType].filter(Boolean).join(" · "))}</span></div><button onclick="newStudioYarn('${y.id}')">Edit</button></div>`).join("")||'<div class=empty>No yarns saved yet.</div>'}</div></div>`;
+}
+function newStudioYarn(id=""){
+  const y=id?studioYarnById(id):{};
+  openF(`<button class=close onclick=dlg.close()>×</button><h2>${id?"Edit":"Add"} Yarn</h2><label>Brand</label><input id=syBrand value="${esc(y?.brand||"")}"><label>Yarn name</label><input id=syName value="${esc(y?.yarnName||"")}"><label>Colour</label><input id=syColour value="${esc(y?.colour||"")}"><label>Weight / type</label><input id=syWeight value="${esc(y?.weightType||"")}" placeholder="e.g. 4 / Worsted / Cotton"><label>Notes</label><textarea id=syNotes>${esc(y?.notes||"")}</textarea><button class=primary onclick="saveStudioYarn('${id}')">Save Yarn</button>${id?`<button class=danger onclick="deleteStudioYarn('${id}')">Delete Yarn</button>`:""}`);
+}
+function saveStudioYarn(id=""){
+  const name=$("#syName").value.trim();if(!name)return alert("Add a yarn name.");
+  const old=id?studioYarnById(id):null,now=new Date().toISOString();
+  const y={id:id||crypto.randomUUID(),brand:$("#syBrand").value.trim(),yarnName:name,colour:$("#syColour").value.trim(),weightType:$("#syWeight").value.trim(),notes:$("#syNotes").value.trim(),created:old?.created||now,updated:now};
+  S("studio_yarns",id?YARNS().map(x=>x.id===id?y:x):[...YARNS(),y]);dlg.close();renderStudioYarns();
+}
+function deleteStudioYarn(id){
+  if(!confirm("Delete this yarn from the library? Existing patterns keep their saved yarn details."))return;
+  S("studio_yarns",YARNS().filter(x=>x.id!==id));deleteCloudRow("crochet_yarns",id);dlg.close();renderStudioYarns();
+}
+
+function renderStudioModels(){
+  const v=$("#view");
+  v.innerHTML=`<div class=studio-subpage><div class=studio-detail-nav><button onclick="studioGo('patterns')">← Patterns</button><button onclick=newStudioModel()>＋ Add Model</button></div>${studioLogoBlock("My Models")}<div class=meta studio-page-note>Save each model once, then link them to patterns. Pattern-specific measurements can still be different.</div><div class=studio-library-list>${MODELS().map(m=>`<div class=studio-library-item><div><b>${esc(m.name)}</b><span>${esc(m.usualSize||"No usual size")} · ${(m.measurements||[]).length} measurements</span></div><button onclick="newStudioModel('${m.id}')">Edit</button></div>`).join("")||'<div class=empty>No models saved yet.</div>'}</div></div>`;
+}
+function studioModelMeasureRow(m={}){
+  return `<div class=studio-measure-edit data-model-measure><input data-mm-name placeholder="Measurement" value="${esc(m.name||"")}"><input data-mm-value placeholder="Value" value="${esc(m.value||"")}"><select data-mm-unit><option ${m.unit==="in"?"selected":""}>in</option><option ${m.unit==="cm"?"selected":""}>cm</option></select><button type=button onclick="this.parentElement.remove()">×</button></div>`;
+}
+function addStudioModelMeasure(){const box=$("#studioModelMeasures");box.insertAdjacentHTML("beforeend",studioModelMeasureRow({unit:"in"}))}
+function newStudioModel(id=""){
+  const m=id?studioModelById(id):{measurements:[{name:"Bust",unit:"in"},{name:"Waist",unit:"in"},{name:"Hips",unit:"in"}]};
+  openF(`<button class=close onclick=dlg.close()>×</button><h2>${id?"Edit":"Add"} Model</h2><label>Name / nickname</label><input id=smName value="${esc(m?.name||"")}"><label>Usual size</label><input id=smSize value="${esc(m?.usualSize||"")}" placeholder="S, M, L…"><div class=studio-editor-row-head><label>Measurements</label><button type=button onclick=addStudioModelMeasure()>＋ Add</button></div><div id=studioModelMeasures>${(m?.measurements||[]).map(studioModelMeasureRow).join("")}</div><label>Notes</label><textarea id=smNotes>${esc(m?.notes||"")}</textarea><button class=primary onclick="saveStudioModel('${id}')">Save Model</button>${id?`<button class=danger onclick="deleteStudioModel('${id}')">Delete Model</button>`:""}`);
+}
+function saveStudioModel(id=""){
+  const name=$("#smName").value.trim();if(!name)return alert("Add the model's name or nickname.");
+  const old=id?studioModelById(id):null,now=new Date().toISOString();
+  const measurements=[...document.querySelectorAll("[data-model-measure]")].map(r=>({name:r.querySelector("[data-mm-name]").value.trim(),value:r.querySelector("[data-mm-value]").value.trim(),unit:r.querySelector("[data-mm-unit]").value})).filter(x=>x.name||x.value);
+  const m={id:id||crypto.randomUUID(),name,usualSize:$("#smSize").value.trim(),measurements,notes:$("#smNotes").value.trim(),created:old?.created||now,updated:now};
+  S("studio_models",id?MODELS().map(x=>x.id===id?m:x):[...MODELS(),m]);dlg.close();renderStudioModels();
+}
+function deleteStudioModel(id){
+  if(PATTERNS().some(x=>x.linkedModelId===id)&&!confirm("This model is linked to a pattern. Delete the saved model anyway? The pattern's own measurements will stay."))return;
+  S("studio_models",MODELS().filter(x=>x.id!==id));deleteCloudRow("crochet_models",id);dlg.close();renderStudioModels();
+}
+
+function renderStudioCalculator(){
+  const v=$("#view");
+  v.innerHTML=`<div class=studio-subpage><div class=studio-detail-nav><button onclick="studioGo('patterns')">← Patterns</button></div>${studioLogoBlock("Measurement Calculator")}
+    <div class=studio-calc-card>
+      <div class=studio-calc-switch><button id=calcSimpleBtn class=active onclick="studioCalcMode('simple')">Simple</button><button id=calcAdvancedBtn onclick="studioCalcMode('advanced')">Advanced</button></div>
+      <label>Units</label><select id=calcUnit><option value=in>Inches</option><option value=cm>Centimetres</option></select>
+      <div class=studio-two><div><label>Target width / circumference</label><input id=calcWidth type=number step=.01 placeholder="e.g. 34"></div><div><label>Target length</label><input id=calcLength type=number step=.01 placeholder="e.g. 20"></div></div>
+      <div class=studio-calc-gauge><h3>Your gauge</h3><div class=studio-two><input id=calcGaugeSt type=number step=.01 placeholder="Stitches"><input id=calcGaugeWidth type=number step=.01 value=4 placeholder="Across this width"></div><div class=studio-two><input id=calcGaugeRows type=number step=.01 placeholder="Rows"><input id=calcGaugeHeight type=number step=.01 value=4 placeholder="Across this height"></div></div>
+      <div id=calcAdvanced style="display:none"><h3>Advanced</h3><div class=studio-two><div><label>Ease %</label><input id=calcEase type=number step=.1 value=0 placeholder="-10 or 5"></div><div><label>Stretch reduction %</label><input id=calcStretch type=number step=.1 value=0></div></div><div class=studio-two><div><label>Total seam allowance</label><input id=calcSeam type=number step=.01 value=0></div><div><label>Panels</label><input id=calcPanels type=number min=1 step=1 value=1></div></div></div>
+      <button class=primary onclick=calculateStudioGauge()>Calculate</button>
+      <div id=calcResult class=studio-calc-result><span>Your stitch and row counts will show here.</span></div>
+    </div>
+    <div class="meta studio-calc-note">Use your own swatch gauge. Counts are a starting point — always check fit and fabric stretch on the actual piece.</div>
+  </div>`;
+}
+function studioCalcMode(mode){
+  const adv=mode==="advanced";
+  $("#calcAdvanced").style.display=adv?"block":"none";
+  $("#calcSimpleBtn").classList.toggle("active",!adv);$("#calcAdvancedBtn").classList.toggle("active",adv);
+}
+function calculateStudioGauge(){
+  let width=+$("#calcWidth").value||0,length=+$("#calcLength").value||0,st=+$("#calcGaugeSt").value||0,gw=+$("#calcGaugeWidth").value||0,rows=+$("#calcGaugeRows").value||0,gh=+$("#calcGaugeHeight").value||0;
+  if(!width||!st||!gw)return alert("Add a target width and stitch gauge.");
+  const advanced=$("#calcAdvanced").style.display!=="none";
+  let panels=1,finalWidth=width;
+  if(advanced){
+    const ease=+$("#calcEase").value||0,stretch=+$("#calcStretch").value||0,seam=+$("#calcSeam").value||0;
+    panels=Math.max(1,+$("#calcPanels").value||1);
+    finalWidth=width*(1+ease/100)*(1-stretch/100)+seam;
+  }
+  const totalSt=Math.max(1,Math.round(finalWidth*(st/gw)));
+  const perPanel=Math.max(1,Math.round(totalSt/panels));
+  const rowCount=length&&rows&&gh?Math.max(1,Math.round(length*(rows/gh))):null;
+  $("#calcResult").innerHTML=`<div><span>Total stitches</span><b>${totalSt}</b></div>${panels>1?`<div><span>Approx. per panel</span><b>${perPanel}</b></div>`:""}${rowCount?`<div><span>Rows for length</span><b>${rowCount}</b></div>`:""}<small>Adjusted width used: ${finalWidth.toFixed(2)} ${$("#calcUnit").value}</small>`;
+}
+
+function exportStudioPatternPDF(id){
+  const x=studioPatternById(id);if(!x||x.status!=="Final")return alert("Only Final patterns can be exported.");
+  const model=studioModelById(x.linkedModelId);
+  const rows=(x.instructions||[]).map((s,i)=>`<section><h2>${String(i+1).padStart(2,"0")} · ${esc(s.name||"Section")}</h2>${(s.yarnOverride||s.hookOverride||s.measurementNotes)?`<div class=over>${s.yarnOverride?`<b>Yarn:</b> ${esc(s.yarnOverride)} `:""}${s.hookOverride?`<b>Hook/settings:</b> ${esc(s.hookOverride)} `:""}${s.measurementNotes?`<b>Measurements:</b> ${esc(s.measurementNotes)}`:""}</div>`:""}${(s.steps||[]).map(st=>`<div class=step><b>${esc(st.label||"Step")}</b><p>${esc(st.text||"")}</p></div>`).join("")}</section>`).join("");
+  const win=window.open("","_blank");if(!win)return alert("Allow pop-ups so I can open the PDF layout.");
+  win.document.write(`<!doctype html><html><head><meta charset=utf-8><title>${esc(x.name)} · Améa Pattern</title><style>
+    @page{margin:16mm}*{box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#5a2440;line-height:1.5;margin:0}.head{border-bottom:2px solid #b88935;padding-bottom:18px;margin-bottom:24px;display:flex;justify-content:space-between;align-items:end}.logo{height:46px;max-width:170px;object-fit:contain}.hq{color:#b88935;font-size:11px;font-weight:800;letter-spacing:2px}.eyebrow{font-size:9px;letter-spacing:2px;color:#b88935;font-weight:800}h1{font-family:Georgia,serif;color:#f52578;margin:3px 0 5px;font-size:30px}h2{font-family:Georgia,serif;color:#f52578;font-size:18px;margin:24px 0 8px}.meta{color:#93677c;font-size:11px}.hero{display:grid;grid-template-columns:145px 1fr;gap:20px;align-items:start}.hero img.photo{width:145px;height:145px;object-fit:cover;border-radius:18px}.box{background:#fff8fc;border:1px solid #f1d7e3;border-radius:14px;padding:12px;margin:12px 0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.line{padding:5px 0;border-bottom:1px solid #f5e5ec}.step{padding:9px 0;border-bottom:1px solid #f2dde6}.step p{margin:3px 0 0;white-space:pre-wrap}.over{background:#fff6fa;padding:9px;border-radius:10px;font-size:10px}.extra{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.extra img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:12px}.footer{margin-top:30px;border-top:1px solid #e9d4dc;padding-top:10px;color:#93677c;font-size:9px;text-align:center}@media print{button{display:none}}</style></head><body>
+    <div class=head><div><img class=logo src="${AMEA_LOGO_DATA}"><div class=hq>HQ · CROCHET STUDIO</div></div><div class=eyebrow>FINAL PATTERN</div></div>
+    <div class=hero>${x.mainPhoto?`<img class=photo src="${x.mainPhoto}">`:""}<div><div class=eyebrow>${esc(x.technique)} · ${esc(x.category)}</div><h1>${esc(x.name)}</h1><div class=meta>${x.collection?esc(x.collection)+" · ":""}Sizes: ${esc((x.sizes||[]).join(", ")||"—")}${model?" · Model: "+esc(model.name):""}</div></div></div>
+    <div class=box><h2>Materials</h2>${(x.materials||[]).map(m=>`<div class=line>□ ${esc(m.text)}</div>`).join("")||"—"}${x.materialNotes?`<p>${esc(x.materialNotes)}</p>`:""}</div>
+    <div class=box><h2>Yarn & ${x.technique==="Knit"?"Machine":"Hook"}</h2>${(x.yarns||[]).map(y=>`<div class=line><b>${esc(studioYarnSummary(y))}</b>${y.amount?" · "+esc(y.amount):""}</div>`).join("")}${x.technique==="Crochet"?`<p><b>Hook:</b> ${esc(x.hookSize||"—")}</p>`:`<div class=grid><div><b>Machine:</b> ${esc(x.knit?.machine||"—")}</div><div><b>Mode:</b> ${esc(x.knit?.mode||"—")}</div><div><b>Rows:</b> ${esc(x.knit?.rowCount||"—")}</div><div><b>Tension:</b> ${esc(x.knit?.tension||"—")}</div></div>`}</div>
+    <div class=box><h2>Measurements</h2>${(x.measurements||[]).map(m=>`<div class=line><b>${esc(m.name)}</b> · ${esc(m.value)} ${esc(m.unit||"")}</div>`).join("")||"—"}</div>
+    ${rows}
+    ${(x.extraPhotos||[]).length?`<section><h2>Reference Photos</h2><div class=extra>${x.extraPhotos.map(p=>`<img src="${p}">`).join("")}</div></section>`:""}
+    ${x.notes?`<section><h2>Notes</h2><p>${esc(x.notes)}</p></section>`:""}
+    <div class=footer>Améa · Final pattern exported from Améa HQ</div>
+    <script>window.onload=()=>setTimeout(()=>window.print(),250)<\/script></body></html>`);
+  win.document.close();
+}
+
+function page(x){cur=x;render()}function render(){document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===cur));let v=$("#view");if(cur=="home"){let o=O(),e=E(),now=new Date(),mo=o.filter(x=>new Date(x.created).getMonth()==now.getMonth()),sales=mo.reduce((a,x)=>a+x.paid,0),out=mo.reduce((a,x)=>a+Math.max(0,x.price-x.paid),0),ex=e.filter(x=>new Date(x.date).getMonth()==now.getMonth()).reduce((a,x)=>a+x.amount,0),today=new Date().toISOString().slice(0,10);v.innerHTML=`<div class=hero><h2 id=homeGreeting>${greeting()}, Améa Boss ✨</h2><div class=meta>Everything in your studio, in one pretty place.</div></div><div class=grid><div class=card>Sales<b>${M(sales)}</b></div><div class=card>Orders<b>${mo.length}</b></div><div class=card>Outstanding<b>${M(out)}</b></div><div class=card>Expenses<b>${M(ex)}</b></div></div><div class=section><h3>Today</h3><div class=card>${list(O().filter(x=>x.due==today),true)||'<div class=meta>No orders due today 💗</div>'}</div></div><button class=studio-home-shortcut onclick="page(\'crochet\')"><div><span class=studio-home-eyebrow>AMÉA HQ</span><b>Crochet Studio</b><small>Patterns · Yarn · Models · Calculator</small></div><span class=studio-home-arrow>→</span></button><div class="section home-analytics-section"><div class=analytics-home-head><div><h3>Order Activity</h3><div class=meta>See which weeks or months bring in the most orders.</div></div><div class=analytics-home-toggle><button data-home-analytics=months class="${homeAnalyticsMode==="months"?"active":""}" onclick="setHomeAnalytics('months')">Months</button><button data-home-analytics=weeks class="${homeAnalyticsMode==="weeks"?"active":""}" onclick="setHomeAnalytics('weeks')">Weeks</button></div></div><div id=homeAnalytics>${homeActivityMarkup(homeAnalyticsMode)}</div></div><div class=section><h3>Recent Orders</h3>${list(O().slice(-5).reverse())||'<div class=empty>No orders yet.</div>'}</div>`}
 else if(cur=="orders")v.innerHTML=`<h2>Orders</h2><input placeholder="Search orders, customers, products…" oninput="searchO(this.value)"><div id=ol>${list(O().slice().reverse())||'<div class=empty>No orders yet.</div>'}</div>`;
 else if(cur=="customers")v.innerHTML=`<div class=top><h2>Customers</h2><button onclick=newCustomer()>＋ Add</button></div>${C().map(x=>{let st=customerStats(x),last=st.last?st.last.toLocaleDateString("en-JM",{day:"numeric",month:"short",year:"numeric"}):"";return `<div class="item customer-row" onclick="openCustomer('${x.id}')"><div class=top><b>${esc(x.name)}</b><span class="customer-badge ${st.orders.length?"returning":"new"}">${st.orders.length?"RETURNING":"NEW"}</span></div><div class=meta>${esc(x.phone||"")}${x.email?" · "+esc(x.email):""}<br><b>${customerStatusText(x)}</b>${st.orders.length?` · ${M(st.paid)} lifetime`:""}${last?`<br>Last order: ${last}`:""}</div><div class=customer-chevron>View customer →</div></div>`}).join("")||'<div class=empty>No customers yet.</div>'}`;
 else if(cur=="invoices"){
@@ -455,6 +1028,7 @@ else if(cur=="invoices"){
   }).join(""):'<div class=empty>No invoices yet. Create an order first.</div>'}`;
 }
 
+else if(cur=="crochet"){renderStudio()}
 else if(cur=="items")v.innerHTML=`<div class=top><div><h2>Items</h2><div class=meta>Products you sell — separate from materials inventory.</div></div><button onclick=newItem()>＋ Add</button></div><div class=item-catalog>${ITEMS().map(x=>`<div class=item-card onclick="newItem('${x.id}')">${x.photo?`<img src="${x.photo}" alt="${esc(x.name)}">`:`<div class=item-photo-placeholder>AMÉA</div>`}<div class=item-card-body><b>${esc(x.name)}</b><div class=meta>${esc(x.category||"Other")} · ${M(x.price)}</div><div class=meta>${x.status=="Ready-made"?"Ready-made":"Made to order"}${x.sizes?` · ${esc(x.sizes)}`:""}</div></div></div>`).join("")||'<div class=empty>No items yet. Add your first product so orders can select from a list.</div>'}</div>`;
 else if(cur=="inventory")v.innerHTML=`<div class=top><h2>Inventory</h2><button onclick=newInventory()>＋ Add</button></div>${I().map(x=>`<div class=item><div class=top><b>${x.name}</b><span class=${x.qty<=x.low?"money":""}>${x.qty}</span></div><div class=meta>${x.type}${x.qty<=x.low?" · LOW STOCK":""}</div></div>`).join("")||'<div class=empty>No inventory yet.</div>'}`;
 else if(cur=="more"){
@@ -468,6 +1042,7 @@ else if(cur=="more"){
     <button onclick="page('inventory')">▦ Inventory</button>
     <button onclick="page('expenses')">↘ Expenses</button>
     <button onclick="page('analytics')">▥ Analytics</button>
+    <button onclick="page('crochet')">✦ Crochet Studio</button>
     <button onclick="page('calendar')">♡ Calendar</button>
     <button onclick="page('settings')">⚙ Settings</button>
   </div>
@@ -545,7 +1120,7 @@ else if(cur=="settings"){
 }}
 function list(a){return a.map(x=>`<div class=item onclick="editOrder('${x.id}')"><div class=top><b>${x.no} · ${x.customer}</b><span class=badge>${x.status}</span></div><div class=meta>${x.orderType==="Custom"?'<span class="custom-order-tag">CUSTOM</span> ':""}${esc(x.product)} · ${esc(x.size||"—")} · ${esc(x.color||"—")}<br>Placed via: ${esc(x.source||"Not set")} · Payment: ${esc(x.payment||"—")} · Delivery: ${esc(x.delivery||"—")}<br>Due: ${esc(x.due||"—")}</div><div class=money>${M(x.paid)} paid · ${M(Math.max(0,x.price-x.paid))} balance</div></div>`).join("")}
 function searchO(q){q=q.toLowerCase();$("#ol").innerHTML=list(O().filter(x=>JSON.stringify(x).toLowerCase().includes(q)))}
-function openF(h){$("#form").innerHTML=h;if(!dlg.open)dlg.showModal()}function openAddMenu(){openF(`<h2>Add to Améa HQ</h2><div class=add-menu><button onclick="newOrder()">＋ New Order</button><button onclick="newCustomer()">＋ Customer</button><button onclick="newItem()">＋ Item</button><button onclick="newExpense()">＋ Expense</button><button onclick="newInventory()">＋ Inventory</button></div>`)}
+function openF(h){$("#form").innerHTML=h;if(!dlg.open)dlg.showModal()}function openAddMenu(){openF(`<h2>Add to Améa HQ</h2><div class=add-menu><button onclick="newOrder()">＋ New Order</button><button onclick="newCustomer()">＋ Customer</button><button onclick="newItem()">＋ Item</button><button onclick="newExpense()">＋ Expense</button><button onclick="newInventory()">＋ Inventory</button><button onclick="dlg.close();page(\'crochet\');setTimeout(newStudioPattern,0)">＋ Pattern</button></div>`)}
 function dels(){return G("settings",{}).delivery||["Pickup","Delivery"]}
 
 function itemById(id){return ITEMS().find(x=>x.id===id)}
