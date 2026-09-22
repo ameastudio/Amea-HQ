@@ -1022,7 +1022,7 @@ async function studioMainPhotoChanged(input){
   const f=input.files?.[0];if(!f)return;
   try{
     studioMainPhoto=await imageToSmallDataUrl(f);
-    const p=$("#studioMainPreview");if(p){p.src=studioMainPhoto;p.style.display="block"}
+    const p=$("#studioMainPreview");if(p){p.src=studioMainPhoto;p.style.display="block"}autoSaveStudioPatternDraft();
   }catch(e){alert("I couldn't process that photo. Try another image.")}
 }
 async function studioExtraPhotosChanged(input){
@@ -1031,19 +1031,48 @@ async function studioExtraPhotosChanged(input){
     try{studioExtraPhotos.push(await imageToSmallDataUrl(f))}catch(e){}
   }
   studioExtraPhotos=studioExtraPhotos.slice(0,6);
-  studioRenderExtraPreviews();
+  studioRenderExtraPreviews();autoSaveStudioPatternDraft();
   input.value="";
 }
+function removeStudioExtraPhoto(i){studioExtraPhotos.splice(i,1);studioRenderExtraPreviews();autoSaveStudioPatternDraft()}
 function studioRenderExtraPreviews(){
   const box=$("#studioExtraPreview");if(!box)return;
-  box.innerHTML=studioExtraPhotos.map((p,i)=>`<div><img src="${p}" alt=""><button type=button onclick="studioExtraPhotos.splice(${i},1);studioRenderExtraPreviews()">×</button></div>`).join("")||'<span class=meta>No extra photos yet.</span>';
+  box.innerHTML=studioExtraPhotos.map((p,i)=>`<div><img src="${p}" alt=""><button type=button onclick="removeStudioExtraPhoto(${i})">×</button></div>`).join("")||'<span class=meta>No extra photos yet.</span>';
 }
+const STUDIO_PATTERN_DRAFT_KEY="ah_new_pattern_draft";
+let studioPatternDraftEnabled=false;
+function readStudioPatternDraft(){try{return JSON.parse(localStorage.getItem(STUDIO_PATTERN_DRAFT_KEY)||"null")}catch(e){return null}}
+function clearStudioPatternDraft(){localStorage.removeItem(STUDIO_PATTERN_DRAFT_KEY)}
+function captureStudioPatternDraft(){
+  if(!$("#studioPatternName"))return null;
+  const baseSizes=[...document.querySelectorAll(".studio-size-checks input[type=checkbox][value]:checked")].map(x=>x.value);
+  const custom=$("#studioCustomSize")?.value.split(",").map(x=>x.trim()).filter(Boolean)||[];
+  return {
+    ...studioDefaultPattern(),name:$("#studioPatternName")?.value.trim()||"",technique:$("#studioTechniqueEdit")?.value||"Crochet",category:$("#studioCategoryEdit")?.value||"Dress",status:$("#studioStatusEdit")?.value||"Draft",collection:$("#studioCollectionEdit")?.value.trim()||"",tags:($("#studioTags")?.value||"").split(",").map(x=>x.trim()).filter(Boolean),
+    mainPhoto:studioMainPhoto,extraPhotos:[...studioExtraPhotos],yarns:collectStudioYarns(),hookSize:$("#studioHook")?.value.trim()||"",
+    knit:{machine:$("#studioMachine")?.value.trim()||"",mode:$("#studioMachineMode")?.value||"Panel",rowCount:$("#studioRowCount")?.value.trim()||"",tension:$("#studioTension")?.value.trim()||"",notes:$("#studioMachineNotes")?.value.trim()||""},
+    materials:collectStudioMaterials(),materialNotes:$("#studioMaterialNotes")?.value.trim()||"",sizes:[...new Set([...baseSizes,...custom])],linkedModelId:$("#studioModel")?.value||"",measurements:collectStudioMeasurements(),instructions:collectStudioInstructions(),notes:$("#studioPatternNotes")?.value.trim()||"",
+    costing:{enabled:!!$("#studioCostEnabled")?.checked,yarn:+($("#studioCostYarn")?.value||0),labor:+($("#studioCostLabor")?.value||0),other:+($("#studioCostOther")?.value||0)}
+  };
+}
+function autoSaveStudioPatternDraft(){
+  if(!studioPatternDraftEnabled)return;
+  const d=captureStudioPatternDraft();if(!d)return;
+  try{localStorage.setItem(STUDIO_PATTERN_DRAFT_KEY,JSON.stringify(d))}
+  catch(e){try{d.mainPhoto="";d.extraPhotos=[];d.instructions=(d.instructions||[]).map(sec=>({...sec,photo:""}));localStorage.setItem(STUDIO_PATTERN_DRAFT_KEY,JSON.stringify(d))}catch(_){}}
+}
+function installStudioPatternDraftAutosave(){
+  const f=$("#form");if(!f||f.dataset.studioDraftAutosave)return;f.dataset.studioDraftAutosave="1";let t;const save=()=>{clearTimeout(t);t=setTimeout(autoSaveStudioPatternDraft,180)};f.addEventListener("input",save);f.addEventListener("change",save);
+}
+function clearStudioPatternDraftAndRestart(){clearStudioPatternDraft();editStudioPattern("")}
 function newStudioPattern(){editStudioPattern("")}
 function editStudioPattern(id=""){
-  const x=id?JSON.parse(JSON.stringify(studioPatternById(id)||studioDefaultPattern())):studioDefaultPattern();
+  studioPatternDraftEnabled=!id;
+  const saved=!id?readStudioPatternDraft():null;
+  const x=id?JSON.parse(JSON.stringify(studioPatternById(id)||studioDefaultPattern())):(saved?{...studioDefaultPattern(),...saved}:studioDefaultPattern());
   studioMainPhoto=x.mainPhoto||"";studioExtraPhotos=[...(x.extraPhotos||[])];
   const sizes=["XS","S","M","L","XL"];
-  openF(`<div class=studio-editor-title>${studioLogoBlock(id?"Edit Pattern":"New Pattern")}</div>
+  openF(`<div class=studio-editor-title><div>${studioLogoBlock(id?"Edit Pattern":"New Pattern")}${!id&&saved?'<span class=draft-restored>Autosaved draft restored ✓</span>':""}</div>${!id?'<button type=button class=draft-clear-btn onclick=clearStudioPatternDraftAndRestart()>Start Fresh</button>':""}</div>
     <label>Pattern name</label><input id=studioPatternName value="${esc(x.name||"")}" placeholder="e.g. Flora Dress">
     <div class=studio-three><div><label>Technique</label><select id=studioTechniqueEdit onchange=studioToggleTechnique()><option ${x.technique==="Crochet"?"selected":""}>Crochet</option><option ${x.technique==="Knit"?"selected":""}>Knit</option></select></div>
     <div><label>Category</label><select id=studioCategoryEdit>${studioCategories().map(z=>`<option ${x.category===z?"selected":""}>${z}</option>`).join("")}</select></div>
@@ -1075,7 +1104,7 @@ function editStudioPattern(id=""){
     <div class=studio-editor-block><label class=studio-cost-toggle><input id=studioCostEnabled type=checkbox ${x.costing?.enabled?"checked":""} onchange=studioToggleCost()> Track cost for this pattern</label><div id=studioCostFields class=studio-cost-fields><input id=studioCostYarn type=number placeholder="Yarn cost" value="${esc(x.costing?.yarn||"")}"><input id=studioCostLabor type=number placeholder="Labour" value="${esc(x.costing?.labor||"")}"><input id=studioCostOther type=number placeholder="Other cost" value="${esc(x.costing?.other||"")}"></div></div>
 
     <button class=primary onclick="saveStudioPattern('${id}')">${id?"Save Pattern":"Create Pattern"}</button>`);
-  studioToggleTechnique();studioToggleCost();studioRenderExtraPreviews();
+  studioToggleTechnique();studioToggleCost();studioRenderExtraPreviews();if(!id)installStudioPatternDraftAutosave();
 }
 function collectStudioYarns(){
   return [...document.querySelectorAll("[data-yarn-row]")].map(row=>({
@@ -1135,6 +1164,7 @@ function saveStudioPattern(id=""){
   };
   const a=id?PATTERNS().map(z=>z.id===id?x:z):[...PATTERNS(),x];
   try{S("studio_patterns",a)}catch(e){return alert("This pattern is too large to save on this device. Try removing an extra photo.")}
+  if(!id)clearStudioPatternDraft();studioPatternDraftEnabled=false;
   dlg.close();studioPatternId=x.id;studioSub="patterns";page("crochet");
 }
 
@@ -1177,7 +1207,9 @@ function saveStudioModel(id=""){
   S("studio_models",id?MODELS().map(x=>x.id===id?m:x):[...MODELS(),m]);dlg.close();renderStudioModels();
 }
 function deleteStudioModel(id){
-  if(PATTERNS().some(x=>x.linkedModelId===id)&&!confirm("This model is linked to a pattern. Delete the saved model anyway? The pattern's own measurements will stay."))return;
+  const linked=PATTERNS().some(x=>x.linkedModelId===id);
+  const msg=linked?"This model is linked to a pattern. Delete the saved model anyway? The pattern's own measurements will stay.":"Delete this saved model?";
+  if(!confirm(msg))return;
   S("studio_models",MODELS().filter(x=>x.id!==id));deleteCloudRow("crochet_models",id);dlg.close();renderStudioModels();
 }
 
@@ -1277,7 +1309,7 @@ function renderCalendarPage(){
 }
 
 function page(x){cur=x;render()}function render(){document.body.classList.toggle("studio-mode",cur==="crochet");document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===cur));let v=$("#view");if(cur=="home"){let o=O(),e=E(),now=new Date(),mo=o.filter(x=>new Date(x.created).getMonth()==now.getMonth()),sales=mo.reduce((a,x)=>a+x.paid,0),out=mo.reduce((a,x)=>a+Math.max(0,x.price-x.paid),0),ex=e.filter(x=>new Date(x.date).getMonth()==now.getMonth()).reduce((a,x)=>a+x.amount,0),today=new Date().toISOString().slice(0,10);v.innerHTML=`<div class=hero><h2 id=homeGreeting>${greeting()}, Améa Boss ✨</h2><div class=meta>Everything in your studio, in one pretty place.</div></div><div class=grid><div class=card>Sales<b>${M(sales)}</b></div><div class=card>Orders<b>${mo.length}</b></div><div class=card>Outstanding<b>${M(out)}</b></div><div class=card>Expenses<b>${M(ex)}</b></div></div><div class=section><h3>Today</h3><div class=card>${list(O().filter(x=>x.due==today),true)||'<div class=meta>No orders due today 💗</div>'}</div></div><button class=studio-home-shortcut onclick="page(\'crochet\')"><div><span class=studio-home-eyebrow>AMÉA HQ</span><b>Crochet Studio</b><small>Patterns · Yarn · Models · Calculator</small></div><span class=studio-home-arrow>→</span></button><div class="section home-analytics-section"><div class=analytics-home-head><div><h3>Order Activity</h3><div class=meta>See which weeks or months bring in the most orders.</div></div><div class=analytics-home-toggle><button data-home-analytics=months class="${homeAnalyticsMode==="months"?"active":""}" onclick="setHomeAnalytics('months')">Months</button><button data-home-analytics=weeks class="${homeAnalyticsMode==="weeks"?"active":""}" onclick="setHomeAnalytics('weeks')">Weeks</button></div></div><div id=homeAnalytics>${homeActivityMarkup(homeAnalyticsMode)}</div></div><div class=section><h3>Recent Orders</h3>${list(O().slice(-5).reverse())||'<div class=empty>No orders yet.</div>'}</div>`}
-else if(cur=="orders")v.innerHTML=`<h2>Orders</h2><input placeholder="Search orders, customers, products…" oninput="searchO(this.value)"><div id=ol>${list(O().slice().reverse())||'<div class=empty>No orders yet.</div>'}</div>`;
+ else if(cur=="orders")v.innerHTML=activeOrderViewId?renderOrderView(activeOrderViewId):renderOrdersPage();
 else if(cur=="customers")v.innerHTML=`<div class=top><h2>Customers</h2><button onclick=newCustomer()>＋ Add</button></div>${C().map(x=>{let st=customerStats(x),last=st.last?st.last.toLocaleDateString("en-JM",{day:"numeric",month:"short",year:"numeric"}):"";return `<div class="item customer-row" onclick="openCustomer('${x.id}')"><div class=top><b>${esc(x.name)}</b><span class="customer-badge ${st.orders.length?"returning":"new"}">${st.orders.length?"RETURNING":"NEW"}</span></div><div class=meta>${esc(x.phone||"")}${x.email?" · "+esc(x.email):""}<br><b>${customerStatusText(x)}</b>${st.orders.length?` · ${M(st.paid)} lifetime`:""}${last?`<br>Last order: ${last}`:""}</div><div class=customer-chevron>View customer →</div></div>`}).join("")||'<div class=empty>No customers yet.</div>'}`;
 else if(cur=="invoices"){
   const orders=O().slice().reverse();
@@ -1382,13 +1414,152 @@ else if(cur=="settings"){
   </div>
   <p class=meta>Your HQ data is synced to your private cloud account. Device storage is kept as a local copy too.</p>`
 }}
-function list(a){return a.map(x=>{
+let activeOrderViewId="";
+let activeOrderViewMode="maker";
+let photoViewerState=null;
+
+function orderPins(){return G("order_pins",[])}
+function orderIsPinned(id){return orderPins().includes(id)}
+function toggleOrderPin(id,event){
+  event?.stopPropagation?.();
+  const pins=orderPins();
+  const next=pins.includes(id)?pins.filter(x=>x!==id):[...pins,id];
+  localStorage.setItem("ah_order_pins",JSON.stringify(next));
+  render();
+}
+function parseDateOnly(v){
+  const m=String(v||"").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  return m?new Date(+m[1],+m[2]-1,+m[3]):null;
+}
+function todayStart(){const d=new Date();return new Date(d.getFullYear(),d.getMonth(),d.getDate())}
+function orderDueOffset(o){
+  const d=parseDateOnly(o?.due);if(!d)return null;
+  return Math.round((d-todayStart())/86400000);
+}
+function sortOrdersSmart(a){
+  return [...a].sort((x,y)=>{
+    const pin=(+orderIsPinned(y.id))-(+orderIsPinned(x.id));if(pin)return pin;
+    const dx=orderDueOffset(x),dy=orderDueOffset(y);
+    if(dx!=null&&dy!=null&&dx!==dy)return dx-dy;
+    if(dx!=null&&dy==null)return -1;if(dx==null&&dy!=null)return 1;
+    return new Date(y.created||0)-new Date(x.created||0);
+  });
+}
+function orderDueLabel(o){
+  const d=orderDueOffset(o);
+  if(d==null)return "No due date";
+  if(d<0)return `${Math.abs(d)} day${Math.abs(d)===1?"":"s"} overdue`;
+  if(d===0)return "Due today";
+  if(d===1)return "Due tomorrow";
+  return `Due in ${d} days`;
+}
+function renderOrdersPage(){
+  const orders=sortOrdersSmart(O());
+  const today=orders.filter(o=>o.status!=="Delivered"&&orderDueOffset(o)===0);
+  const soon=orders.filter(o=>o.status!=="Delivered"&&orderDueOffset(o)>0&&orderDueOffset(o)<=7);
+  return `<div class=orders-page>
+    <div class=orders-title-row><div><h2>Orders</h2><div class=meta>Open an order to see the making details first.</div></div><button onclick=newOrder()>＋ New Order</button></div>
+    ${(today.length||soon.length)?`<div class=due-priority-wrap>${today.length?`<section class=due-priority today-due><div class=due-priority-head><div><span>TODAY</span><b>${today.length} order${today.length===1?"":"s"} due</b></div></div>${list(today,true)}</section>`:""}${soon.length?`<section class=due-priority><div class=due-priority-head><div><span>DUE SOON</span><b>Next 7 days</b></div></div>${list(soon,true)}</section>`:""}</div>`:""}
+    <div class=orders-all-head><h3>All Orders</h3><span>${orders.length}</span></div>
+    <input placeholder="Search orders, customers, products…" oninput="searchO(this.value)">
+    <div id=ol>${list(orders)||'<div class=empty>No orders yet.</div>'}</div>
+  </div>`;
+}
+function list(a,compact=false){return a.map(x=>{
   const items=orderItemsFor(x);
   const summary=items.map(it=>orderItemLabel(it)).join(" · ");
-  return `<div class=item onclick="editOrder('${x.id}')"><div class=top><b>${x.no} · ${x.customer}</b><span class=badge>${x.status}</span></div><div class=meta>${items.length>1?'<span class="multi-order-tag">MULTI-ITEM</span> ':""}${esc(summary||x.product)}<br>Placed via: ${esc(x.source||"Not set")} · Payment: ${esc(x.payment||"—")} · Delivery: ${esc(x.delivery||"—")}<br>Due: ${esc(x.due||"—")}</div><div class=money>${M(x.paid)} paid · ${M(Math.max(0,x.price-x.paid))} balance</div>${orderHasPattern(x)?`<button class=order-work-quick onclick="event.stopPropagation();openOrderPatternChooser('${x.id}')">✓ Work on Pattern</button>`:""}</div>`;
+  const pinned=orderIsPinned(x.id);
+  return `<div class="item order-list-card ${pinned?"pinned":""}" onclick="openOrderView('${x.id}')"><div class=top><b>${pinned?"★ ":""}${esc(x.no)} · ${esc(x.customer)}</b><span class=badge>${esc(x.status)}</span></div><div class=meta>${items.length>1?'<span class="multi-order-tag">MULTI-ITEM</span> ':""}${esc(summary||x.product)}<br>${esc(orderDueLabel(x))}${compact?"":` · ${esc(x.delivery||"—")}`}</div>${compact?"":`<div class=order-list-actions><button class=order-pin-btn onclick="toggleOrderPin('${x.id}',event)">${pinned?"★ Pinned":"☆ Pin"}</button>${orderHasPattern(x)?`<button class=order-work-quick onclick="event.stopPropagation();openOrderPatternChooser('${x.id}')">✓ Work on Pattern</button>`:""}</div>`}</div>`;
 }).join("")}
-function searchO(q){q=q.toLowerCase();$("#ol").innerHTML=list(O().filter(x=>JSON.stringify(x).toLowerCase().includes(q)))}
-function openF(h){$("#form").innerHTML=h;if(!dlg.open)dlg.showModal()}function openAddMenu(){openF(`<h2>Add to Améa HQ</h2><div class=add-menu><button onclick="newOrder()">＋ New Order</button><button onclick="newCustomer()">＋ Customer</button><button onclick="newItem()">＋ Item</button><button onclick="newExpense()">＋ Expense</button><button onclick="newInventory()">＋ Inventory</button><button onclick="dlg.close();page(\'crochet\');setTimeout(newStudioPattern,0)">＋ Pattern</button></div>`)}
+function searchO(q){q=q.toLowerCase();const el=$("#ol");if(el)el.innerHTML=list(sortOrdersSmart(O().filter(x=>JSON.stringify(x).toLowerCase().includes(q))))}
+function openOrderView(id,mode="maker"){activeOrderViewId=id;activeOrderViewMode=mode;cur="orders";render()}
+function closeOrderView(){activeOrderViewId="";activeOrderViewMode="maker";cur="orders";render()}
+function setOrderViewMode(mode){activeOrderViewMode=mode==="full"?"full":"maker";render()}
+function quickOrderStatus(id,status){
+  const valid=["New","In Studio","Ready","Delivered"];if(!valid.includes(status))return;
+  S("orders",O().map(o=>o.id===id?{...o,status}:o));
+  render();
+}
+async function copyOrderMeasurements(id,btn){
+  const o=O().find(x=>x.id===id);if(!o)return;
+  const text=String(customerForOrder(o).measurements||"").trim();
+  if(!text)return alert("No measurements are saved for this customer yet.");
+  try{
+    if(navigator.clipboard?.writeText)await navigator.clipboard.writeText(text);
+    else throw new Error("clipboard unavailable");
+    if(btn){const old=btn.textContent;btn.textContent="Copied ✓";setTimeout(()=>btn.textContent=old,1300)}
+  }catch(e){prompt("Measurements — press and hold to copy",text)}
+}
+function orderMakerItemMarkup(it,index,orderId){
+  const pattern=it.patternId?studioPatternById(it.patternId):null;
+  return `<section class=maker-item-card><div class=maker-item-head><span>ITEM ${index+1}</span><h3>${esc(orderItemLabel(it))}</h3></div><div class=maker-spec-grid><div><span>Size</span><b>${esc(it.size||"—")}</b></div><div><span>Colour</span><b>${esc(it.color||"—")}</b></div></div>${it.details?`<div class=maker-note><span>DESIGN / MAKING NOTES</span><p>${esc(it.details)}</p></div>`:""}${pattern?`<button class=maker-pattern-btn onclick="openOrderPatternTracker('${orderId}','${it.lineId}')"><span>Pattern</span><b>${esc(pattern.name)}</b><small>Open work view →</small></button>`:""}</section>`;
+}
+function renderOrderView(id){
+  const o=O().find(x=>x.id===id);if(!o){activeOrderViewId="";return renderOrdersPage()}
+  const items=orderItemsFor(o),c=customerForOrder(o),photos=Array.isArray(o.inspirationPhotos)?o.inspirationPhotos:[];
+  const statusButtons=["New","In Studio","Ready","Delivered"].map(st=>`<button class="quick-status ${o.status===st?"active":""}" onclick="quickOrderStatus('${o.id}','${st}')">${st}</button>`).join("");
+  const tabs=`<div class=order-view-tabs><button class="${activeOrderViewMode==="maker"?"active":""}" onclick="setOrderViewMode('maker')">Maker View</button><button class="${activeOrderViewMode==="full"?"active":""}" onclick="setOrderViewMode('full')">Full Details</button></div>`;
+  if(activeOrderViewMode==="full")return `<div class=order-view-page>
+    <div class=order-view-nav><button onclick=closeOrderView()>← Orders</button><div><button onclick="toggleOrderPin('${o.id}',event)">${orderIsPinned(o.id)?"★":"☆"}</button><button class=order-edit-btn onclick="editOrder('${o.id}')">Edit</button></div></div>
+    <div class=order-view-title><span>${esc(o.no)}</span><h2>${esc(o.customer)}</h2><p>${esc(orderDueLabel(o))}</p></div>${tabs}
+    <section class=full-detail-card><h3>Customer</h3><div class=full-detail-grid><div><span>Name</span><b>${esc(c.name||o.customer||"—")}</b></div><div><span>Phone</span><b>${esc(c.phone||"—")}</b></div><div><span>Email</span><b>${esc(c.email||"—")}</b></div><div><span>Instagram</span><b>${esc(c.instagram||"—")}</b></div></div></section>
+    <section class=full-detail-card><h3>Order & Payment</h3><div class=full-detail-grid><div><span>Total</span><b>${M(o.price)}</b></div><div><span>Paid</span><b>${M(o.paid)}</b></div><div><span>Balance</span><b>${M(Math.max(0,(+o.price||0)-(+o.paid||0)))}</b></div><div><span>Payment</span><b>${esc(o.payment||"—")}</b></div><div><span>Placed via</span><b>${esc(o.source||"—")}</b></div><div><span>Delivery</span><b>${esc(o.delivery||"—")}</b></div><div><span>Due</span><b>${esc(o.due||"—")}</b></div><div><span>Status</span><b>${esc(o.status||"New")}</b></div></div></section>
+    <section class=full-detail-card><h3>Items</h3>${items.map((it,i)=>`<div class=full-order-item><b>${i+1}. ${esc(orderItemLabel(it))}</b><span>${esc(it.size||"No size")} · ${esc(it.color||"No colour")} · ${M(it.price)}</span>${it.details?`<p>${esc(it.details)}</p>`:""}</div>`).join("")}</section>
+    ${o.notes?`<section class=full-detail-card><h3>Private Order Notes</h3><p>${esc(o.notes)}</p></section>`:""}
+    <div class=full-detail-actions><button class=invoice-btn onclick="openInvoice('${o.id}')">Create Invoice</button><button class=danger onclick="delOrder('${o.id}')">Delete Order</button></div>
+  </div>`;
+  return `<div class=order-view-page>
+    <div class=order-view-nav><button onclick=closeOrderView()>← Orders</button><div><button onclick="toggleOrderPin('${o.id}',event)">${orderIsPinned(o.id)?"★":"☆"}</button><button class=order-edit-btn onclick="editOrder('${o.id}')">Edit</button></div></div>
+    <div class=order-view-title><span>${esc(o.no)} · ${esc(o.customer)}</span><h2>${esc(orderSummaryProduct(items))}</h2><p>${esc(orderDueLabel(o))}</p></div>${tabs}
+    ${photos.length?`<section class=maker-photo-section><div class=maker-section-head><div><span>INSPIRATION</span><h3>Reference Photos</h3></div><small>Tap one to zoom</small></div><div class=maker-photo-grid>${photos.map((src,i)=>`<button onclick="openInspoViewer('${o.id}',${i})" aria-label="Open inspiration photo ${i+1}"><img src="${src}" alt="Inspiration ${i+1}"><span>${i+1}</span></button>`).join("")}</div></section>`:""}
+    <div class=maker-items>${items.map((it,i)=>orderMakerItemMarkup(it,i,o.id)).join("")}</div>
+    <section class=maker-measurements><div class=maker-section-head><div><span>MEASUREMENTS</span><h3>${esc(c.name||o.customer||"Customer")}</h3></div>${c.measurements?`<button onclick="copyOrderMeasurements('${o.id}',this)">Copy</button>`:""}</div><div class=maker-measure-text>${c.measurements?esc(c.measurements):"No measurements saved for this customer."}</div></section>
+    ${o.notes?`<section class=maker-note-card><span>ORDER NOTES</span><p>${esc(o.notes)}</p></section>`:""}
+    <section class=maker-status-card><div class=maker-section-head><div><span>STATUS</span><h3>Quick Update</h3></div><b>${esc(o.status||"New")}</b></div><div class=quick-status-row>${statusButtons}</div></section>
+    <button class=view-full-details-btn onclick="setOrderViewMode('full')">View Full Order Details</button>
+  </div>`;
+}
+function openInspoViewer(orderId,index){
+  const o=O().find(x=>x.id===orderId),src=o?.inspirationPhotos?.[index];if(!src)return;
+  openF(`<div class=photo-viewer-wrap><div class=photo-viewer-head><div><span>INSPIRATION ${index+1}</span><b>${esc(o.no)} · ${esc(o.customer)}</b></div><small>Pinch or use + / −</small></div><div id=photoViewerStage class=photo-viewer-stage><img id=photoViewerImage src="${src}" alt="Inspiration photo ${index+1}" draggable="false"></div><div class=photo-viewer-controls><button onclick="photoViewerZoom(-.5)" aria-label="Zoom out">−</button><button onclick="photoViewerReset()">Reset</button><button onclick="photoViewerZoom(.5)" aria-label="Zoom in">＋</button></div></div>`);
+  setTimeout(bindPhotoViewer,0);
+}
+function photoViewerApply(){
+  const img=$("#photoViewerImage");if(!img||!photoViewerState)return;
+  const s=photoViewerState;img.style.transform=`translate3d(${s.x}px,${s.y}px,0) scale(${s.scale})`;
+}
+function photoViewerReset(){if(!photoViewerState)return;photoViewerState.scale=1;photoViewerState.x=0;photoViewerState.y=0;photoViewerApply()}
+function photoViewerZoom(delta){
+  if(!photoViewerState)return;photoViewerState.scale=Math.max(1,Math.min(6,photoViewerState.scale+delta));
+  if(photoViewerState.scale===1){photoViewerState.x=0;photoViewerState.y=0}photoViewerApply();
+}
+function bindPhotoViewer(){
+  const stage=$("#photoViewerStage");if(!stage)return;
+  photoViewerState={scale:1,x:0,y:0,pointers:new Map(),pinchDistance:0,pinchScale:1,startMid:null,startX:0,startY:0};
+  const dist=pts=>{const a=pts[0],b=pts[1];return Math.hypot(b.x-a.x,b.y-a.y)};
+  const mid=pts=>({x:(pts[0].x+pts[1].x)/2,y:(pts[0].y+pts[1].y)/2});
+  stage.addEventListener("pointerdown",e=>{
+    stage.setPointerCapture?.(e.pointerId);photoViewerState.pointers.set(e.pointerId,{x:e.clientX,y:e.clientY,lastX:e.clientX,lastY:e.clientY});
+    const pts=[...photoViewerState.pointers.values()];
+    if(pts.length===2){photoViewerState.pinchDistance=dist(pts);photoViewerState.pinchScale=photoViewerState.scale;photoViewerState.startMid=mid(pts);photoViewerState.startX=photoViewerState.x;photoViewerState.startY=photoViewerState.y}
+  });
+  stage.addEventListener("pointermove",e=>{
+    const s=photoViewerState,p=s.pointers.get(e.pointerId);if(!p)return;
+    const old={...p};p.x=e.clientX;p.y=e.clientY;s.pointers.set(e.pointerId,p);const pts=[...s.pointers.values()];
+    if(pts.length>=2){const d=dist(pts),m=mid(pts);s.scale=Math.max(1,Math.min(6,s.pinchScale*(d/(s.pinchDistance||d))));s.x=s.startX+(m.x-s.startMid.x);s.y=s.startY+(m.y-s.startMid.y)}
+    else if(s.scale>1){s.x+=p.x-old.x;s.y+=p.y-old.y}
+    p.lastX=p.x;p.lastY=p.y;photoViewerApply();
+  });
+  const end=e=>{const s=photoViewerState;if(!s)return;s.pointers.delete(e.pointerId);const pts=[...s.pointers.values()];if(pts.length===1){pts[0].lastX=pts[0].x;pts[0].lastY=pts[0].y}if(s.scale<=1)photoViewerReset()};
+  stage.addEventListener("pointerup",end);stage.addEventListener("pointercancel",end);
+  stage.addEventListener("wheel",e=>{e.preventDefault();photoViewerZoom(e.deltaY>0?-.25:.25)},{passive:false});
+}
+function normalizeDialogClose(){
+  if(!dlg?.querySelectorAll)return;
+  const closes=[...dlg.querySelectorAll(".close")].filter(b=>b.parentElement===dlg||b.parentElement?.id==="form");
+  closes.slice(1).forEach(b=>b.remove());
+}
+function openF(h){$("#form").innerHTML=h;normalizeDialogClose();if(!dlg.open)dlg.showModal()}function openAddMenu(){openF(`<h2>Add to Améa HQ</h2><div class=add-menu><button onclick="newOrder()">＋ New Order</button><button onclick="newCustomer()">＋ Customer</button><button onclick="newItem()">＋ Item</button><button onclick="newExpense()">＋ Expense</button><button onclick="newInventory()">＋ Inventory</button><button onclick="dlg.close();page(\'crochet\');setTimeout(newStudioPattern,0)">＋ Pattern</button></div>`)}
 function dels(){return G("settings",{}).delivery||["Pickup","Delivery"]}
 
 function itemById(id){return ITEMS().find(x=>x.id===id)}
@@ -1508,14 +1679,14 @@ function addOrderLine(){
   const idx=box.querySelectorAll("[data-order-line]").length;
   box.insertAdjacentHTML("beforeend",orderLineCard({lineId:crypto.randomUUID(),type:"Made to Order"},idx));
   toggleOrderLine(box.lastElementChild.querySelector("[data-line-type]"),false);
-  refreshOrderTotal();
+  refreshOrderTotal();autoSaveOrderDraft();
 }
 function removeOrderLine(btn){
   btn.closest("[data-order-line]")?.remove();
   [...document.querySelectorAll("[data-order-line]")].forEach((line,i)=>{
     const tag=line.querySelector(".order-line-head span");if(tag)tag.textContent=`ITEM ${i+1}`;
   });
-  refreshOrderTotal();
+  refreshOrderTotal();autoSaveOrderDraft();
 }
 function toggleOrderLine(sel,clear=true){
   const line=sel?.closest("[data-order-line]");if(!line)return;
@@ -1645,13 +1816,16 @@ function renderInspoPreviews(){
   const box=$("#inspoPreview");
   if(!box)return;
   box.innerHTML=draftInspoPhotos.length
-    ? draftInspoPhotos.map((src,i)=>`<div class=inspo-thumb><img src="${src}" alt="Inspiration ${i+1}"><button type=button onclick="removeInspoPhoto(${i})">×</button></div>`).join("")
+    ? draftInspoPhotos.map((src,i)=>`<div class=inspo-thumb><img src="${src}" alt="Inspiration ${i+1}"><div class=inspo-thumb-tools><button type=button onclick="moveInspoPhoto(${i},-1)" ${i===0?"disabled":""} aria-label="Move photo left">‹</button><span>${i+1}</span><button type=button onclick="moveInspoPhoto(${i},1)" ${i===draftInspoPhotos.length-1?"disabled":""} aria-label="Move photo right">›</button><button class=inspo-remove type=button onclick="removeInspoPhoto(${i})" aria-label="Remove photo">×</button></div></div>`).join("")
     : '<div class="meta inspo-empty">No inspiration photos added yet.</div>';
 }
-
+function moveInspoPhoto(i,delta){
+  const j=i+delta;if(j<0||j>=draftInspoPhotos.length)return;
+  [draftInspoPhotos[i],draftInspoPhotos[j]]=[draftInspoPhotos[j],draftInspoPhotos[i]];renderInspoPreviews();autoSaveOrderDraft();
+}
 function removeInspoPhoto(i){
   draftInspoPhotos.splice(i,1);
-  renderInspoPreviews();
+  renderInspoPreviews();autoSaveOrderDraft();
 }
 
 function imageToInspoDataUrl(file){
@@ -1688,10 +1862,26 @@ async function addInspoPhotos(input){
     catch(e){alert("One of those photos could not be added. Try another image.")}
   }
   input.value="";
-  renderInspoPreviews();
+  renderInspoPreviews();autoSaveOrderDraft();
 }
 
+const ORDER_DRAFT_KEY="ah_new_order_draft";
+function readOrderDraft(){try{return JSON.parse(localStorage.getItem(ORDER_DRAFT_KEY)||"null")}catch(e){return null}}
+function clearOrderDraftAuto(){localStorage.removeItem(ORDER_DRAFT_KEY)}
+function autoSaveOrderDraft(){
+  if(activeOrderBase?.id||!$("#orderLines"))return;
+  try{localStorage.setItem(ORDER_DRAFT_KEY,JSON.stringify(captureOrderDraft()))}
+  catch(e){try{const d=captureOrderDraft();d.inspirationPhotos=[];localStorage.setItem(ORDER_DRAFT_KEY,JSON.stringify(d))}catch(_){}}
+}
+function installOrderDraftAutosave(){
+  if(activeOrderBase?.id)return;const f=$("#form");if(!f||f.dataset.orderDraftAutosave)return;f.dataset.orderDraftAutosave="1";
+  let t;const save=()=>{clearTimeout(t);t=setTimeout(autoSaveOrderDraft,180)};f.addEventListener("input",save);f.addEventListener("change",save);
+}
+function clearOrderDraftAndRestart(){clearOrderDraftAuto();activeOrderBase={};newOrder({})}
+
 function newOrder(x={}){
+  let restoredDraft=false;
+  if(!x?.id&&Object.keys(x||{}).length===0){const saved=readOrderDraft();if(saved){x=saved;restoredDraft=true}}
   activeOrderBase={...x};
   const customers=C();
   const selectedCustomerId=x.customerId||customers.find(c=>String(c.name||"").trim().toLowerCase()===String(x.customer||"").trim().toLowerCase())?.id||"";
@@ -1701,7 +1891,7 @@ function newOrder(x={}){
   const orderItems=orderItemsFor(x);
   draftInspoPhotos=Array.isArray(x.inspirationPhotos)?[...x.inspirationPhotos]:[];
 
-  openF(`<h2>${x.id?"Edit":"New"} Order</h2>
+  openF(`<div class=order-editor-head><div><h2>${x.id?"Edit":"New"} Order</h2>${!x.id&&restoredDraft?'<span class=draft-restored>Autosaved draft restored ✓</span>':""}</div>${!x.id?'<button type=button class=draft-clear-btn onclick=clearOrderDraftAndRestart()>Start Fresh</button>':""}</div>
   <div class=customer-select-head><label>Customer</label><button type=button class=inline-plus onclick=addCustomerFromOrder() aria-label="Add new customer">＋</button></div>
   <select id=oc ${customers.length?"":"disabled"}>${customerOptions}</select>
   ${customers.length?"":'<div class=customer-help>Add a customer first, then return to New Order.</div>'}
@@ -1727,7 +1917,7 @@ function newOrder(x={}){
   ${x.id?`<button class=invoice-btn onclick="openInvoice('${x.id}')">Create Invoice</button><button class=danger onclick="delOrder('${x.id}')">Delete Order</button>`:""}`);
 
   renderOrderLines(orderItems);
-  renderInspoPreviews();
+  renderInspoPreviews();installOrderDraftAutosave();
   if($("#reason")&&x._reason)$("#reason").value=x._reason;
 }
 function saveOrder(id,openPatternAfter=false){
@@ -1781,6 +1971,7 @@ function saveOrder(id,openPatternAfter=false){
 
   try{S("orders",a)}
   catch(e){return alert("Those photos are too large for this device. Remove one inspiration photo and try again.")}
+  if(!old)clearOrderDraftAuto();
   if(openPatternAfter&&orderHasPattern(x)){
     openOrderPatternChooser(x.id);
     return;
@@ -1878,7 +2069,7 @@ async function shareInvoice(id){
   alert(text);
 }
 
-function delOrder(id){let r=prompt("Reason for deleting this order?");if(!r)return;let d=G("deleted");d.push({...O().find(x=>x.id==id),deleteReason:r,deletedAt:new Date().toISOString()});S("deleted",d);S("orders",O().filter(x=>x.id!=id));deleteCloudRow("orders",id);dlg.close();render()}
+function delOrder(id){if(!confirm("Delete this order? It will be removed from active orders."))return;let r=prompt("Reason for deleting this order?");if(!r)return;let d=G("deleted");d.push({...O().find(x=>x.id==id),deleteReason:r,deletedAt:new Date().toISOString()});S("deleted",d);S("orders",O().filter(x=>x.id!=id));deleteCloudRow("orders",id);activeOrderViewId="";dlg.close?.();render()}
 function openCustomer(id){
   const c=C().find(x=>x.id===id); if(!c)return;
   const st=customerStats(c);
@@ -1998,7 +2189,7 @@ function newExpense(){let suppliers=SUP();openF(`<h2>Add Expense</h2><label>Cate
 function saveExpense(){let a=E(),supplier=es.value.trim();a.push({id:crypto.randomUUID(),category:ec.value,supplier,amount:+ea.value||0,date:ed.value,note:en.value});S("expenses",a);if(supplier&&!SUP().some(x=>x.name.toLowerCase()==supplier.toLowerCase())){let s=SUP();s.push({id:crypto.randomUUID(),name:supplier});S("suppliers",s)}dlg.close();render()}
 function manageSuppliers(){let s=SUP();openF(`<div class=top><h2>Suppliers</h2><button onclick=addSupplier()>＋ Add</button></div><div id=supplierRows>${s.map(x=>`<div class=item><div class=top><b>${x.name}</b><button class=mini-danger onclick="deleteSupplier('${x.id}')">Remove</button></div></div>`).join("")||'<div class=empty>No suppliers saved yet.</div>'}</div>`)}
 function addSupplier(){let name=prompt("Supplier name");if(!name||!name.trim())return;let s=SUP();if(!s.some(x=>x.name.toLowerCase()==name.trim().toLowerCase())){s.push({id:crypto.randomUUID(),name:name.trim()});S("suppliers",s)}manageSuppliers()}
-function deleteSupplier(id){S("suppliers",SUP().filter(x=>x.id!=id));deleteCloudRow("suppliers",id);manageSuppliers()}
+function deleteSupplier(id){if(!confirm("Remove this supplier?"))return;S("suppliers",SUP().filter(x=>x.id!=id));deleteCloudRow("suppliers",id);manageSuppliers()}
 function newInventory(){openF(`<h2>Add Inventory</h2><label>Item</label><input id=ii><label>Type</label><select id=it><option>Material</option><option>Packaging</option><option>Finished product</option></select><label>Quantity</label><input id=iq type=number><label>Low stock alert at</label><input id=il type=number value=2><button class=primary onclick=saveInventory()>Save</button>`)}function saveInventory(){let a=I();a.push({id:crypto.randomUUID(),name:ii.value,type:it.value,qty:+iq.value||0,low:+il.value||2});S("inventory",a);dlg.close();render()}
 
 function analyticsMonthKey(dateString){
