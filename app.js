@@ -658,7 +658,17 @@ function studioSegmentPhrase(seg={}){
 }
 function studioStepReadable(st={}){
   const segs=studioStepSegments(st);
-  const parts=segs.map(studioSegmentPhrase).filter(Boolean);
+  const parts=[];
+  segs.forEach(seg=>{
+    const phrase=studioSegmentPhrase(seg);
+    if(!phrase)return;
+    if((seg.kind==="action"||seg.action)&&phrase==="in magic ring"){
+      if(parts.length)parts[parts.length-1]+=" in magic ring";
+      else parts.push("magic ring");
+      return;
+    }
+    parts.push(phrase);
+  });
   const note=String(st.note||(!segs.length?st.text||"":"")).trim();
   if(note)parts.push(note);
   return parts.join(", ")||"No row instructions";
@@ -844,7 +854,7 @@ function studioStitchOptions(selected=""){
   return stitches.map(([v,l])=>`<option value="${v}" ${selected===v?"selected":""}>${l}</option>`).join("");
 }
 function studioActionOptions(selected="turn work"){
-  const actions=["turn work","join","fasten off","place marker","skip stitch","repeat","continue around","do not turn"];
+  const actions=["magic ring","in magic ring","turn work","join","fasten off","place marker","skip stitch","repeat","continue around","do not turn"];
   return actions.map(v=>`<option value="${v}" ${selected===v?"selected":""}>${v.replace(/\b\w/g,c=>c.toUpperCase())}</option>`).join("");
 }
 function studioStepRowNumber(st={},fallback=1){
@@ -987,7 +997,7 @@ function studioRepeatMultipleRows(btn){
 function studioVoiceRow(btn){
   const Recognition=window.SpeechRecognition||window.webkitSpeechRecognition;if(!Recognition)return alert("Voice row entry is not available in this browser yet. The dropdowns will still work.");
   const sec=btn.closest("[data-section-row]"),r=new Recognition();r.lang="en-US";r.interimResults=false;r.maxAlternatives=1;btn.textContent="…";r.onend=()=>btn.textContent="🎙";r.onerror=()=>alert("I couldn't catch that. Try again or use the dropdowns.");
-  r.onresult=e=>{const heard=e.results?.[0]?.[0]?.transcript||"";const rowMatch=heard.match(/row\s+(\d+)/i);if(rowMatch)sec.querySelector("[data-builder-row]").value=rowMatch[1];const parts=[];const rx=/(\d+)\s*(single crochet|half double crochet|double crochet|treble crochet|slip stitch|chain|increase|decrease)/gi;let m;const map={"single crochet":"SC","half double crochet":"HDC","double crochet":"DC","treble crochet":"TR","slip stitch":"SL ST","chain":"CH","increase":"INC","decrease":"DEC"};while((m=rx.exec(heard)))parts.push({kind:"stitch",count:+m[1],stitch:map[m[2].toLowerCase()]});if(/turn work|turn/i.test(heard))parts.push({kind:"action",action:"turn work"});if(parts.length){const box=sec.querySelector("[data-builder-parts]");box.innerHTML=parts.map(studioBuilderPart).join("")}else alert(`I heard: "${heard}". Check the row before saving.`);studioUpdateLiveRow(sec)};r.start();
+  r.onresult=e=>{const heard=e.results?.[0]?.[0]?.transcript||"";const rowMatch=heard.match(/row\s+(\d+)/i);if(rowMatch)sec.querySelector("[data-builder-row]").value=rowMatch[1];const parts=[];const rx=/(\d+)\s*(single crochet|half double crochet|double crochet|treble crochet|slip stitch|chain|increase|decrease)/gi;let m;const map={"single crochet":"SC","half double crochet":"HDC","double crochet":"DC","treble crochet":"TR","slip stitch":"SL ST","chain":"CH","increase":"INC","decrease":"DEC"};while((m=rx.exec(heard)))parts.push({kind:"stitch",count:+m[1],stitch:map[m[2].toLowerCase()]});if(/magic ring/i.test(heard))parts.push({kind:"action",action:parts.length?"in magic ring":"magic ring"});if(/turn work|turn/i.test(heard))parts.push({kind:"action",action:"turn work"});if(parts.length){const box=sec.querySelector("[data-builder-parts]");box.innerHTML=parts.map(studioBuilderPart).join("")}else alert(`I heard: "${heard}". Check the row before saving.`);studioUpdateLiveRow(sec)};r.start();
 }
 function studioFillYarnFromLibrary(sel){
   const y=studioYarnById(sel.value),row=sel.closest("[data-yarn-row]");if(!y||!row)return;
@@ -1033,7 +1043,7 @@ function editStudioPattern(id=""){
   const x=id?JSON.parse(JSON.stringify(studioPatternById(id)||studioDefaultPattern())):studioDefaultPattern();
   studioMainPhoto=x.mainPhoto||"";studioExtraPhotos=[...(x.extraPhotos||[])];
   const sizes=["XS","S","M","L","XL"];
-  openF(`<button class=close onclick=dlg.close()>×</button><div class=studio-editor-title>${studioLogoBlock(id?"Edit Pattern":"New Pattern")}</div>
+  openF(`<div class=studio-editor-title>${studioLogoBlock(id?"Edit Pattern":"New Pattern")}</div>
     <label>Pattern name</label><input id=studioPatternName value="${esc(x.name||"")}" placeholder="e.g. Flora Dress">
     <div class=studio-three><div><label>Technique</label><select id=studioTechniqueEdit onchange=studioToggleTechnique()><option ${x.technique==="Crochet"?"selected":""}>Crochet</option><option ${x.technique==="Knit"?"selected":""}>Knit</option></select></div>
     <div><label>Category</label><select id=studioCategoryEdit>${studioCategories().map(z=>`<option ${x.category===z?"selected":""}>${z}</option>`).join("")}</select></div>
@@ -1227,6 +1237,45 @@ function exportStudioPatternPDF(id){
   win.document.close();
 }
 
+let calendarCursor=new Date(new Date().getFullYear(),new Date().getMonth(),1);
+function calendarMove(delta){
+  calendarCursor=new Date(calendarCursor.getFullYear(),calendarCursor.getMonth()+delta,1);
+  render();
+}
+function calendarGoToday(){
+  const n=new Date();calendarCursor=new Date(n.getFullYear(),n.getMonth(),1);render();
+}
+function calendarDayKey(y,m,d){return `${y}-${String(m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`}
+function renderCalendarPage(){
+  const y=calendarCursor.getFullYear(),m=calendarCursor.getMonth();
+  const first=new Date(y,m,1),startDay=first.getDay(),daysInMonth=new Date(y,m+1,0).getDate(),prevDays=new Date(y,m,0).getDate();
+  const today=new Date(),todayKey=calendarDayKey(today.getFullYear(),today.getMonth(),today.getDate());
+  const byDue={};
+  O().filter(o=>o.due).forEach(o=>{(byDue[o.due]||(byDue[o.due]=[])).push(o)});
+  const cells=[];
+  for(let i=0;i<42;i++){
+    let cy=y,cm=m,day,muted=false;
+    if(i<startDay){day=prevDays-startDay+i+1;cm=m-1;muted=true;if(cm<0){cm=11;cy--}}
+    else if(i>=startDay+daysInMonth){day=i-(startDay+daysInMonth)+1;cm=m+1;muted=true;if(cm>11){cm=0;cy++}}
+    else day=i-startDay+1;
+    const key=calendarDayKey(cy,cm,day),orders=byDue[key]||[];
+    const names=orders.slice(0,3).map(o=>`<span class=calendar-name title="${esc(o.customer||"Customer")}">${esc(o.customer||"Customer")}</span>`).join("");
+    const extra=orders.length>3?`<span class=calendar-more>+${orders.length-3} more</span>`:"";
+    cells.push(`<div class="calendar-cell ${muted?"muted":""} ${key===todayKey?"today":""}"><div class=calendar-date>${day}</div><div class=calendar-due-list>${names}${extra}</div></div>`);
+  }
+  const month=calendarCursor.toLocaleDateString("en-JM",{month:"long",year:"numeric"});
+  const dueCount=Object.entries(byDue).filter(([k])=>k.startsWith(`${y}-${String(m+1).padStart(2,"0")}-`)).reduce((n,[,v])=>n+v.length,0);
+  return `<div class=calendar-page>
+    <div class=calendar-title-row><div><span class=calendar-eyebrow>AMÉA HQ</span><h2>Calendar</h2><p>See exactly who is due each day.</p></div><button class=calendar-export onclick=ics()>Export .ics</button></div>
+    <div class=calendar-shell>
+      <div class=calendar-month-head><button onclick="calendarMove(-1)" aria-label="Previous month">‹</button><div><h3>${esc(month)}</h3><span>${dueCount} order${dueCount===1?"":"s"} due</span></div><button onclick="calendarMove(1)" aria-label="Next month">›</button></div>
+      <div class=calendar-weekdays>${["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map(d=>`<span>${d}</span>`).join("")}</div>
+      <div class=calendar-grid>${cells.join("")}</div>
+      <button class=calendar-today onclick=calendarGoToday()>Today</button>
+    </div>
+  </div>`;
+}
+
 function page(x){cur=x;render()}function render(){document.body.classList.toggle("studio-mode",cur==="crochet");document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===cur));let v=$("#view");if(cur=="home"){let o=O(),e=E(),now=new Date(),mo=o.filter(x=>new Date(x.created).getMonth()==now.getMonth()),sales=mo.reduce((a,x)=>a+x.paid,0),out=mo.reduce((a,x)=>a+Math.max(0,x.price-x.paid),0),ex=e.filter(x=>new Date(x.date).getMonth()==now.getMonth()).reduce((a,x)=>a+x.amount,0),today=new Date().toISOString().slice(0,10);v.innerHTML=`<div class=hero><h2 id=homeGreeting>${greeting()}, Améa Boss ✨</h2><div class=meta>Everything in your studio, in one pretty place.</div></div><div class=grid><div class=card>Sales<b>${M(sales)}</b></div><div class=card>Orders<b>${mo.length}</b></div><div class=card>Outstanding<b>${M(out)}</b></div><div class=card>Expenses<b>${M(ex)}</b></div></div><div class=section><h3>Today</h3><div class=card>${list(O().filter(x=>x.due==today),true)||'<div class=meta>No orders due today 💗</div>'}</div></div><button class=studio-home-shortcut onclick="page(\'crochet\')"><div><span class=studio-home-eyebrow>AMÉA HQ</span><b>Crochet Studio</b><small>Patterns · Yarn · Models · Calculator</small></div><span class=studio-home-arrow>→</span></button><div class="section home-analytics-section"><div class=analytics-home-head><div><h3>Order Activity</h3><div class=meta>See which weeks or months bring in the most orders.</div></div><div class=analytics-home-toggle><button data-home-analytics=months class="${homeAnalyticsMode==="months"?"active":""}" onclick="setHomeAnalytics('months')">Months</button><button data-home-analytics=weeks class="${homeAnalyticsMode==="weeks"?"active":""}" onclick="setHomeAnalytics('weeks')">Weeks</button></div></div><div id=homeAnalytics>${homeActivityMarkup(homeAnalyticsMode)}</div></div><div class=section><h3>Recent Orders</h3>${list(O().slice(-5).reverse())||'<div class=empty>No orders yet.</div>'}</div>`}
 else if(cur=="orders")v.innerHTML=`<h2>Orders</h2><input placeholder="Search orders, customers, products…" oninput="searchO(this.value)"><div id=ol>${list(O().slice().reverse())||'<div class=empty>No orders yet.</div>'}</div>`;
 else if(cur=="customers")v.innerHTML=`<div class=top><h2>Customers</h2><button onclick=newCustomer()>＋ Add</button></div>${C().map(x=>{let st=customerStats(x),last=st.last?st.last.toLocaleDateString("en-JM",{day:"numeric",month:"short",year:"numeric"}):"";return `<div class="item customer-row" onclick="openCustomer('${x.id}')"><div class=top><b>${esc(x.name)}</b><span class="customer-badge ${st.orders.length?"returning":"new"}">${st.orders.length?"RETURNING":"NEW"}</span></div><div class=meta>${esc(x.phone||"")}${x.email?" · "+esc(x.email):""}<br><b>${customerStatusText(x)}</b>${st.orders.length?` · ${M(st.paid)} lifetime`:""}${last?`<br>Last order: ${last}`:""}</div><div class=customer-chevron>View customer →</div></div>`}).join("")||'<div class=empty>No customers yet.</div>'}`;
@@ -1287,7 +1336,7 @@ else if(cur=="more"){
 }
 else if(cur=="expenses")v.innerHTML=`<div class=top><h2>Expenses</h2><div class=top-actions><button onclick=manageSuppliers()>Suppliers</button><button onclick=newExpense()>＋ Add</button></div></div>${E().slice().reverse().map(x=>`<div class=item><div class=top><b>${x.category}</b><span class=money>${M(x.amount)}</span></div><div class=meta>${x.date}${x.supplier?" · Supplier: "+x.supplier:""}${x.note?" · "+x.note:""}</div></div>`).join("")||'<div class=empty>No expenses yet.</div>'}`;
 else if(cur=="analytics"){renderAnalytics("month")}
-else if(cur=="calendar")v.innerHTML=`<div class=top><h2>Calendar</h2><button onclick=ics()>Add .ics</button></div>${O().filter(x=>x.due).sort((a,b)=>a.due.localeCompare(b.due)).map(x=>`<div class=item><b>${x.due}</b><div class=meta>${x.no} · ${x.customer} · ${x.product} · ${x.delivery}</div></div>`).join("")||'<div class=empty>No due dates yet.</div>'}`;
+else if(cur=="calendar")v.innerHTML=renderCalendarPage();
 else if(cur=="settings"){
   let s=G("settings",{});
   v.innerHTML=`<h2>Settings</h2>
