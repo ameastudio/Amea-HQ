@@ -1517,7 +1517,7 @@ function renderOrderView(id){
   return `<div class=order-view-page>
     <div class=order-view-nav><button onclick=closeOrderView()>← Orders</button><div><button onclick="toggleOrderPin('${o.id}',event)">${orderIsPinned(o.id)?"★":"☆"}</button><button class=order-edit-btn onclick="editOrder('${o.id}')">Edit</button></div></div>
     <div class=order-view-title><span>${esc(o.no)} · ${esc(o.customer)}</span><h2>${esc(orderSummaryProduct(items))}</h2><p>${esc(orderDueLabel(o))}</p></div>${tabs}
-    ${photos.length?`<section class=maker-photo-section><div class=maker-section-head><div><span>INSPIRATION</span><h3>Reference Photos</h3></div><small>Tap one to zoom</small></div><div class=maker-photo-grid>${photos.map((src,i)=>`<button type=button class=maker-photo-button data-order-id="${esc(o.id)}" data-photo-index="${i}" aria-label="Open inspiration photo ${i+1}"><img src="${esc(src)}" alt="Inspiration ${i+1}" data-order-id="${esc(o.id)}" data-photo-index="${i}"><span>${i+1}</span><em>Tap to view</em></button>`).join("")}</div></section>`:""}
+    ${photos.length?`<section class=maker-photo-section><div class=maker-section-head><div><span>INSPIRATION</span><h3>Reference Photos</h3></div></div><div class=maker-photo-grid>${photos.map((src,i)=>`<button type=button class=maker-photo-button data-order-id="${esc(o.id)}" data-photo-index="${i}" aria-label="Open inspiration photo ${i+1}"><img src="${esc(src)}" alt="Inspiration ${i+1}" data-order-id="${esc(o.id)}" data-photo-index="${i}"><span>${i+1}</span></button>`).join("")}</div></section>`:""}
     <div class=maker-items>${items.map((it,i)=>orderMakerItemMarkup(it,i,o.id)).join("")}</div>
     <section class=maker-measurements><div class=maker-section-head><div><span>MEASUREMENTS</span><h3>${esc(c.name||o.customer||"Customer")}</h3></div>${c.measurements?`<button onclick="copyOrderMeasurements('${o.id}',this)">Copy</button>`:""}</div><div class=maker-measure-text>${c.measurements?esc(c.measurements):"No measurements saved for this customer."}</div></section>
     ${o.notes?`<section class=maker-note-card><span>ORDER NOTES</span><p>${esc(o.notes)}</p></section>`:""}
@@ -1525,9 +1525,12 @@ function renderOrderView(id){
     <button class=view-full-details-btn onclick="setOrderViewMode('full')">View Full Order Details</button>
   </div>`;
 }
+function closePhotoViewer(){dlg.close?.();dlg.classList.remove("photo-viewer-dialog");photoViewerState=null}
 function openPhotoViewerSrc(src,label="Inspiration photo",subLabel=""){
   if(!src)return;
-  openF(`<button type=button class=close onclick="dlg.close()" aria-label="Close photo viewer">×</button><div class=photo-viewer-wrap><div class=photo-viewer-head><div><span>${esc(label)}</span>${subLabel?`<b>${esc(subLabel)}</b>`:""}</div><small>Pinch or use + / −</small></div><div id=photoViewerStage class=photo-viewer-stage><img id=photoViewerImage src="${esc(src)}" alt="${esc(label)}" draggable="false"></div><div class=photo-viewer-controls><button type=button onclick="photoViewerZoom(-.5)" aria-label="Zoom out">−</button><button type=button onclick="photoViewerReset()">Reset</button><button type=button onclick="photoViewerZoom(.5)" aria-label="Zoom in">＋</button></div></div>`);
+  $("#form").innerHTML=`<button type=button class=photo-viewer-close onclick="closePhotoViewer()" aria-label="Close photo">×</button><div id=photoViewerStage class=photo-viewer-stage><img id=photoViewerImage src="${esc(src)}" alt="${esc(label)}" draggable="false"></div>`;
+  dlg.classList.add("photo-viewer-dialog");
+  if(!dlg.open)dlg.showModal();
   requestAnimationFrame(()=>bindPhotoViewer());
 }
 function openInspoViewer(orderId,index){
@@ -1586,7 +1589,7 @@ function normalizeDialogClose(){
   const closes=[...dlg.querySelectorAll(".close")].filter(b=>b.parentElement===dlg||b.parentElement?.id==="form");
   closes.slice(1).forEach(b=>b.remove());
 }
-function openF(h){$("#form").innerHTML=h;normalizeDialogClose();if(!dlg.open)dlg.showModal()}function openAddMenu(){openF(`<h2>Add to Améa HQ</h2><div class=add-menu><button onclick="newOrder()">＋ New Order</button><button onclick="newCustomer()">＋ Customer</button><button onclick="newItem()">＋ Item</button><button onclick="newExpense()">＋ Expense</button><button onclick="newInventory()">＋ Inventory</button><button onclick="dlg.close();page(\'crochet\');setTimeout(newStudioPattern,0)">＋ Pattern</button></div>`)}
+function openF(h){dlg.classList.remove("photo-viewer-dialog");$("#form").innerHTML=h;normalizeDialogClose();if(!dlg.open)dlg.showModal()}function openAddMenu(){openF(`<h2>Add to Améa HQ</h2><div class=add-menu><button onclick="newOrder()">＋ New Order</button><button onclick="newCustomer()">＋ Customer</button><button onclick="newItem()">＋ Item</button><button onclick="newExpense()">＋ Expense</button><button onclick="newInventory()">＋ Inventory</button><button onclick="dlg.close();page(\'crochet\');setTimeout(newStudioPattern,0)">＋ Pattern</button></div>`)}
 function dels(){return G("settings",{}).delivery||["Pickup","Delivery"]}
 
 function itemById(id){return ITEMS().find(x=>x.id===id)}
@@ -1843,7 +1846,7 @@ function renderInspoPreviews(){
   const box=$("#inspoPreview");
   if(!box)return;
   box.innerHTML=draftInspoPhotos.length
-    ? draftInspoPhotos.map((src,i)=>`<div class=inspo-thumb><button type=button class=inspo-preview-button onclick="openDraftInspoViewer(${i})" aria-label="Open inspiration photo ${i+1}"><img src="${esc(src)}" alt="Inspiration ${i+1}"><span>Tap to view</span></button><div class=inspo-thumb-tools><button type=button onclick="moveInspoPhoto(${i},-1)" ${i===0?"disabled":""} aria-label="Move photo left">‹</button><span>${i+1}</span><button type=button onclick="moveInspoPhoto(${i},1)" ${i===draftInspoPhotos.length-1?"disabled":""} aria-label="Move photo right">›</button><button class=inspo-remove type=button onclick="removeInspoPhoto(${i})" aria-label="Remove photo">×</button></div></div>`).join("")
+    ? draftInspoPhotos.map((src,i)=>`<div class=inspo-thumb><button type=button class=inspo-preview-button onclick="openDraftInspoViewer(${i})" aria-label="Open inspiration photo ${i+1}"><img src="${esc(src)}" alt="Inspiration ${i+1}"></button><div class=inspo-thumb-tools><button type=button onclick="moveInspoPhoto(${i},-1)" ${i===0?"disabled":""} aria-label="Move photo left">‹</button><span>${i+1}</span><button type=button onclick="moveInspoPhoto(${i},1)" ${i===draftInspoPhotos.length-1?"disabled":""} aria-label="Move photo right">›</button><button class=inspo-remove type=button onclick="removeInspoPhoto(${i})" aria-label="Remove photo">×</button></div></div>`).join("")
     : '<div class="meta inspo-empty">No inspiration photos added yet.</div>';
 }
 function moveInspoPhoto(i,delta){
