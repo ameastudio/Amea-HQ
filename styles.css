@@ -905,3 +905,9 @@ body.studio-mode .studio-subpage{padding-top:2px}
 .maker-photo-button img{pointer-events:none}
 .inspo-preview-button{display:block!important;position:relative!important;width:100%!important;height:auto!important;padding:0!important;border-radius:13px 13px 0 0!important;overflow:hidden;background:#fff!important;box-shadow:none!important;color:var(--h)!important;cursor:zoom-in}
 .inspo-preview-button img{width:100%;aspect-ratio:1/1;object-fit:cover;display:block;pointer-events:none;border-radius:0!important}
+
+/* Photo viewer: guarantee only the dedicated small close button is visible */
+.photo-viewer-dialog .close,
+.photo-viewer-dialog > .close,
+.photo-viewer-dialog #form > .close{display:none!important}
+.photo-viewer-dialog .photo-viewer-close{display:grid!important}
