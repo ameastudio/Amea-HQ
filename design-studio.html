@@ -2,47 +2,58 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#fff7fb" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#fff8fb" />
   <title>Améa HQ — Design Studio</title>
   <link rel="stylesheet" href="design-studio.css" />
 </head>
 <body>
   <div class="studio-shell" id="studioShell">
     <header class="topbar">
-      <div class="topbar-left">
-        <a class="icon-btn" href="index.html" aria-label="Back to Améa HQ">←</a>
-        <div>
-          <div class="eyebrow">AMÉA HQ</div>
-          <div class="studio-title">Design Studio</div>
+      <div class="brand-group">
+        <a class="top-icon back-btn" href="index.html" aria-label="Back to Améa HQ">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+        </a>
+        <div class="brand-copy">
+          <span class="eyebrow">AMÉA HQ</span>
+          <strong>Design Studio</strong>
         </div>
       </div>
 
-      <div class="topbar-center">
-        <input id="designName" class="design-name" value="Untitled Design" aria-label="Design name" />
+      <div class="top-actions">
+        <button class="top-icon history-btn" id="undoBtn" aria-label="Undo" title="Undo">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7H5v-4"/><path d="M5 7c2.2-2.5 5.1-3.7 8.1-3 3.5.8 5.9 4 5.9 7.6 0 4.4-3.6 8-8 8-3.1 0-5.8-1.8-7.2-4.4"/></svg>
+        </button>
+        <button class="top-icon history-btn" id="redoBtn" aria-label="Redo" title="Redo">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 7h4v-4"/><path d="M19 7c-2.2-2.5-5.1-3.7-8.1-3-3.5.8-5.9 4-5.9 7.6 0 4.4 3.6 8 8 8 3.1 0 5.8-1.8 7.2-4.4"/></svg>
+        </button>
       </div>
 
-      <div class="topbar-actions">
-        <button class="icon-btn icon-pill" id="undoBtn" title="Undo" aria-label="Undo">
-          <span>↶</span><small>Undo</small>
+      <input id="designName" class="design-name" value="Untitled Design" aria-label="Design name" />
+
+      <div class="top-right">
+        <div class="zoom-readout" id="zoomReadout">100%</div>
+        <button class="export-btn" id="exportBtn" aria-label="Export design">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4"/><path d="M8 8l4-4 4 4"/><path d="M5 12v7h14v-7"/></svg>
+          <span>Export</span>
         </button>
-        <button class="icon-btn icon-pill" id="redoBtn" title="Redo" aria-label="Redo">
-          <span>↷</span><small>Redo</small>
-        </button>
-        <button class="soft-btn" id="focusBtn">Full screen</button>
-        <button class="pink-btn" id="exportBtn">Export PNG</button>
       </div>
     </header>
 
     <aside class="panel left-panel" id="leftPanel">
-      <button class="panel-handle left-handle" id="toggleLeft" aria-label="Hide tools">‹</button>
-      <div class="panel-heading">Tools</div>
+      <div class="panel-top">
+        <div>
+          <span class="panel-kicker">CREATE</span>
+          <h2>Brushes</h2>
+        </div>
+        <button class="collapse-btn" id="toggleLeft" aria-label="Hide brushes">‹</button>
+      </div>
 
       <div class="tool-grid" id="toolGrid">
         <button class="tool-btn active" data-tool="pencil"><span>✏️</span><small>Pencil</small></button>
         <button class="tool-btn" data-tool="marker"><span>🖊️</span><small>Marker</small></button>
         <button class="tool-btn" data-tool="eraser"><span>⌫</span><small>Eraser</small></button>
-        <button class="tool-btn" data-tool="eyedropper"><span>🎯</span><small>Pick colour</small></button>
+        <button class="tool-btn" data-tool="eyedropper"><span>◉</span><small>Pick colour</small></button>
         <button class="tool-btn" data-tool="select"><span>⬚</span><small>Select</small></button>
         <button class="tool-btn" data-tool="stamp"><span>✿</span><small>Stamp</small></button>
         <button class="tool-btn" data-tool="scatter"><span>❀</span><small>Scatter</small></button>
@@ -50,62 +61,49 @@
       </div>
 
       <div class="brush-library" id="brushLibrary">
-        <div class="brush-library-head">
+        <div class="subhead-row">
           <div>
-            <div class="brush-library-kicker">BRUSH LIBRARY</div>
+            <span class="mini-kicker">BRUSH LIBRARY</span>
             <strong id="brushLibraryTitle">Pencil Brushes</strong>
           </div>
-          <button class="brush-library-close" id="closeBrushLibrary" aria-label="Close brush library">×</button>
         </div>
         <div class="brush-presets" id="brushPresets"></div>
-
-        <div class="panel-section compact-top">
-          <label class="field-label" for="brushSmoothing">Smoothing</label>
-          <div class="range-row">
-            <input id="brushSmoothing" type="range" min="0" max="100" value="25" />
-            <output id="brushSmoothingValue">25%</output>
-          </div>
-          <label class="pressure-toggle">
-            <input id="pressureToggle" type="checkbox" checked />
-            <span>Apple Pencil pressure</span>
-          </label>
-        </div>
       </div>
 
-      <div class="panel-section">
-        <label class="field-label" for="brushSize">Brush size</label>
-        <div class="range-row">
-          <input id="brushSize" type="range" min="2" max="90" value="12" />
-          <output id="brushSizeValue">12</output>
-        </div>
+      <div class="control-card">
+        <div class="control-row-head"><span>Size</span><output id="brushSizeValue">12</output></div>
+        <input id="brushSize" type="range" min="2" max="100" value="12" />
       </div>
 
-      <div class="panel-section">
-        <label class="field-label" for="brushOpacity">Opacity</label>
-        <div class="range-row">
-          <input id="brushOpacity" type="range" min="5" max="100" value="100" />
-          <output id="brushOpacityValue">100%</output>
-        </div>
+      <div class="control-card">
+        <div class="control-row-head"><span>Opacity</span><output id="brushOpacityValue">100%</output></div>
+        <input id="brushOpacity" type="range" min="5" max="100" value="100" />
       </div>
 
-      <div class="panel-section quick-actions">
-        <button class="outline-btn" id="clearLayerBtn">Clear layer</button>
+      <div class="control-card">
+        <div class="control-row-head"><span>Smoothing</span><output id="brushSmoothingValue">25%</output></div>
+        <input id="brushSmoothing" type="range" min="0" max="100" value="25" />
+        <label class="toggle-line"><input id="pressureToggle" type="checkbox" checked /><span>Apple Pencil pressure</span></label>
       </div>
+
+      <button class="secondary-wide" id="clearLayerBtn">Clear active layer</button>
     </aside>
 
-    <button class="edge-reopen edge-reopen-left" id="reopenLeft" aria-label="Open tools">TOOLS</button>
+    <button class="edge-tab edge-tab-left" id="reopenLeft" aria-label="Open brushes">
+      <span>BRUSHES</span>
+      <b>›</b>
+    </button>
 
-    <main class="workspace">
-      <div class="canvas-stage" id="canvasStage">
-        <canvas id="artboard" width="1800" height="2200" aria-label="Fashion drawing canvas"></canvas>
+    <main class="workspace" id="workspace">
+      <div class="canvas-viewport" id="canvasViewport">
+        <div class="canvas-transform" id="canvasTransform">
+          <canvas id="artboard" width="1800" height="2200" aria-label="Fashion drawing canvas"></canvas>
+        </div>
       </div>
 
-      <div class="floating-toolbar" id="floatingToolbar">
-        <button class="floating-btn" data-quick-tool="pencil">✏️</button>
-        <button class="floating-btn" data-quick-tool="eraser">⌫</button>
-        <button class="floating-btn colour-preview" id="floatingColour" title="Current colour"></button>
-        <button class="floating-btn" id="floatingUndo">↶</button>
-        <button class="floating-btn" id="exitFocusBtn">✕</button>
+      <div class="canvas-hud">
+        <button id="fitCanvasBtn">Fit</button>
+        <span>Pinch to zoom · Drag with one finger</span>
       </div>
 
       <div class="view-strip">
@@ -118,7 +116,13 @@
     </main>
 
     <aside class="panel right-panel" id="rightPanel">
-      <button class="panel-handle right-handle" id="toggleRight" aria-label="Hide controls">›</button>
+      <div class="panel-top">
+        <div>
+          <span class="panel-kicker">DETAILS</span>
+          <h2>Studio</h2>
+        </div>
+        <button class="collapse-btn" id="toggleRight" aria-label="Hide studio controls">›</button>
+      </div>
 
       <div class="tabs" id="rightTabs">
         <button class="tab-btn active" data-tab="colour">Colour</button>
@@ -129,17 +133,15 @@
       </div>
 
       <section class="tab-panel active" data-panel="colour">
-        <div class="panel-heading">Colour</div>
-        <div class="colour-block">
+        <div class="colour-card">
           <input id="colourPicker" type="color" value="#e24892" />
-          <div class="colour-meta">
+          <div>
+            <span class="mini-kicker">CURRENT COLOUR</span>
             <strong id="hexValue">#E24892</strong>
-            <span>Tap 🎯 then tap anywhere on the canvas to pick a colour.</span>
           </div>
         </div>
-
-        <div class="panel-section">
-          <div class="field-label">Améa palette</div>
+        <div class="section-block">
+          <span class="field-title">Améa palette</span>
           <div class="swatches" id="swatches">
             <button data-colour="#E24892" style="--swatch:#E24892"></button>
             <button data-colour="#FF8FC5" style="--swatch:#FF8FC5"></button>
@@ -149,126 +151,83 @@
             <button data-colour="#1E1A1C" style="--swatch:#1E1A1C"></button>
           </div>
         </div>
-
-        <div class="panel-section">
-          <div class="field-label">Recent colours</div>
+        <div class="section-block">
+          <span class="field-title">Recent colours</span>
           <div class="swatches" id="recentColours"></div>
         </div>
       </section>
 
       <section class="tab-panel" data-panel="mannequin">
-        <div class="panel-heading">Mannequin</div>
-        <div class="segmented" id="mannequinStyleSwitch">
+        <div class="segmented">
           <button class="seg-btn active" data-mannequin-style="fashion">Fashion sketch</button>
           <button class="seg-btn" data-mannequin-style="realistic">Clean realistic</button>
         </div>
-
-        <div class="panel-section compact-top">
-          <div class="field-label">Body guide</div>
-          <div class="choice-grid two-col" id="bodyTypeGrid">
+        <div class="section-block">
+          <span class="field-title">Body guide</span>
+          <div class="choice-grid">
             <button class="choice-chip active" data-body-type="standard">Standard</button>
             <button class="choice-chip" data-body-type="petite">Petite</button>
             <button class="choice-chip" data-body-type="curvy">Curvy</button>
             <button class="choice-chip" data-body-type="plus">Plus-size</button>
           </div>
         </div>
-
-        <div class="panel-section">
-          <label class="field-label" for="mannequinOpacity">Mannequin opacity</label>
-          <div class="range-row">
-            <input id="mannequinOpacity" type="range" min="0" max="100" value="100" />
-            <output id="mannequinOpacityValue">100%</output>
-          </div>
+        <div class="control-card">
+          <div class="control-row-head"><span>Mannequin opacity</span><output id="mannequinOpacityValue">100%</output></div>
+          <input id="mannequinOpacity" type="range" min="0" max="100" value="100" />
         </div>
-
-        <div class="panel-section">
-          <label class="toggle-row">
-            <input id="showFaceGuide" type="checkbox" checked />
-            <span>Show head / face guide</span>
-          </label>
-          <label class="toggle-row">
-            <input id="showCenterGuide" type="checkbox" checked />
-            <span>Show center guide</span>
-          </label>
-        </div>
+        <label class="toggle-line"><input id="showFaceGuide" type="checkbox" checked /><span>Head / face guide</span></label>
+        <label class="toggle-line"><input id="showCenterGuide" type="checkbox" checked /><span>Center guide</span></label>
       </section>
 
       <section class="tab-panel" data-panel="motifs">
-        <div class="panel-heading">Motif Tool</div>
-        <p class="helper">Draw something once, select it, then save it as a reusable motif.</p>
-        <button class="pink-btn full" id="createMotifBtn">Create motif from selection</button>
-
-        <div class="motif-preview-wrap">
+        <p class="helper">Draw once, select it, then reuse it across your design.</p>
+        <button class="primary-wide" id="createMotifBtn">Create motif from selection</button>
+        <div class="motif-card">
           <canvas id="motifPreview" width="220" height="160"></canvas>
-          <div>
-            <strong id="motifStatus">No motif saved</strong>
-            <p class="helper mini">After saving, choose Stamp, Scatter or Pattern fill.</p>
-          </div>
+          <div><strong id="motifStatus">No motif saved</strong><small>Use Stamp, Scatter or Pattern Fill.</small></div>
         </div>
-
-        <div class="panel-section">
-          <label class="field-label" for="motifSize">Motif size</label>
-          <div class="range-row">
-            <input id="motifSize" type="range" min="20" max="250" value="100" />
-            <output id="motifSizeValue">100%</output>
-          </div>
+        <div class="control-card">
+          <div class="control-row-head"><span>Motif size</span><output id="motifSizeValue">100%</output></div>
+          <input id="motifSize" type="range" min="20" max="250" value="100" />
         </div>
-
-        <div class="panel-section">
-          <label class="field-label" for="motifSpacing">Spacing</label>
-          <div class="range-row">
-            <input id="motifSpacing" type="range" min="10" max="250" value="90" />
-            <output id="motifSpacingValue">90</output>
-          </div>
+        <div class="control-card">
+          <div class="control-row-head"><span>Spacing</span><output id="motifSpacingValue">90</output></div>
+          <input id="motifSpacing" type="range" min="10" max="250" value="90" />
         </div>
-
-        <div class="panel-section">
-          <label class="field-label" for="motifRotation">Rotation</label>
-          <div class="range-row">
-            <input id="motifRotation" type="range" min="-180" max="180" value="0" />
-            <output id="motifRotationValue">0°</output>
-          </div>
+        <div class="control-card">
+          <div class="control-row-head"><span>Rotation</span><output id="motifRotationValue">0°</output></div>
+          <input id="motifRotation" type="range" min="-180" max="180" value="0" />
         </div>
-
-        <button class="outline-btn full" id="clearMotifBtn">Clear saved motif</button>
+        <button class="secondary-wide" id="clearMotifBtn">Clear saved motif</button>
       </section>
 
       <section class="tab-panel" data-panel="layers">
-        <div class="panel-heading row-between">
-          <span>Layers</span>
-          <button class="mini-pink" id="addLayerBtn">+ Add</button>
-        </div>
+        <div class="subhead-row"><strong>Layers</strong><button class="mini-btn" id="addLayerBtn">+ Add</button></div>
         <div id="layerList" class="layer-list"></div>
-        <p class="helper mini">Mannequin and reference stay separate from your drawing layers.</p>
       </section>
 
       <section class="tab-panel" data-panel="reference">
-        <div class="panel-heading">Reference</div>
         <label class="upload-card">
           <input id="referenceUpload" type="file" accept="image/*" />
-          <span class="upload-icon">＋</span>
+          <span>＋</span>
           <strong>Add inspiration photo</strong>
           <small>PNG, JPG, HEIC*</small>
         </label>
-        <p class="helper mini">*Browser support for HEIC depends on your iPad/iOS version.</p>
-
-        <div class="panel-section">
-          <label class="field-label" for="referenceOpacity">Reference opacity</label>
-          <div class="range-row">
-            <input id="referenceOpacity" type="range" min="0" max="100" value="40" />
-            <output id="referenceOpacityValue">40%</output>
-          </div>
+        <div class="control-card">
+          <div class="control-row-head"><span>Reference opacity</span><output id="referenceOpacityValue">40%</output></div>
+          <input id="referenceOpacity" type="range" min="0" max="100" value="40" />
         </div>
-
-        <button class="outline-btn full" id="removeReferenceBtn">Remove reference</button>
+        <button class="secondary-wide" id="removeReferenceBtn">Remove reference</button>
       </section>
     </aside>
 
-    <button class="edge-reopen edge-reopen-right" id="reopenRight" aria-label="Open colour and layers">COLOUR</button>
+    <button class="edge-tab edge-tab-right" id="reopenRight" aria-label="Open studio controls">
+      <b>‹</b>
+      <span>STUDIO</span>
+    </button>
   </div>
 
   <div class="toast" id="toast" role="status"></div>
-
   <script src="design-studio.js"></script>
 </body>
 </html>
