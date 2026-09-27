@@ -34,15 +34,16 @@
       <button class="collapse-btn" id="toggleLeft">‹</button>
     </div>
 
-    <div class="brush-categories" id="brushCategories">
-      <button class="category-chip active" data-brush-category="sketching">Sketching</button>
-      <button class="category-chip" data-brush-category="inking">Inking</button>
-      <button class="category-chip" data-brush-category="markers">Markers</button>
-      <button class="category-chip" data-brush-category="fashion">Fashion</button>
-      <button class="category-chip" data-brush-category="favorites">♡ Favorites</button>
+    <div class="brush-library-shell">
+      <div class="brush-categories" id="brushCategories">
+        <button class="category-chip active" data-brush-category="sketching">Sketching</button>
+        <button class="category-chip" data-brush-category="inking">Inking</button>
+        <button class="category-chip" data-brush-category="markers">Markers</button>
+        <button class="category-chip" data-brush-category="fashion">Fashion</button>
+        <button class="category-chip" data-brush-category="favorites">♡ Favorites</button>
+      </div>
+      <div class="brush-presets" id="brushPresets"></div>
     </div>
-
-    <div class="brush-presets" id="brushPresets"></div>
 
     <div class="quick-tools">
       <button class="quick-tool" data-tool="eraser">⌫<small>Eraser</small></button>
@@ -91,11 +92,11 @@
       <span>Pinch to zoom · drag to pan</span>
     </div>
 
-    <div class="view-strip">
-      <button class="view-btn active" data-croquis="classic">Classic</button>
-      <button class="view-btn" data-croquis="curvy">Curvy</button>
-      <button class="view-btn" data-croquis="back">Back</button>
-      <button class="view-btn" data-croquis="threequarter">3/4</button>
+    <div class="view-strip" id="viewStrip">
+      <span class="view-label" id="activeBodyLabel">Classic</span>
+      <button class="view-btn active" data-view="front">Front</button>
+      <button class="view-btn" data-view="back">Back</button>
+      <button class="view-btn" data-view="threequarter">3/4</button>
     </div>
   </main>
 
@@ -136,13 +137,31 @@
     </section>
 
     <section class="tab-panel" data-panel="croquis">
-      <p class="helper">Your four Améa fashion bases.</p>
-      <div class="croquis-grid">
-        <button class="croquis-card active" data-croquis="classic"><span class="croquis-mini classic-mini"></span><strong>Classic Fashion</strong></button>
-        <button class="croquis-card" data-croquis="curvy"><span class="croquis-mini curvy-mini"></span><strong>Curvy</strong></button>
-        <button class="croquis-card" data-croquis="back"><span class="croquis-mini back-mini"></span><strong>Back View</strong></button>
-        <button class="croquis-card" data-croquis="threequarter"><span class="croquis-mini three-mini"></span><strong>3/4 View</strong></button>
+      <div class="croquis-section-head">
+        <span class="mini-kicker">BODY TYPE</span>
+        <strong>Choose your base</strong>
       </div>
+
+      <div class="body-type-switch">
+        <button class="body-type-btn active" data-body-type="classic">
+          <span class="body-type-preview"><canvas width="96" height="150" data-body-preview="classic"></canvas></span>
+          <span><strong>Classic</strong><small>Long fashion proportions</small></span>
+        </button>
+        <button class="body-type-btn" data-body-type="curvy">
+          <span class="body-type-preview"><canvas width="96" height="150" data-body-preview="curvy"></canvas></span>
+          <span><strong>Curvy</strong><small>Fuller waist & hips</small></span>
+        </button>
+      </div>
+
+      <div class="section-block">
+        <span class="field-title">View</span>
+        <div class="view-choice-grid">
+          <button class="view-choice active" data-view="front">Front</button>
+          <button class="view-choice" data-view="back">Back</button>
+          <button class="view-choice" data-view="threequarter">3/4</button>
+        </div>
+      </div>
+
       <div class="control-card">
         <div class="control-row-head"><span>Croquis opacity</span><output id="croquisOpacityValue">100%</output></div>
         <input id="croquisOpacity" type="range" min="0" max="100" value="100" />
