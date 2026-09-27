@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#fff7fb" />
+  <title>Améa HQ — Design Studio</title>
+  <link rel="stylesheet" href="design-studio.css" />
+</head>
+<body>
+  <div class="studio-shell" id="studioShell">
+    <header class="topbar">
+      <div class="topbar-left">
+        <a class="icon-btn" href="index.html" aria-label="Back to Améa HQ">←</a>
+        <div>
+          <div class="eyebrow">AMÉA HQ</div>
+          <div class="studio-title">Design Studio</div>
+        </div>
+      </div>
+
+      <div class="topbar-center">
+        <input id="designName" class="design-name" value="Untitled Design" aria-label="Design name" />
+      </div>
+
+      <div class="topbar-actions">
+        <button class="icon-btn" id="undoBtn" title="Undo">↶</button>
+        <button class="icon-btn" id="redoBtn" title="Redo">↷</button>
+        <button class="soft-btn" id="focusBtn">Full screen</button>
+        <button class="pink-btn" id="exportBtn">Export PNG</button>
+      </div>
+    </header>
+
+    <aside class="panel left-panel" id="leftPanel">
+      <button class="panel-handle left-handle" id="toggleLeft" aria-label="Hide tools">‹</button>
+      <div class="panel-heading">Tools</div>
+
+      <div class="tool-grid" id="toolGrid">
+        <button class="tool-btn active" data-tool="pencil"><span>✏️</span><small>Pencil</small></button>
+        <button class="tool-btn" data-tool="marker"><span>🖊️</span><small>Marker</small></button>
+        <button class="tool-btn" data-tool="eraser"><span>⌫</span><small>Eraser</small></button>
+        <button class="tool-btn" data-tool="eyedropper"><span>🎯</span><small>Pick colour</small></button>
+        <button class="tool-btn" data-tool="select"><span>⬚</span><small>Select</small></button>
+        <button class="tool-btn" data-tool="stamp"><span>✿</span><small>Stamp</small></button>
+        <button class="tool-btn" data-tool="scatter"><span>❀</span><small>Scatter</small></button>
+        <button class="tool-btn" data-tool="fillpattern"><span>▦</span><small>Pattern fill</small></button>
+      </div>
+
+      <div class="panel-section">
+        <label class="field-label" for="brushSize">Brush size</label>
+        <div class="range-row">
+          <input id="brushSize" type="range" min="2" max="90" value="12" />
+          <output id="brushSizeValue">12</output>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <label class="field-label" for="brushOpacity">Opacity</label>
+        <div class="range-row">
+          <input id="brushOpacity" type="range" min="5" max="100" value="100" />
+          <output id="brushOpacityValue">100%</output>
+        </div>
+      </div>
+
+      <div class="panel-section quick-actions">
+        <button class="outline-btn" id="clearLayerBtn">Clear layer</button>
+      </div>
+    </aside>
+
+    <main class="workspace">
+      <div class="canvas-stage" id="canvasStage">
+        <canvas id="artboard" width="1800" height="2200" aria-label="Fashion drawing canvas"></canvas>
+      </div>
+
+      <div class="floating-toolbar" id="floatingToolbar">
+        <button class="floating-btn" data-quick-tool="pencil">✏️</button>
+        <button class="floating-btn" data-quick-tool="eraser">⌫</button>
+        <button class="floating-btn colour-preview" id="floatingColour" title="Current colour"></button>
+        <button class="floating-btn" id="floatingUndo">↶</button>
+        <button class="floating-btn" id="exitFocusBtn">✕</button>
+      </div>
+
+      <div class="view-strip">
+        <button class="view-btn active" data-template="front">Front</button>
+        <button class="view-btn" data-template="back">Back</button>
+        <button class="view-btn" data-template="side">Side</button>
+        <button class="view-btn" data-template="blank">Blank</button>
+      </div>
+    </main>
+
+    <aside class="panel right-panel" id="rightPanel">
+      <button class="panel-handle right-handle" id="toggleRight" aria-label="Hide controls">›</button>
+
+      <div class="tabs" id="rightTabs">
+        <button class="tab-btn active" data-tab="colour">Colour</button>
+        <button class="tab-btn" data-tab="motifs">Motifs</button>
+        <button class="tab-btn" data-tab="layers">Layers</button>
+        <button class="tab-btn" data-tab="reference">Reference</button>
+      </div>
+
+      <section class="tab-panel active" data-panel="colour">
+        <div class="panel-heading">Colour</div>
+        <div class="colour-block">
+          <input id="colourPicker" type="color" value="#e24892" />
+          <div class="colour-meta">
+            <strong id="hexValue">#E24892</strong>
+            <span>Tap 🎯 then tap anywhere on the canvas to pick a colour.</span>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <div class="field-label">Améa palette</div>
+          <div class="swatches" id="swatches">
+            <button data-colour="#E24892" style="--swatch:#E24892"></button>
+            <button data-colour="#FF8FC5" style="--swatch:#FF8FC5"></button>
+            <button data-colour="#F7D6E7" style="--swatch:#F7D6E7"></button>
+            <button data-colour="#FFF8FB" style="--swatch:#FFF8FB"></button>
+            <button data-colour="#8D4368" style="--swatch:#8D4368"></button>
+            <button data-colour="#1E1A1C" style="--swatch:#1E1A1C"></button>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <div class="field-label">Recent colours</div>
+          <div class="swatches" id="recentColours"></div>
+        </div>
+      </section>
+
+      <section class="tab-panel" data-panel="motifs">
+        <div class="panel-heading">Motif Tool</div>
+        <p class="helper">Draw something once, select it, then save it as a reusable motif.</p>
+        <button class="pink-btn full" id="createMotifBtn">Create motif from selection</button>
+
+        <div class="motif-preview-wrap">
+          <canvas id="motifPreview" width="220" height="160"></canvas>
+          <div>
+            <strong id="motifStatus">No motif saved</strong>
+            <p class="helper mini">After saving, choose Stamp, Scatter or Pattern fill.</p>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <label class="field-label" for="motifSize">Motif size</label>
+          <div class="range-row">
+            <input id="motifSize" type="range" min="20" max="250" value="100" />
+            <output id="motifSizeValue">100%</output>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <label class="field-label" for="motifSpacing">Spacing</label>
+          <div class="range-row">
+            <input id="motifSpacing" type="range" min="10" max="250" value="90" />
+            <output id="motifSpacingValue">90</output>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <label class="field-label" for="motifRotation">Rotation</label>
+          <div class="range-row">
+            <input id="motifRotation" type="range" min="-180" max="180" value="0" />
+            <output id="motifRotationValue">0°</output>
+          </div>
+        </div>
+
+        <button class="outline-btn full" id="clearMotifBtn">Clear saved motif</button>
+      </section>
+
+      <section class="tab-panel" data-panel="layers">
+        <div class="panel-heading row-between">
+          <span>Layers</span>
+          <button class="mini-pink" id="addLayerBtn">+ Add</button>
+        </div>
+        <div id="layerList" class="layer-list"></div>
+        <p class="helper mini">Mannequin and reference stay separate from your drawing layers.</p>
+      </section>
+
+      <section class="tab-panel" data-panel="reference">
+        <div class="panel-heading">Reference</div>
+        <label class="upload-card">
+          <input id="referenceUpload" type="file" accept="image/*" />
+          <span class="upload-icon">＋</span>
+          <strong>Add inspiration photo</strong>
+          <small>PNG, JPG, HEIC*</small>
+        </label>
+        <p class="helper mini">*Browser support for HEIC depends on your iPad/iOS version.</p>
+
+        <div class="panel-section">
+          <label class="field-label" for="referenceOpacity">Reference opacity</label>
+          <div class="range-row">
+            <input id="referenceOpacity" type="range" min="0" max="100" value="40" />
+            <output id="referenceOpacityValue">40%</output>
+          </div>
+        </div>
+
+        <button class="outline-btn full" id="removeReferenceBtn">Remove reference</button>
+      </section>
+    </aside>
+  </div>
+
+  <div class="toast" id="toast" role="status"></div>
+
+  <script src="design-studio.js"></script>
+</body>
+</html>
