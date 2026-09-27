@@ -36,7 +36,7 @@ const BRUSHES={
 const state={
   tool:"brush",brushCategory:"sketching",brush:null,colour:"#e24892",brushSize:12,opacity:1,smoothing:.28,
   pressureEnabled:true,brushMultiplier:1,eraserSize:48,drawing:false,last:null,lastSpecial:null,
-  selection:null,selectionStart:null,croquis:"classic",croquisOpacity:1,croquisHidden:false,
+  selection:null,selectionStart:null,croquisBody:"classic",croquisView:"front",croquisOpacity:1,croquisHidden:false,
   referenceImage:null,referenceOpacity:.4,motif:null,motifScale:1,motifSpacing:90,motifRotation:0,lastStamp:null,
   layers:[],activeLayerId:null,history:[],historyIndex:-1,recentColours:[],
   zoom:1,fitScale:1,panX:0,panY:0,touches:new Map(),gesture:null
@@ -143,56 +143,110 @@ function updateTouchGesture(){
 }
 function pagePoint(e){const r=artboard.getBoundingClientRect();return{x:(e.clientX-r.left)*(W/r.width),y:(e.clientY-r.top)*(H/r.height),pressure:e.pointerType==="pen"&&e.pressure>0?e.pressure:.5}}
 
-function skinStyle(t){t.fillStyle="#efd4c8";t.strokeStyle="#c5a99f";t.lineWidth=4;t.lineJoin="round";t.lineCap="round"}
-function limb(t,x1,y1,x2,y2,w){t.save();skinStyle(t);t.lineWidth=w;t.beginPath();t.moveTo(x1,y1);t.lineTo(x2,y2);t.stroke();t.restore()}
-function foot(t,x,y,dir=1){t.save();skinStyle(t);t.beginPath();t.ellipse(x+18*dir,y,38,17,dir>0?-.12:.12,0,Math.PI*2);t.fill();t.stroke();t.restore()}
-function hand(t,x,y){t.save();skinStyle(t);t.beginPath();t.ellipse(x,y,22,34,0,0,Math.PI*2);t.fill();t.stroke();t.restore()}
-function head(t,cx,cy,turn=0){t.save();skinStyle(t);t.beginPath();t.ellipse(cx,cy,82,112,turn,0,Math.PI*2);t.fill();t.stroke();t.restore()}
-function torso(t,cx,opts){
-  const sh=opts.shoulders,wa=opts.waist,hi=opts.hips,lean=opts.lean||0,y=opts.y||430;
-  t.save();skinStyle(t);t.beginPath();
-  t.moveTo(cx-sh+lean,y);t.bezierCurveTo(cx-sh-10+lean,y+90,cx-wa+lean,y+230,cx-wa+lean,y+360);
-  t.bezierCurveTo(cx-wa+lean,y+460,cx-hi+lean,y+510,cx-hi+lean,y+610);
-  t.quadraticCurveTo(cx+lean,y+660,cx+hi+lean,y+610);
-  t.bezierCurveTo(cx+hi+lean,y+510,cx+wa+lean,y+460,cx+wa+lean,y+360);
-  t.bezierCurveTo(cx+wa+lean,y+230,cx+sh+10+lean,y+90,cx+sh+lean,y);
-  t.quadraticCurveTo(cx+lean,y+50,cx-sh+lean,y);
-  t.closePath();t.fill();t.stroke();t.restore();
-}
-function leg(t,x,y,outer,ankle,dir){
-  t.save();skinStyle(t);t.beginPath();
-  t.moveTo(x-dir*outer,y);t.bezierCurveTo(x-dir*(outer+18),y+260,x-dir*(ankle+18),y+520,x-dir*ankle,y+760);
-  t.lineTo(x+dir*ankle,y+760);t.bezierCurveTo(x+dir*(ankle+18),y+520,x+dir*(outer+18),y+260,x+dir*outer,y);t.closePath();t.fill();t.stroke();t.restore();
-}
-function drawCroquis(t,type){
-  if(state.croquisHidden)return;
-  t.save();t.globalAlpha=state.croquisOpacity;
-  const cx=W/2;
-  if(type==="classic"){
-    head(t,cx,225);torso(t,cx,{shoulders:185,waist:92,hips:150,y:410});
-    limb(t,cx-165,470,cx-340,1180,58);limb(t,cx+165,470,cx+340,1180,58);hand(t,cx-345,1210);hand(t,cx+345,1210);
-    leg(t,cx-70,1000,88,36,-1);leg(t,cx+70,1000,88,36,1);foot(t,cx-110,2000,-1);foot(t,cx+110,2000,1);
-  }else if(type==="curvy"){
-    head(t,cx,225);torso(t,cx,{shoulders:188,waist:82,hips:205,y:410});
-    limb(t,cx-170,475,cx-350,1190,64);limb(t,cx+170,475,cx+350,1190,64);hand(t,cx-355,1220);hand(t,cx+355,1220);
-    leg(t,cx-92,1005,112,44,-1);leg(t,cx+92,1005,112,44,1);foot(t,cx-135,2000,-1);foot(t,cx+135,2000,1);
-  }else if(type==="back"){
-    head(t,cx,225);torso(t,cx,{shoulders:190,waist:96,hips:158,y:410});
-    limb(t,cx-170,470,cx-335,1170,60);limb(t,cx+170,470,cx+335,1170,60);hand(t,cx-340,1200);hand(t,cx+340,1200);
-    leg(t,cx-72,1005,90,38,-1);leg(t,cx+72,1005,90,38,1);foot(t,cx-112,2000,-1);foot(t,cx+112,2000,1);
-    t.save();t.strokeStyle="#c2a49a";t.lineWidth=4;t.beginPath();t.moveTo(cx,430);t.bezierCurveTo(cx-8,650,cx+8,800,cx,990);t.stroke();t.restore();
+function drawHumanCroquis(t,bodyType,view,cx,top,scale=1){
+  const curvy=bodyType==="curvy";
+  const shoulder=curvy?182:166,bust=curvy?154:132,waist=curvy?88:76,hip=curvy?190:142,thigh=curvy?126:102;
+  t.save();
+  t.translate(cx,top);
+  t.scale(scale,scale);
+  if(view==="threequarter")t.transform(1,0,-.055,1,18,0);
+  t.fillStyle="#f0d8cf";
+  t.strokeStyle="#bd9f95";
+  t.lineWidth=4;
+  t.lineJoin="round";
+  t.lineCap="round";
+
+  t.beginPath();
+  t.ellipse(view==="threequarter"?15:0,108,70,96,view==="threequarter"?-.06:0,0,Math.PI*2);
+  t.fill();t.stroke();
+
+  t.beginPath();
+  t.moveTo(-36,192);t.lineTo(-42,260);t.quadraticCurveTo(0,278,42,260);t.lineTo(36,192);
+  t.closePath();t.fill();t.stroke();
+
+  t.beginPath();
+  t.moveTo(-42,258);
+  t.bezierCurveTo(-86,274,-shoulder,290,-shoulder,335);
+  t.bezierCurveTo(-shoulder-5,400,-bust-8,455,-bust,520);
+  t.bezierCurveTo(-bust+8,590,-waist-9,625,-waist,690);
+  t.bezierCurveTo(-waist+2,760,-hip,790,-hip,865);
+  t.bezierCurveTo(-hip+10,915,-82,955,-35,970);
+  t.quadraticCurveTo(0,990,35,970);
+  t.bezierCurveTo(82,955,hip-10,915,hip,865);
+  t.bezierCurveTo(hip,790,waist-2,760,waist,690);
+  t.bezierCurveTo(waist+9,625,bust-8,590,bust,520);
+  t.bezierCurveTo(bust+8,455,shoulder+5,400,shoulder,335);
+  t.bezierCurveTo(shoulder,290,86,274,42,258);
+  t.quadraticCurveTo(0,282,-42,258);
+  t.closePath();t.fill();t.stroke();
+
+  const arm=(side)=>{
+    const s=side,shift=view==="threequarter"?32:0;
+    const sx=s*(shoulder-4)+shift,ex=s*(228+(curvy?10:0))+shift,wx=s*(220+(curvy?12:0))+shift;
+    t.beginPath();
+    t.moveTo(sx,332);
+    t.bezierCurveTo(s*(shoulder+38)+shift,455,ex,595,ex,725);
+    t.bezierCurveTo(ex,830,wx,960,wx,1080);
+    t.bezierCurveTo(wx-s*17,1110,wx-s*45,1108,wx-s*50,1070);
+    t.bezierCurveTo(wx-s*58,950,ex-s*42,825,ex-s*40,720);
+    t.bezierCurveTo(ex-s*35,590,s*(shoulder-5)+shift,455,sx-s*16,360);
+    t.closePath();t.fill();t.stroke();
+    t.beginPath();t.ellipse(wx-s*25,1115,24,38,s>0?.12:-.12,0,Math.PI*2);t.fill();t.stroke();
+  };
+  arm(-1);arm(1);
+
+  const leg=(side)=>{
+    const s=side,outer=s*(hip*.72),inner=s*25;
+    t.beginPath();
+    t.moveTo(outer,905);
+    t.bezierCurveTo(s*(thigh+24),1080,s*(thigh-12),1225,s*86,1370);
+    t.bezierCurveTo(s*68,1500,s*54,1650,s*46,1770);
+    t.lineTo(s*21,1770);
+    t.bezierCurveTo(s*26,1600,s*36,1490,s*45,1375);
+    t.bezierCurveTo(s*54,1220,s*55,1080,inner,970);
+    t.closePath();t.fill();t.stroke();
+    t.beginPath();t.ellipse(s*55,1793,45,17,s>0?-.1:.1,0,Math.PI*2);t.fill();t.stroke();
+  };
+  leg(-1);leg(1);
+
+  t.save();
+  t.strokeStyle="rgba(151,118,108,.58)";
+  t.lineWidth=2.5;
+  if(view==="back"){
+    t.beginPath();t.moveTo(0,290);t.bezierCurveTo(-5,480,5,690,0,925);t.stroke();
+    t.beginPath();t.moveTo(-112,355);t.quadraticCurveTo(-65,420,-28,470);t.moveTo(112,355);t.quadraticCurveTo(65,420,28,470);t.stroke();
+    t.beginPath();t.moveTo(-80,860);t.quadraticCurveTo(0,910,80,860);t.stroke();
+  }else if(view==="front"){
+    t.beginPath();t.moveTo(-95,520);t.quadraticCurveTo(0,565,95,520);t.stroke();
+    t.beginPath();t.moveTo(0,692);t.lineTo(0,845);t.stroke();
   }else{
-    head(t,cx+18,225,-.08);torso(t,cx,{shoulders:178,waist:88,hips:160,y:410,lean:34});
-    limb(t,cx-120,470,cx-275,1110,58);limb(t,cx+190,485,cx+300,1050,54);hand(t,cx-280,1140);hand(t,cx+305,1080);
-    leg(t,cx-30,1000,92,36,-1);leg(t,cx+115,1020,82,34,1);foot(t,cx-72,1995,-1);foot(t,cx+165,1965,1);
+    t.beginPath();t.moveTo(-55,520);t.quadraticCurveTo(22,557,102,515);t.stroke();
+    t.beginPath();t.moveTo(18,690);t.lineTo(22,842);t.stroke();
   }
   t.restore();
+  t.restore();
+}
+
+function drawCroquis(t){
+  if(state.croquisHidden)return;
+  t.save();
+  t.globalAlpha=state.croquisOpacity;
+  drawHumanCroquis(t,state.croquisBody,state.croquisView,W/2,105,1);
+  t.restore();
+}
+
+function renderBodyTypePreviews(){
+  $$("[data-body-preview]").forEach(c=>{
+    const pc=c.getContext("2d");
+    pc.clearRect(0,0,c.width,c.height);
+    drawHumanCroquis(pc,c.dataset.bodyPreview,"front",c.width/2,3,.075);
+  });
 }
 
 function render(){
   ctx.clearRect(0,0,W,H);ctx.fillStyle="#fff";ctx.fillRect(0,0,W,H);
   if(state.referenceImage){ctx.save();ctx.globalAlpha=state.referenceOpacity;const i=state.referenceImage,s=Math.min((W*.82)/i.width,(H*.82)/i.height),iw=i.width*s,ih=i.height*s;ctx.drawImage(i,(W-iw)/2,(H-ih)/2,iw,ih);ctx.restore()}
-  drawCroquis(ctx,state.croquis);
+  drawCroquis(ctx);
   [...state.layers].reverse().forEach(l=>{if(l.visible)ctx.drawImage(l.canvas,0,0)});
   if(state.selection){ctx.save();ctx.strokeStyle="#e24892";ctx.lineWidth=5;ctx.setLineDash([18,14]);ctx.strokeRect(state.selection.x,state.selection.y,state.selection.w,state.selection.h);ctx.restore()}
 }
@@ -231,11 +285,11 @@ function patternFill(){if(!state.selection||!state.motif){showToast("Select an a
 function renderLayerList(){const root=$("#layerList");root.innerHTML="";state.layers.forEach(layer=>{const row=document.createElement("div");row.className="layer-item"+(layer.id===state.activeLayerId?" active":"");row.innerHTML='<button class="layer-eye">'+(layer.visible?"◉":"○")+'</button><div class="layer-name">'+escapeHtml(layer.name)+'</div><button class="layer-delete">×</button>';row.onclick=e=>{if(e.target.classList.contains("layer-eye"))layer.visible=!layer.visible;else if(e.target.classList.contains("layer-delete")){if(state.layers.length===1)return;state.layers=state.layers.filter(l=>l.id!==layer.id);if(state.activeLayerId===layer.id)state.activeLayerId=state.layers[0].id;snapshot()}else state.activeLayerId=layer.id;renderLayerList();render()};root.appendChild(row)})}
 function escapeHtml(v){return v.replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[ch]))}
 function serializeLayers(){return state.layers.map(l=>({id:l.id,name:l.name,visible:l.visible,data:l.canvas.toDataURL("image/png")}))}
-function snapshot(){const s={layers:serializeLayers(),activeLayerId:state.activeLayerId,croquis:state.croquis,croquisOpacity:state.croquisOpacity,croquisHidden:state.croquisHidden};state.history=state.history.slice(0,state.historyIndex+1);state.history.push(s);if(state.history.length>20)state.history.shift();state.historyIndex=state.history.length-1}
-async function restore(s){const layers=[];for(const d of s.layers){const c=newCanvas(),i=new Image();await new Promise(r=>{i.onload=r;i.src=d.data});c.getContext("2d").drawImage(i,0,0);layers.push({id:d.id,name:d.name,visible:d.visible,canvas:c})}state.layers=layers;state.activeLayerId=s.activeLayerId;state.croquis=s.croquis||"classic";state.croquisOpacity=s.croquisOpacity??1;state.croquisHidden=s.croquisHidden??false;syncCroquisUI();renderLayerList();render()}
+function snapshot(){const s={layers:serializeLayers(),activeLayerId:state.activeLayerId,croquisBody:state.croquisBody,croquisView:state.croquisView,croquisOpacity:state.croquisOpacity,croquisHidden:state.croquisHidden};state.history=state.history.slice(0,state.historyIndex+1);state.history.push(s);if(state.history.length>20)state.history.shift();state.historyIndex=state.history.length-1}
+async function restore(s){const layers=[];for(const d of s.layers){const c=newCanvas(),i=new Image();await new Promise(r=>{i.onload=r;i.src=d.data});c.getContext("2d").drawImage(i,0,0);layers.push({id:d.id,name:d.name,visible:d.visible,canvas:c})}state.layers=layers;state.activeLayerId=s.activeLayerId;state.croquisBody=s.croquisBody||"classic";state.croquisView=s.croquisView||"front";state.croquisOpacity=s.croquisOpacity??1;state.croquisHidden=s.croquisHidden??false;syncCroquisUI();renderLayerList();render()}
 async function undo(){if(state.historyIndex<=0)return;state.historyIndex--;await restore(state.history[state.historyIndex])}
 async function redo(){if(state.historyIndex>=state.history.length-1)return;state.historyIndex++;await restore(state.history[state.historyIndex])}
-function exportPNG(){const c=newCanvas(),x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,W,H);drawCroquis(x,state.croquis);[...state.layers].reverse().forEach(l=>{if(l.visible)x.drawImage(l.canvas,0,0)});const a=document.createElement("a"),safe=($("#designName").value||"amea-design").trim().replace(/[^a-z0-9-_]+/gi,"-");a.download=(safe||"amea-design")+".png";a.href=c.toDataURL("image/png");a.click();showToast("Exported ✓")}
+function exportPNG(){const c=newCanvas(),x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,W,H);drawCroquis(x);[...state.layers].reverse().forEach(l=>{if(l.visible)x.drawImage(l.canvas,0,0)});const a=document.createElement("a"),safe=($("#designName").value||"amea-design").trim().replace(/[^a-z0-9-_]+/gi,"-");a.download=(safe||"amea-design")+".png";a.href=c.toDataURL("image/png");a.click();showToast("Exported ✓")}
 
 viewport.addEventListener("pointerdown",e=>{
   if(e.pointerType==="touch"){e.preventDefault();state.touches.set(e.pointerId,{x:e.clientX,y:e.clientY});viewport.setPointerCapture?.(e.pointerId);startTouchGesture();return}
@@ -275,9 +329,18 @@ $("#colourPicker").oninput=e=>setColour(e.target.value);
 $$("#swatches button").forEach(b=>b.onclick=()=>setColour(b.dataset.colour));
 
 $$(".tab-btn").forEach(btn=>btn.onclick=()=>{$$(".tab-btn").forEach(b=>b.classList.remove("active"));$$(".tab-panel").forEach(p=>p.classList.remove("active"));btn.classList.add("active");$('[data-panel="'+btn.dataset.tab+'"]').classList.add("active")});
-function chooseCroquis(type){state.croquis=type;syncCroquisUI();render();snapshot()}
-$$("[data-croquis]").forEach(b=>b.onclick=()=>chooseCroquis(b.dataset.croquis));
-function syncCroquisUI(){$$("[data-croquis]").forEach(b=>b.classList.toggle("active",b.dataset.croquis===state.croquis));$("#croquisOpacity").value=Math.round(state.croquisOpacity*100);$("#croquisOpacityValue").textContent=Math.round(state.croquisOpacity*100)+"%";$("#hideCroquis").checked=state.croquisHidden}
+function chooseBody(type){state.croquisBody=type;syncCroquisUI();render();snapshot()}
+function chooseView(view){state.croquisView=view;syncCroquisUI();render();snapshot()}
+$("[data-body-type]").forEach(b=>b.onclick=()=>chooseBody(b.dataset.bodyType));
+$("[data-view]").forEach(b=>b.onclick=()=>chooseView(b.dataset.view));
+function syncCroquisUI(){
+  $("[data-body-type]").forEach(b=>b.classList.toggle("active",b.dataset.bodyType===state.croquisBody));
+  $("[data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===state.croquisView));
+  $("#activeBodyLabel").textContent=state.croquisBody==="curvy"?"Curvy":"Classic";
+  $("#croquisOpacity").value=Math.round(state.croquisOpacity*100);
+  $("#croquisOpacityValue").textContent=Math.round(state.croquisOpacity*100)+"%";
+  $("#hideCroquis").checked=state.croquisHidden;
+}
 $("#croquisOpacity").oninput=e=>{state.croquisOpacity=+e.target.value/100;$("#croquisOpacityValue").textContent=e.target.value+"%";render()};
 $("#hideCroquis").onchange=e=>{state.croquisHidden=e.target.checked;render();snapshot()};
 
@@ -302,5 +365,5 @@ window.addEventListener("keydown",e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCa
 
 addLayer("Details");addLayer("Colour");addLayer("Sketch");
 state.history=[];state.historyIndex=-1;
-state.brush=BRUSHES.sketching[0];renderBrushes("sketching");applyBrush(state.brush);setColour(state.colour);syncCroquisUI();renderLayerList();render();snapshot();requestAnimationFrame(fitCanvas);
+state.brush=BRUSHES.sketching[0];renderBrushes("sketching");applyBrush(state.brush);setColour(state.colour);renderBodyTypePreviews();syncCroquisUI();renderLayerList();render();snapshot();requestAnimationFrame(fitCanvas);
 })();
