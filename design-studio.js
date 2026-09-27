@@ -50,6 +50,45 @@ function showToast(m){toast.textContent=m;toast.classList.add("show");clearTimeo
 function setColour(hex){state.colour=hex;$("#colourPicker").value=hex;$("#hexValue").textContent=hex.toUpperCase();state.recentColours=[hex,...state.recentColours.filter(c=>c!==hex)].slice(0,8);renderRecentColours()}
 function renderRecentColours(){const root=$("#recentColours");root.innerHTML="";state.recentColours.forEach(c=>{const b=document.createElement("button");b.style.setProperty("--swatch",c);b.onclick=()=>setColour(c);root.appendChild(b)})}
 
+function drawBrushPreview(canvas,p){
+  const c=canvas.getContext("2d"),w=canvas.width,h=canvas.height;
+  c.clearRect(0,0,w,h);
+  c.save();c.lineCap="round";c.lineJoin="round";c.strokeStyle="#3c3036";c.fillStyle="#3c3036";
+  const curve=(offset,alpha,width)=>{
+    c.globalAlpha=alpha;c.lineWidth=width;c.beginPath();
+    c.moveTo(10,h*.63+offset);
+    c.bezierCurveTo(w*.25,h*.18+offset,w*.48,h*.86+offset,w*.7,h*.42+offset);
+    c.bezierCurveTo(w*.8,h*.25+offset,w*.88,h*.35+offset,w-10,h*.28+offset);
+    c.stroke();
+  };
+  if(p.mode==="stitch"){
+    c.lineWidth=3;for(let x=12;x<w-12;x+=15){c.beginPath();c.moveTo(x,h*.62);c.lineTo(x+8,h*.48);c.stroke()}
+  }else if(p.mode==="bead"){
+    for(let x=13;x<w-9;x+=16){const y=h*.52+Math.sin(x*.16)*5;c.beginPath();c.arc(x,y,5,0,Math.PI*2);c.fill();c.fillStyle="#fff";c.globalAlpha=.65;c.beginPath();c.arc(x-1.5,y-1.5,1.4,0,Math.PI*2);c.fill();c.fillStyle="#3c3036";c.globalAlpha=1}
+  }else if(p.mode==="crochet"){
+    c.lineWidth=2.4;for(let x=12;x<w-12;x+=12){const y=h*.54+Math.sin(x*.12)*4;c.beginPath();c.arc(x,y,6,0,Math.PI*2);c.stroke();c.beginPath();c.arc(x+5,y,6,0,Math.PI*2);c.stroke()}
+  }else if(p.mode==="knit"){
+    c.lineWidth=2.2;for(let x=12;x<w-10;x+=10){c.beginPath();c.moveTo(x,h*.72);c.quadraticCurveTo(x+5,h*.25,x+10,h*.72);c.stroke()}
+  }else if(p.mode==="fuzzy"){
+    curve(0,.5,7);c.globalAlpha=.42;c.lineWidth=1.4;
+    for(let x=12;x<w-12;x+=5){const y=h*.52+Math.sin(x*.1)*7;for(let k=0;k<3;k++){const a=(x+k*19)*.61,r=5+k*2;c.beginPath();c.moveTo(x,y);c.lineTo(x+Math.cos(a)*r,y+Math.sin(a)*r);c.stroke()}}
+  }else if(/Marker|Highlighter/.test(p.name)){
+    curve(0,p.opacity,Math.max(10,p.sample*1.3));
+    if(p.name==="Chisel Marker"){c.globalAlpha=.42;c.lineCap="butt";c.lineWidth=17;c.beginPath();c.moveTo(12,h*.68);c.lineTo(w-12,h*.28);c.stroke()}
+  }else if(p.name==="6B Pencil"){
+    curve(-1,.46,7);curve(1,.45,5);curve(0,.35,2);
+  }else if(p.name==="Soft Sketch"){
+    curve(-2,.25,5);curve(2,.2,4);curve(0,.26,2);
+  }else if(p.name==="Technical Pencil"||p.name==="Fine Liner"){
+    curve(0,.95,2);
+  }else if(p.name==="Monoline"){
+    curve(0,1,5);
+  }else{
+    curve(-1,.55,3);curve(1,.38,2);
+  }
+  c.restore();
+}
+
 function renderBrushes(category=state.brushCategory){
   state.brushCategory=category;
   $$(".category-chip").forEach(b=>b.classList.toggle("active",b.dataset.brushCategory===category));
@@ -58,12 +97,13 @@ function renderBrushes(category=state.brushCategory){
   (list||[]).forEach(p=>{
     const b=document.createElement("button");
     b.className="brush-preset"+(state.brush?.name===p.name?" active":"");
-    b.innerHTML='<span class="brush-stroke"><i style="height:'+p.sample+'px"></i></span><span><strong>'+p.name+'</strong><small>'+p.note+'</small></span><span class="fav-star">'+(p.favorite?"♥":"♡")+'</span>';
+    b.innerHTML='<canvas class="brush-preview-canvas" width="156" height="76"></canvas><span><strong>'+p.name+'</strong><small>'+p.note+'</small></span><span class="fav-star">'+(p.favorite?"♥":"♡")+'</span>';
     b.onclick=e=>{
       if(e.target.classList.contains("fav-star")){e.stopPropagation();p.favorite=!p.favorite;renderBrushes(category);return}
       applyBrush(p);
     };
     root.appendChild(b);
+    drawBrushPreview($(".brush-preview-canvas",b),p);
   });
   if(!list?.length)root.innerHTML='<div class="helper">Favorite brushes will appear here.</div>';
 }
