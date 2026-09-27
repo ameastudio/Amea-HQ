@@ -16,7 +16,7 @@ button{cursor:pointer}
 .studio-shell{
   height:100dvh;
   display:grid;
-  grid-template-columns:230px minmax(0,1fr) 320px;
+  grid-template-columns:300px minmax(0,1fr) 320px;
   grid-template-rows:62px minmax(0,1fr);
   background:#f4eef2;
 }
@@ -198,7 +198,7 @@ input[type="range"]{width:100%;accent-color:var(--pink)}
 .studio-shell.left-collapsed{grid-template-columns:0 minmax(0,1fr) 320px}
 .studio-shell.left-collapsed .left-panel{transform:translateX(-100%)}
 .studio-shell.left-collapsed .edge-tab-left{display:flex}
-.studio-shell.right-collapsed{grid-template-columns:230px minmax(0,1fr) 0}
+.studio-shell.right-collapsed{grid-template-columns:300px minmax(0,1fr) 0}
 .studio-shell.right-collapsed .right-panel{transform:translateX(100%)}
 .studio-shell.right-collapsed .edge-tab-right{display:flex}
 .studio-shell.left-collapsed.right-collapsed{grid-template-columns:0 minmax(0,1fr) 0}
@@ -206,12 +206,149 @@ input[type="range"]{width:100%;accent-color:var(--pink)}
 .studio-shell.left-collapsed.right-collapsed .canvas-transform{box-shadow:none;border-radius:0}
 
 @media(max-width:1100px){
-  .studio-shell{grid-template-columns:195px minmax(0,1fr) 285px}
+  .studio-shell{grid-template-columns:250px minmax(0,1fr) 285px}
   .studio-shell.left-collapsed{grid-template-columns:0 minmax(0,1fr) 285px}
-  .studio-shell.right-collapsed{grid-template-columns:195px minmax(0,1fr) 0}
+  .studio-shell.right-collapsed{grid-template-columns:250px minmax(0,1fr) 0}
   .studio-shell.left-collapsed.right-collapsed{grid-template-columns:0 minmax(0,1fr) 0}
   .design-name{width:180px}
   .topbar{gap:7px;padding-inline:8px}
   .brush-preset{grid-template-columns:32px 1fr auto}
   .tabs{grid-template-columns:repeat(3,1fr)}
+}
+
+/* v4: Procreate-inspired brush library + structured croquis */
+.brush-library-shell{
+  display:grid;
+  grid-template-columns:92px minmax(0,1fr);
+  gap:8px;
+  min-height:310px;
+  margin-top:4px;
+}
+.brush-categories{
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+  overflow:visible;
+  padding:0;
+}
+.category-chip{
+  width:100%;
+  text-align:left;
+  border:0;
+  border-radius:9px;
+  padding:9px 8px;
+  background:transparent;
+  color:#76616b;
+  font-size:9px;
+  font-weight:800;
+}
+.category-chip.active{
+  background:var(--pink-soft);
+  color:#8d315c;
+  border:0;
+}
+.brush-presets{
+  margin-top:0;
+  max-height:320px;
+  overflow:auto;
+  padding-right:2px;
+  scrollbar-width:none;
+}
+.brush-presets::-webkit-scrollbar{display:none}
+.brush-preset{
+  grid-template-columns:82px minmax(0,1fr) 18px;
+  padding:8px;
+  min-height:58px;
+  border-radius:11px;
+}
+.brush-preview-canvas{
+  width:78px;
+  height:38px;
+  border-radius:8px;
+  background:#fffafd;
+  display:block;
+}
+.brush-preset strong{font-size:10px}
+.brush-preset small{font-size:8px;line-height:1.25}
+.fav-star{font-size:14px}
+
+.view-strip{align-items:center}
+.view-label{
+  padding:0 9px;
+  font-size:9px;
+  font-weight:900;
+  color:#8d315c;
+  border-right:1px solid var(--line);
+  letter-spacing:.04em;
+}
+
+.croquis-section-head{
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+  margin-bottom:10px;
+}
+.croquis-section-head strong{font-size:13px}
+.body-type-switch{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+}
+.body-type-btn{
+  border:1px solid var(--line);
+  background:#fff;
+  border-radius:14px;
+  padding:9px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:7px;
+  color:#6d5661;
+}
+.body-type-btn.active{
+  background:#fff2f8;
+  border-color:#eda2c5;
+  box-shadow:0 7px 18px rgba(226,72,146,.08);
+}
+.body-type-preview{
+  width:100%;
+  height:126px;
+  display:grid;
+  place-items:center;
+  border-radius:10px;
+  background:#fffafc;
+}
+.body-type-preview canvas{
+  width:80px;
+  height:125px;
+  display:block;
+}
+.body-type-btn span:last-child{display:flex;flex-direction:column;gap:2px}
+.body-type-btn strong{font-size:11px}
+.body-type-btn small{font-size:8px;color:var(--muted)}
+.view-choice-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:7px;
+}
+.view-choice{
+  border:1px solid var(--line);
+  background:#fff;
+  color:#705965;
+  border-radius:10px;
+  padding:9px 5px;
+  font-size:9px;
+  font-weight:800;
+}
+.view-choice.active{
+  background:var(--pink-soft);
+  border-color:#eda3c5;
+  color:#8d315c;
+}
+.croquis-grid,.croquis-mini{display:none!important}
+
+@media(max-width:1100px){
+  .brush-library-shell{grid-template-columns:78px minmax(0,1fr)}
+  .brush-preset{grid-template-columns:66px minmax(0,1fr) 16px}
+  .brush-preview-canvas{width:62px;height:34px}
 }
