@@ -553,12 +553,12 @@
   artboard.addEventListener("pointercancel", endPointer);
 
   // Tool controls
-  $(".tool-btn").forEach(b => b.addEventListener("click",()=>{
+  $$(".tool-btn").forEach(b => b.addEventListener("click",()=>{
     const t=b.dataset.tool;
     if ((t==="pencil"||t==="marker") && state.tool===t) openBrushLibrary(t);
     else setTool(t);
   }));
-  $("[data-quick-tool]").forEach(b => b.addEventListener("click",()=>setTool(b.dataset.quickTool)));
+  $$("[data-quick-tool]").forEach(b => b.addEventListener("click",()=>setTool(b.dataset.quickTool)));
   $("#closeBrushLibrary").addEventListener("click",()=>$("#brushLibrary").classList.remove("open"));
   $("#brushSmoothing").addEventListener("input",e=>{state.smoothing=+e.target.value/100;$("#brushSmoothingValue").textContent=e.target.value+"%"});
   $("#pressureToggle").addEventListener("change",e=>{state.pressureEnabled=e.target.checked});
@@ -573,15 +573,15 @@
   $$("#swatches button").forEach(b=>b.addEventListener("click",()=>setColour(b.dataset.colour)));
 
   function syncMannequinUI(){
-    $("[data-mannequin-style]").forEach(btn=>btn.classList.toggle("active",btn.dataset.mannequinStyle===state.mannequinStyle));
-    $("[data-body-type]").forEach(btn=>btn.classList.toggle("active",btn.dataset.bodyType===state.bodyType));
+    $$("[data-mannequin-style]").forEach(btn=>btn.classList.toggle("active",btn.dataset.mannequinStyle===state.mannequinStyle));
+    $$("[data-body-type]").forEach(btn=>btn.classList.toggle("active",btn.dataset.bodyType===state.bodyType));
     $("#mannequinOpacity").value=Math.round(state.mannequinOpacity*100);
     $("#mannequinOpacityValue").textContent=Math.round(state.mannequinOpacity*100)+"%";
     $("#showFaceGuide").checked=state.showFaceGuide;
     $("#showCenterGuide").checked=state.showCenterGuide;
   }
-  $("[data-mannequin-style]").forEach(btn=>btn.addEventListener("click",()=>{state.mannequinStyle=btn.dataset.mannequinStyle;syncMannequinUI();render();snapshot()}));
-  $("[data-body-type]").forEach(btn=>btn.addEventListener("click",()=>{state.bodyType=btn.dataset.bodyType;syncMannequinUI();render();snapshot()}));
+  $$("[data-mannequin-style]").forEach(btn=>btn.addEventListener("click",()=>{state.mannequinStyle=btn.dataset.mannequinStyle;syncMannequinUI();render();snapshot()}));
+  $$("[data-body-type]").forEach(btn=>btn.addEventListener("click",()=>{state.bodyType=btn.dataset.bodyType;syncMannequinUI();render();snapshot()}));
   $("#mannequinOpacity").addEventListener("input",e=>{state.mannequinOpacity=+e.target.value/100;$("#mannequinOpacityValue").textContent=e.target.value+"%";render()});
   $("#showFaceGuide").addEventListener("change",e=>{state.showFaceGuide=e.target.checked;render();snapshot()});
   $("#showCenterGuide").addEventListener("change",e=>{state.showCenterGuide=e.target.checked;render();snapshot()});
