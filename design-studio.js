@@ -10,6 +10,29 @@
   const shell = $("#studioShell");
   const toast = $("#toast");
 
+
+  const BRUSH_PRESETS = {
+    pencil: [
+      {name:"Studio Pencil",note:"Clean everyday sketch",size:12,opacity:1,smoothing:.25,pressure:true,shape:"round",multiplier:1,sample:3},
+      {name:"Technical Pencil",note:"Fine crisp linework",size:7,opacity:1,smoothing:.12,pressure:true,shape:"round",multiplier:.8,sample:2},
+      {name:"6B Pencil",note:"Soft dark fashion sketch",size:24,opacity:.82,smoothing:.32,pressure:true,shape:"round",multiplier:1.15,sample:6},
+      {name:"Soft Sketch",note:"Loose planning lines",size:20,opacity:.42,smoothing:.48,pressure:true,shape:"round",multiplier:1.2,sample:5}
+    ],
+    marker: [
+      {name:"Studio Marker",note:"Smooth solid colour",size:26,opacity:.86,smoothing:.34,pressure:true,shape:"round",multiplier:1.55,sample:8},
+      {name:"Brush Marker",note:"Pressure-sensitive strokes",size:34,opacity:.92,smoothing:.46,pressure:true,shape:"round",multiplier:1.7,sample:10},
+      {name:"Chisel Marker",note:"Bold blocky edges",size:30,opacity:.88,smoothing:.2,pressure:false,shape:"square",multiplier:1.8,sample:9},
+      {name:"Highlighter",note:"Transparent colour wash",size:52,opacity:.24,smoothing:.55,pressure:false,shape:"round",multiplier:2,sample:13}
+    ]
+  };
+
+  const BODY_TYPES = {
+    standard:{height:1,shoulders:1,waist:1,hips:1,legs:1,head:1},
+    petite:{height:.93,shoulders:.95,waist:.95,hips:.97,legs:.9,head:1.03},
+    curvy:{height:1,shoulders:.97,waist:.83,hips:1.14,legs:1,head:1},
+    plus:{height:1.02,shoulders:1.08,waist:1.12,hips:1.18,legs:1.02,head:1.02}
+  };
+
   const state = {
     tool: "pencil",
     colour: "#e24892",
@@ -31,7 +54,17 @@
     history: [],
     historyIndex: -1,
     lastStamp: null,
-    recentColours: []
+    recentColours: [],
+    brushPreset:"Studio Pencil",
+    smoothing:.25,
+    pressureEnabled:true,
+    brushShape:"round",
+    brushMultiplier:1,
+    mannequinStyle:"fashion",
+    mannequinOpacity:1,
+    showFaceGuide:true,
+    showCenterGuide:true,
+    bodyType:"standard"
   };
 
   function newCanvas() {
@@ -59,10 +92,48 @@
     return state.layers.find(l => l.id === state.activeLayerId) || state.layers[0];
   }
 
+  function openBrushLibrary(kind=state.tool) {
+    if (!BRUSH_PRESETS[kind]) return;
+    const box=$("#brushLibrary"), root=$("#brushPresets");
+    $("#brushLibraryTitle").textContent=kind==="marker"?"Marker Brushes":"Pencil Brushes";
+    root.innerHTML="";
+    BRUSH_PRESETS[kind].forEach(p=>{
+      const b=document.createElement("button");
+      b.className="brush-preset"+(state.brushPreset===p.name?" active":"");
+      b.innerHTML=`<span class="brush-sample"><i style="height:${p.sample}px"></i></span><span><strong>${p.name}</strong><small>${p.note}</small></span>`;
+      b.addEventListener("click",()=>applyBrushPreset(kind,p));
+      root.appendChild(b);
+    });
+    box.classList.add("open");
+  }
+
+  function applyBrushPreset(kind,p) {
+    state.tool=kind;
+    state.brushPreset=p.name;
+    state.brushSize=p.size;
+    state.opacity=p.opacity;
+    state.smoothing=p.smoothing;
+    state.pressureEnabled=p.pressure;
+    state.brushShape=p.shape;
+    state.brushMultiplier=p.multiplier;
+    $("#brushSize").value=p.size;
+    $("#brushSizeValue").textContent=p.size;
+    $("#brushOpacity").value=Math.round(p.opacity*100);
+    $("#brushOpacityValue").textContent=Math.round(p.opacity*100)+"%";
+    $("#brushSmoothing").value=Math.round(p.smoothing*100);
+    $("#brushSmoothingValue").textContent=Math.round(p.smoothing*100)+"%";
+    $("#pressureToggle").checked=p.pressure;
+    $$(".tool-btn").forEach(btn=>btn.classList.toggle("active",btn.dataset.tool===kind));
+    openBrushLibrary(kind);
+    showToast(p.name);
+  }
+
   function setTool(tool) {
     state.tool = tool;
     $$(".tool-btn").forEach(btn => btn.classList.toggle("active", btn.dataset.tool === tool));
     artboard.style.cursor = tool === "eyedropper" ? "crosshair" : tool === "select" ? "crosshair" : "default";
+    if (tool === "pencil" || tool === "marker") openBrushLibrary(tool);
+    else $("#brushLibrary")?.classList.remove("open");
     if (tool === "stamp" || tool === "scatter" || tool === "fillpattern") {
       if (!state.motif) showToast("Create a motif first ✿");
     }
@@ -84,93 +155,78 @@
     };
   }
 
-  function drawMannequin(target, view) {
+  function currentBody(){ return BODY_TYPES[state.bodyType] || BODY_TYPES.standard; }
+
+  function drawFashionMannequin(target, view) {
     if (view === "blank") return;
-    const t = target;
-    t.save();
-    t.strokeStyle = "#cdbdc5";
-    t.fillStyle = "#fbf5f7";
-    t.lineWidth = 7;
-    t.lineCap = "round";
-    t.lineJoin = "round";
-    const cx = W/2;
-
-    // head
-    t.beginPath();
-    t.ellipse(cx, 245, view === "side" ? 78 : 108, 142, 0, 0, Math.PI*2);
-    t.fill(); t.stroke();
-
-    // neck
-    t.beginPath();
-    t.moveTo(cx-45, 375); t.lineTo(cx-52, 470);
-    t.moveTo(cx+45, 375); t.lineTo(cx+52, 470);
-    t.stroke();
-
-    if (view === "side") {
+    const b=currentBody(), cx=W/2, y=65;
+    const t=target;
+    t.save(); t.globalAlpha=state.mannequinOpacity; t.strokeStyle="#ccb9c3"; t.fillStyle="#fbf6f8"; t.lineWidth=6; t.lineCap="round"; t.lineJoin="round";
+    if(state.showFaceGuide){ t.beginPath(); t.ellipse(cx,190+y,(view==="side"?70:100)*b.head,130*b.head,0,0,Math.PI*2); t.fill(); t.stroke(); }
+    const shoulderY=400+y, waistY=770+y, hipY=1010+y, kneeY=1470+y, ankleY=1975;
+    const shoulder=190*b.shoulders, waist=92*b.waist, hip=150*b.hips;
+    if(view==="side"){
       t.beginPath();
-      t.moveTo(cx-15, 465);
-      t.bezierCurveTo(cx+115,520,cx+135,690,cx+90,830);
-      t.bezierCurveTo(cx+40,990,cx+85,1200,cx+45,1360);
-      t.bezierCurveTo(cx+18,1510,cx+30,1720,cx+14,1975);
-      t.moveTo(cx-15,465);
-      t.bezierCurveTo(cx-75,555,cx-90,720,cx-48,845);
-      t.bezierCurveTo(cx-15,1010,cx-42,1200,cx-38,1360);
-      t.bezierCurveTo(cx-20,1520,cx-12,1730,cx-5,1975);
-      t.stroke();
-
-      // arm
+      t.moveTo(cx-10,295+y); t.lineTo(cx-18,shoulderY);
+      t.bezierCurveTo(cx+95,450+y,cx+105,630+y,cx+48,waistY);
+      t.bezierCurveTo(cx+85,860+y,cx+95,925+y,cx+80,hipY);
+      t.bezierCurveTo(cx+42,1190+y,cx+55,1320+y,cx+24,kneeY); t.lineTo(cx+14,ankleY);
+      t.moveTo(cx-10,295+y); t.bezierCurveTo(cx-60,430+y,cx-70,625+y,cx-32,waistY);
+      t.bezierCurveTo(cx-12,1010+y,cx-28,1220+y,cx-26,kneeY); t.lineTo(cx-4,ankleY); t.stroke();
+      t.beginPath(); t.moveTo(cx+28,470+y); t.bezierCurveTo(cx+162,715+y,cx+135,1040+y,cx+88,1260+y); t.stroke();
+    } else if(view==="threequarter"){
       t.beginPath();
-      t.moveTo(cx+45,530);
-      t.bezierCurveTo(cx+165,760,cx+140,1040,cx+95,1240);
-      t.stroke();
-      return;
+      t.moveTo(cx-45,300+y); t.lineTo(cx-55,shoulderY); t.bezierCurveTo(cx-210,445+y,cx-190,690+y,cx-120,waistY);
+      t.bezierCurveTo(cx-90,860+y,cx-118,950+y,cx-98,hipY); t.bezierCurveTo(cx-72,1270+y,cx-62,1405+y,cx-50,kneeY); t.lineTo(cx-38,ankleY);
+      t.moveTo(cx+60,300+y); t.lineTo(cx+68,shoulderY); t.bezierCurveTo(cx+155,460+y,cx+165,680+y,cx+108,waistY);
+      t.bezierCurveTo(cx+115,870+y,cx+130,945+y,cx+118,hipY); t.bezierCurveTo(cx+95,1270+y,cx+78,1410+y,cx+64,kneeY); t.lineTo(cx+46,ankleY); t.stroke();
+      t.beginPath(); t.moveTo(cx-55,420+y); t.bezierCurveTo(cx-250,470+y,cx-280,610+y,cx-310,740+y); t.bezierCurveTo(cx-348,930+y,cx-330,1120+y,cx-292,1300+y);
+      t.moveTo(cx+55,425+y); t.bezierCurveTo(cx+185,475+y,cx+215,620+y,cx+250,800+y); t.bezierCurveTo(cx+282,960+y,cx+275,1110+y,cx+245,1260+y); t.stroke();
+    } else {
+      t.beginPath();
+      t.moveTo(cx-45,300+y); t.lineTo(cx-52,shoulderY); t.bezierCurveTo(cx-shoulder,445+y,cx-185,680+y,cx-waist,waistY);
+      t.bezierCurveTo(cx-92,840+y,cx-88,930+y,cx-hip,hipY); t.bezierCurveTo(cx-145,1270+y,cx-105,1420+y,cx-78,kneeY); t.lineTo(cx-48,ankleY);
+      t.moveTo(cx+45,300+y); t.lineTo(cx+52,shoulderY); t.bezierCurveTo(cx+shoulder,445+y,cx+185,680+y,cx+waist,waistY);
+      t.bezierCurveTo(cx+92,840+y,cx+88,930+y,cx+hip,hipY); t.bezierCurveTo(cx+145,1270+y,cx+105,1420+y,cx+78,kneeY); t.lineTo(cx+48,ankleY); t.stroke();
+      t.beginPath(); t.moveTo(cx-50,420+y); t.bezierCurveTo(cx-245,430+y,cx-305,520+y,cx-358,690+y); t.bezierCurveTo(cx-428,900+y,cx-420,1120+y,cx-380,1330+y);
+      t.moveTo(cx+50,420+y); t.bezierCurveTo(cx+245,430+y,cx+305,520+y,cx+358,690+y); t.bezierCurveTo(cx+428,900+y,cx+420,1120+y,cx+380,1330+y); t.stroke();
+      t.beginPath(); t.moveTo(cx-6,1100+y); t.lineTo(cx-10,ankleY); t.moveTo(cx+6,1100+y); t.lineTo(cx+10,ankleY); t.stroke();
     }
-
-    // torso
-    t.beginPath();
-    t.moveTo(cx-52,465);
-    t.bezierCurveTo(cx-180,510,cx-185,675,cx-135,820);
-    t.bezierCurveTo(cx-95,935,cx-80,1030,cx-115,1165);
-    t.bezierCurveTo(cx-150,1295,cx-120,1425,cx-82,1545);
-    t.lineTo(cx-55,2000);
-    t.moveTo(cx+52,465);
-    t.bezierCurveTo(cx+180,510,cx+185,675,cx+135,820);
-    t.bezierCurveTo(cx+95,935,cx+80,1030,cx+115,1165);
-    t.bezierCurveTo(cx+150,1295,cx+120,1425,cx+82,1545);
-    t.lineTo(cx+55,2000);
-    t.stroke();
-
-    // shoulders and arms
-    t.beginPath();
-    t.moveTo(cx-52,485);
-    t.bezierCurveTo(cx-240,490,cx-310,560,cx-360,690);
-    t.bezierCurveTo(cx-425,880,cx-420,1110,cx-375,1320);
-    t.moveTo(cx+52,485);
-    t.bezierCurveTo(cx+240,490,cx+310,560,cx+360,690);
-    t.bezierCurveTo(cx+425,880,cx+420,1110,cx+375,1320);
-    t.stroke();
-
-    // inner legs
-    t.beginPath();
-    t.moveTo(cx-5,1245); t.lineTo(cx-8,1995);
-    t.moveTo(cx+5,1245); t.lineTo(cx+8,1995);
-    t.stroke();
-
-    // light guides
-    t.strokeStyle = "#eadfe4";
-    t.lineWidth = 3;
-    t.setLineDash([18,20]);
-    t.beginPath(); t.moveTo(cx,440); t.lineTo(cx,2040); t.stroke();
-    t.setLineDash([]);
-
-    if (view === "back") {
-      t.strokeStyle = "#d6c5cd";
-      t.lineWidth = 5;
-      t.beginPath();
-      t.moveTo(cx-55,485); t.quadraticCurveTo(cx,535,cx+55,485);
-      t.stroke();
-    }
+    if(state.showCenterGuide && view!=="side"){ t.strokeStyle="#eadfe4"; t.lineWidth=3; t.setLineDash([18,20]); t.beginPath(); t.moveTo(cx,340+y); t.lineTo(cx,2025); t.stroke(); t.setLineDash([]); }
     t.restore();
+  }
+
+  function drawRealisticMannequin(target, view) {
+    if (view === "blank") return;
+    const b=currentBody(), cx=W/2, y=75;
+    const t=target;
+    t.save(); t.globalAlpha=state.mannequinOpacity; t.strokeStyle="#c7b4bd"; t.fillStyle="#f8f2f4"; t.lineWidth=5; t.lineCap="round"; t.lineJoin="round";
+    if(state.showFaceGuide){ t.beginPath(); t.ellipse(cx,205+y,(view==="side"?72:104)*b.head,135*b.head,0,0,Math.PI*2); t.fill(); t.stroke(); }
+    const sW=205*b.shoulders, wW=100*b.waist, hW=164*b.hips;
+    if(view==="side"){
+      t.beginPath(); t.moveTo(cx-5,338+y); t.quadraticCurveTo(cx+12,410+y,cx+2,480+y);
+      t.bezierCurveTo(cx+110,520+y,cx+120,705+y,cx+50,860+y); t.bezierCurveTo(cx+95,950+y,cx+102,1030+y,cx+82,1130+y); t.bezierCurveTo(cx+50,1300+y,cx+40,1500+y,cx+28,1940); t.lineTo(cx+7,2050);
+      t.moveTo(cx-5,338+y); t.bezierCurveTo(cx-85,470+y,cx-96,700+y,cx-35,860+y); t.bezierCurveTo(cx-4,960+y,cx-18,1070+y,cx-24,1195+y); t.bezierCurveTo(cx-28,1430+y,cx-18,1690+y,cx-8,2050); t.stroke();
+      t.beginPath(); t.moveTo(cx+45,500+y); t.bezierCurveTo(cx+155,780+y,cx+140,1060+y,cx+98,1270+y); t.stroke();
+    } else if(view==="threequarter"){
+      t.beginPath(); t.moveTo(cx-62,338+y); t.bezierCurveTo(cx-150,390+y,cx-172,620+y,cx-112,845+y); t.bezierCurveTo(cx-88,945+y,cx-100,1032+y,cx-110,1140+y); t.bezierCurveTo(cx-138,1400+y,cx-92,1700+y,cx-62,2050);
+      t.moveTo(cx+72,338+y); t.bezierCurveTo(cx+152,395+y,cx+170,635+y,cx+118,860+y); t.bezierCurveTo(cx+132,960+y,cx+142,1038+y,cx+128,1135+y); t.bezierCurveTo(cx+115,1398+y,cx+84,1700+y,cx+52,2050); t.stroke();
+      t.beginPath(); t.moveTo(cx-64,445+y); t.bezierCurveTo(cx-240,470+y,cx-300,620+y,cx-320,795+y); t.bezierCurveTo(cx-335,945+y,cx-315,1090+y,cx-286,1265+y);
+      t.moveTo(cx+58,460+y); t.bezierCurveTo(cx+180,495+y,cx+222,640+y,cx+248,812+y); t.bezierCurveTo(cx+266,950+y,cx+258,1080+y,cx+232,1230+y); t.stroke();
+    } else {
+      t.beginPath(); t.moveTo(cx-70,338+y); t.bezierCurveTo(cx-sW,390+y,cx-190,625+y,cx-wW,840+y); t.bezierCurveTo(cx-88,930+y,cx-92,1040+y,cx-hW,1120+y); t.bezierCurveTo(cx-152,1330+y,cx-122,1605+y,cx-78,2050);
+      t.moveTo(cx+70,338+y); t.bezierCurveTo(cx+sW,390+y,cx+190,625+y,cx+wW,840+y); t.bezierCurveTo(cx+88,930+y,cx+92,1040+y,cx+hW,1120+y); t.bezierCurveTo(cx+152,1330+y,cx+122,1605+y,cx+78,2050); t.stroke();
+      t.beginPath(); t.moveTo(cx-70,445+y); t.bezierCurveTo(cx-245,465+y,cx-310,555+y,cx-362,730+y); t.bezierCurveTo(cx-408,890+y,cx-410,1060+y,cx-382,1268+y);
+      t.moveTo(cx+70,445+y); t.bezierCurveTo(cx+245,465+y,cx+310,555+y,cx+362,730+y); t.bezierCurveTo(cx+408,890+y,cx+410,1060+y,cx+382,1268+y); t.stroke();
+      t.beginPath(); t.moveTo(cx-18,1140+y); t.bezierCurveTo(cx-35,1450+y,cx-25,1760+y,cx-16,2050); t.moveTo(cx+18,1140+y); t.bezierCurveTo(cx+35,1450+y,cx+25,1760+y,cx+16,2050); t.stroke();
+    }
+    if(state.showCenterGuide && view!=="side"){ t.strokeStyle="#eadfe4"; t.lineWidth=3; t.setLineDash([18,20]); t.beginPath(); t.moveTo(cx,340+y); t.lineTo(cx,2050); t.stroke(); t.setLineDash([]); }
+    t.restore();
+  }
+
+  function drawMannequin(target, view) {
+    if (state.mannequinStyle === "realistic") drawRealisticMannequin(target, view);
+    else drawFashionMannequin(target, view);
   }
 
   function render() {
@@ -216,12 +272,12 @@
     if (!layer) return;
     const lctx = layer.canvas.getContext("2d");
     const prev = state.last || p;
-
     lctx.save();
-    lctx.lineCap = "round";
-    lctx.lineJoin = "round";
+    lctx.lineCap = state.brushShape === "square" ? "square" : "round";
+    lctx.lineJoin = state.brushShape === "square" ? "bevel" : "round";
     lctx.globalAlpha = state.opacity;
-
+    const smoothAmount = Math.min(.82, Math.max(0,state.smoothing) * .82);
+    const target = {x:prev.x+(p.x-prev.x)*(1-smoothAmount),y:prev.y+(p.y-prev.y)*(1-smoothAmount),pressure:p.pressure};
     if (state.tool === "eraser") {
       lctx.globalCompositeOperation = "destination-out";
       lctx.strokeStyle = "rgba(0,0,0,1)";
@@ -229,15 +285,11 @@
     } else {
       lctx.globalCompositeOperation = "source-over";
       lctx.strokeStyle = state.colour;
-      const pressureBoost = p.pressure ? (.65 + p.pressure*.75) : 1;
-      lctx.lineWidth = state.brushSize * (state.tool === "marker" ? 2.2 : 1) * pressureBoost;
+      const pressureBoost = state.pressureEnabled && p.pressure ? (.58 + p.pressure*.9) : 1;
+      lctx.lineWidth = state.brushSize * state.brushMultiplier * pressureBoost;
     }
-    lctx.beginPath();
-    lctx.moveTo(prev.x, prev.y);
-    lctx.lineTo(p.x, p.y);
-    lctx.stroke();
-    lctx.restore();
-    state.last = p;
+    lctx.beginPath(); lctx.moveTo(prev.x,prev.y); lctx.lineTo(target.x,target.y); lctx.stroke(); lctx.restore();
+    state.last = target;
     render();
   }
 
@@ -383,7 +435,12 @@
     const snap = {
       layers: serializeLayers(),
       activeLayerId: state.activeLayerId,
-      template: state.template
+      template: state.template,
+      mannequinStyle: state.mannequinStyle,
+      bodyType: state.bodyType,
+      mannequinOpacity: state.mannequinOpacity,
+      showFaceGuide: state.showFaceGuide,
+      showCenterGuide: state.showCenterGuide
     };
     state.history = state.history.slice(0,state.historyIndex+1);
     state.history.push(snap);
@@ -403,6 +460,12 @@
     state.layers = layers;
     state.activeLayerId = snap.activeLayerId;
     state.template = snap.template;
+    state.mannequinStyle = snap.mannequinStyle || "fashion";
+    state.bodyType = snap.bodyType || "standard";
+    state.mannequinOpacity = snap.mannequinOpacity ?? 1;
+    state.showFaceGuide = snap.showFaceGuide ?? true;
+    state.showCenterGuide = snap.showCenterGuide ?? true;
+    syncMannequinUI();
     renderLayerList(); render();
   }
 
@@ -490,8 +553,15 @@
   artboard.addEventListener("pointercancel", endPointer);
 
   // Tool controls
-  $$(".tool-btn").forEach(b => b.addEventListener("click",()=>setTool(b.dataset.tool)));
-  $$("[data-quick-tool]").forEach(b => b.addEventListener("click",()=>setTool(b.dataset.quickTool)));
+  $(".tool-btn").forEach(b => b.addEventListener("click",()=>{
+    const t=b.dataset.tool;
+    if ((t==="pencil"||t==="marker") && state.tool===t) openBrushLibrary(t);
+    else setTool(t);
+  }));
+  $("[data-quick-tool]").forEach(b => b.addEventListener("click",()=>setTool(b.dataset.quickTool)));
+  $("#closeBrushLibrary").addEventListener("click",()=>$("#brushLibrary").classList.remove("open"));
+  $("#brushSmoothing").addEventListener("input",e=>{state.smoothing=+e.target.value/100;$("#brushSmoothingValue").textContent=e.target.value+"%"});
+  $("#pressureToggle").addEventListener("change",e=>{state.pressureEnabled=e.target.checked});
 
   $("#brushSize").addEventListener("input", e => {
     state.brushSize=+e.target.value; $("#brushSizeValue").textContent=e.target.value;
@@ -501,6 +571,20 @@
   });
   $("#colourPicker").addEventListener("input",e=>setColour(e.target.value));
   $$("#swatches button").forEach(b=>b.addEventListener("click",()=>setColour(b.dataset.colour)));
+
+  function syncMannequinUI(){
+    $("[data-mannequin-style]").forEach(btn=>btn.classList.toggle("active",btn.dataset.mannequinStyle===state.mannequinStyle));
+    $("[data-body-type]").forEach(btn=>btn.classList.toggle("active",btn.dataset.bodyType===state.bodyType));
+    $("#mannequinOpacity").value=Math.round(state.mannequinOpacity*100);
+    $("#mannequinOpacityValue").textContent=Math.round(state.mannequinOpacity*100)+"%";
+    $("#showFaceGuide").checked=state.showFaceGuide;
+    $("#showCenterGuide").checked=state.showCenterGuide;
+  }
+  $("[data-mannequin-style]").forEach(btn=>btn.addEventListener("click",()=>{state.mannequinStyle=btn.dataset.mannequinStyle;syncMannequinUI();render();snapshot()}));
+  $("[data-body-type]").forEach(btn=>btn.addEventListener("click",()=>{state.bodyType=btn.dataset.bodyType;syncMannequinUI();render();snapshot()}));
+  $("#mannequinOpacity").addEventListener("input",e=>{state.mannequinOpacity=+e.target.value/100;$("#mannequinOpacityValue").textContent=e.target.value+"%";render()});
+  $("#showFaceGuide").addEventListener("change",e=>{state.showFaceGuide=e.target.checked;render();snapshot()});
+  $("#showCenterGuide").addEventListener("change",e=>{state.showCenterGuide=e.target.checked;render();snapshot()});
 
   $("#motifSize").addEventListener("input",e=>{
     state.motifScale=+e.target.value/100; $("#motifSizeValue").textContent=e.target.value+"%";
@@ -564,6 +648,8 @@
   // Collapsible panels
   $("#toggleLeft").addEventListener("click",()=>shell.classList.toggle("left-collapsed"));
   $("#toggleRight").addEventListener("click",()=>shell.classList.toggle("right-collapsed"));
+  $("#reopenLeft").addEventListener("click",()=>shell.classList.remove("left-collapsed"));
+  $("#reopenRight").addEventListener("click",()=>shell.classList.remove("right-collapsed"));
 
   // Focus mode
   function toggleFocus(force) {
@@ -594,6 +680,9 @@
   state.historyIndex = -1;
   snapshot();
   setColour(state.colour);
+  applyBrushPreset("pencil",BRUSH_PRESETS.pencil[0]);
+  $("#brushLibrary").classList.remove("open");
+  syncMannequinUI();
   renderLayerList();
   render();
 })();
