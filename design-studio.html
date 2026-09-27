@@ -23,8 +23,12 @@
       </div>
 
       <div class="topbar-actions">
-        <button class="icon-btn" id="undoBtn" title="Undo">↶</button>
-        <button class="icon-btn" id="redoBtn" title="Redo">↷</button>
+        <button class="icon-btn icon-pill" id="undoBtn" title="Undo" aria-label="Undo">
+          <span>↶</span><small>Undo</small>
+        </button>
+        <button class="icon-btn icon-pill" id="redoBtn" title="Redo" aria-label="Redo">
+          <span>↷</span><small>Redo</small>
+        </button>
         <button class="soft-btn" id="focusBtn">Full screen</button>
         <button class="pink-btn" id="exportBtn">Export PNG</button>
       </div>
@@ -43,6 +47,29 @@
         <button class="tool-btn" data-tool="stamp"><span>✿</span><small>Stamp</small></button>
         <button class="tool-btn" data-tool="scatter"><span>❀</span><small>Scatter</small></button>
         <button class="tool-btn" data-tool="fillpattern"><span>▦</span><small>Pattern fill</small></button>
+      </div>
+
+      <div class="brush-library" id="brushLibrary">
+        <div class="brush-library-head">
+          <div>
+            <div class="brush-library-kicker">BRUSH LIBRARY</div>
+            <strong id="brushLibraryTitle">Pencil Brushes</strong>
+          </div>
+          <button class="brush-library-close" id="closeBrushLibrary" aria-label="Close brush library">×</button>
+        </div>
+        <div class="brush-presets" id="brushPresets"></div>
+
+        <div class="panel-section compact-top">
+          <label class="field-label" for="brushSmoothing">Smoothing</label>
+          <div class="range-row">
+            <input id="brushSmoothing" type="range" min="0" max="100" value="25" />
+            <output id="brushSmoothingValue">25%</output>
+          </div>
+          <label class="pressure-toggle">
+            <input id="pressureToggle" type="checkbox" checked />
+            <span>Apple Pencil pressure</span>
+          </label>
+        </div>
       </div>
 
       <div class="panel-section">
@@ -66,6 +93,8 @@
       </div>
     </aside>
 
+    <button class="edge-reopen edge-reopen-left" id="reopenLeft" aria-label="Open tools">TOOLS</button>
+
     <main class="workspace">
       <div class="canvas-stage" id="canvasStage">
         <canvas id="artboard" width="1800" height="2200" aria-label="Fashion drawing canvas"></canvas>
@@ -83,6 +112,7 @@
         <button class="view-btn active" data-template="front">Front</button>
         <button class="view-btn" data-template="back">Back</button>
         <button class="view-btn" data-template="side">Side</button>
+        <button class="view-btn" data-template="threequarter">3/4</button>
         <button class="view-btn" data-template="blank">Blank</button>
       </div>
     </main>
@@ -92,6 +122,7 @@
 
       <div class="tabs" id="rightTabs">
         <button class="tab-btn active" data-tab="colour">Colour</button>
+        <button class="tab-btn" data-tab="mannequin">Mannequin</button>
         <button class="tab-btn" data-tab="motifs">Motifs</button>
         <button class="tab-btn" data-tab="layers">Layers</button>
         <button class="tab-btn" data-tab="reference">Reference</button>
@@ -122,6 +153,43 @@
         <div class="panel-section">
           <div class="field-label">Recent colours</div>
           <div class="swatches" id="recentColours"></div>
+        </div>
+      </section>
+
+      <section class="tab-panel" data-panel="mannequin">
+        <div class="panel-heading">Mannequin</div>
+        <div class="segmented" id="mannequinStyleSwitch">
+          <button class="seg-btn active" data-mannequin-style="fashion">Fashion sketch</button>
+          <button class="seg-btn" data-mannequin-style="realistic">Clean realistic</button>
+        </div>
+
+        <div class="panel-section compact-top">
+          <div class="field-label">Body guide</div>
+          <div class="choice-grid two-col" id="bodyTypeGrid">
+            <button class="choice-chip active" data-body-type="standard">Standard</button>
+            <button class="choice-chip" data-body-type="petite">Petite</button>
+            <button class="choice-chip" data-body-type="curvy">Curvy</button>
+            <button class="choice-chip" data-body-type="plus">Plus-size</button>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <label class="field-label" for="mannequinOpacity">Mannequin opacity</label>
+          <div class="range-row">
+            <input id="mannequinOpacity" type="range" min="0" max="100" value="100" />
+            <output id="mannequinOpacityValue">100%</output>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <label class="toggle-row">
+            <input id="showFaceGuide" type="checkbox" checked />
+            <span>Show head / face guide</span>
+          </label>
+          <label class="toggle-row">
+            <input id="showCenterGuide" type="checkbox" checked />
+            <span>Show center guide</span>
+          </label>
         </div>
       </section>
 
@@ -195,6 +263,8 @@
         <button class="outline-btn full" id="removeReferenceBtn">Remove reference</button>
       </section>
     </aside>
+
+    <button class="edge-reopen edge-reopen-right" id="reopenRight" aria-label="Open colour and layers">COLOUR</button>
   </div>
 
   <div class="toast" id="toast" role="status"></div>
