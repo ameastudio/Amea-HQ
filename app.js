@@ -554,6 +554,51 @@ function applyAmeaBrandHeader(){
 }
 
 let studioPatternId="";
+function renderStudioHub(){
+  const patterns=PATTERNS();
+  const activePatterns=patterns.filter(p=>String(p.status||"").toLowerCase()!=="final").length;
+  const inStudio=O().filter(o=>o.status==="In Studio").length;
+  const designCount=Number(localStorage.getItem("ah_design_count")||0);
+  return `<div class="studio-hub-page">
+    <div class="studio-hub-head">
+      <div><span class="studio-hub-eyebrow">AMÉA HQ</span><h2>Studio</h2><p>Create • Plan • Grow</p></div>
+      <span class="studio-hub-spark">✦</span>
+    </div>
+
+    <button class="studio-feature-card crochet" onclick="page('crochet')">
+      <div class="studio-feature-art"><span>🧶</span><i>♡</i></div>
+      <div class="studio-feature-copy">
+        <span>MAKE & TRACK</span>
+        <h3>Crochet Studio</h3>
+        <p>Patterns, yarn, projects and all the making details.</p>
+      </div>
+      <b class="studio-feature-arrow">→</b>
+      <div class="studio-feature-stats">
+        <span><strong>${activePatterns}</strong> active patterns</span>
+        <span><strong>${YARNS().length}</strong> yarns saved</span>
+        <span><strong>${inStudio}</strong> in studio</span>
+      </div>
+    </button>
+
+    <button class="studio-feature-card design" onclick="window.location.href='design-studio.html'">
+      <div class="studio-feature-art"><span>✎</span><i>✿</i></div>
+      <div class="studio-feature-copy">
+        <span>CREATE & PLAN</span>
+        <h3>Design Studio</h3>
+        <p>Sketch, colour, motifs and bring new ideas to life.</p>
+      </div>
+      <b class="studio-feature-arrow">→</b>
+      <div class="studio-feature-stats">
+        <span><strong>${designCount}</strong> saved ideas</span>
+        <span><strong>∞</strong> colour options</span>
+        <span><strong>✦</strong> your canvas</span>
+      </div>
+    </button>
+
+    <div class="studio-hub-note">Different processes. <b>Same big vision.</b> ♡</div>
+  </div>`;
+}
+
 let studioSub="patterns";
 let studioMainPhoto="";
 let studioExtraPhotos=[];
@@ -603,22 +648,37 @@ function renderStudioLibrary(){
   const patterns=PATTERNS().slice().sort((a,b)=>(+!!b.pinned)-(+!!a.pinned)||new Date(b.updated||b.created||0)-new Date(a.updated||a.created||0));
   const cats=[...new Set(patterns.map(x=>x.category).filter(Boolean))].sort();
   const cols=[...new Set(patterns.map(x=>x.collection).filter(Boolean))].sort();
-  v.innerHTML=`<div class=studio-page>
-    <div class=studio-topbar>${studioLogoBlock()}<button class=studio-new-btn onclick=newStudioPattern()>＋ New Pattern</button></div>
-    <div class=studio-tool-grid>
-      <button onclick="studioGo('yarns')"><span>🧶</span><b>Yarn Library</b><small>${YARNS().length} saved</small></button>
-      <button onclick="studioGo('models')"><span>♡</span><b>My Models</b><small>${MODELS().length} saved</small></button>
-      <button onclick="studioGo('calculator')"><span>⌁</span><b>Calculator</b><small>Stitches & rows</small></button>
+  const active=patterns.filter(p=>String(p.status||"").toLowerCase()!=="final").length;
+  v.innerHTML=`<div class="studio-page crochet-redesign">
+    <div class="crochet-page-head">
+      <button class="studio-back-hub" onclick="page('studio')">← Studio</button>
+      <div><span class="studio-hub-eyebrow">AMÉA HQ</span><h2>Crochet Studio</h2><p>Make, track and keep the details together.</p></div>
+      <button class="studio-new-btn" onclick=newStudioPattern()>＋</button>
     </div>
-    <div class=studio-library-head><div><h2>Patterns</h2><div class=meta>${patterns.length} pattern${patterns.length===1?"":"s"} saved</div></div></div>
-    <input id=studioSearch class=studio-search placeholder="Search patterns…" oninput=studioApplyFilters()>
-    <div class=studio-filters>
-      <select id=studioTechnique onchange=studioApplyFilters()><option value="">Crochet + Knit</option><option>Crochet</option><option>Knit</option></select>
-      <select id=studioCategory onchange=studioApplyFilters()><option value="">All categories</option>${cats.map(x=>`<option>${esc(x)}</option>`).join("")}</select>
-      <select id=studioStatus onchange=studioApplyFilters()><option value="">All statuses</option><option>Draft</option><option>Testing</option><option>Final</option></select>
-      <select id=studioCollection onchange=studioApplyFilters()><option value="">All collections</option>${cols.map(x=>`<option>${esc(x)}</option>`).join("")}</select>
+
+    <div class="crochet-summary">
+      <div><span>Active</span><strong>${active}</strong><small>patterns</small></div>
+      <div><span>Yarns</span><strong>${YARNS().length}</strong><small>saved</small></div>
+      <div><span>Models</span><strong>${MODELS().length}</strong><small>saved</small></div>
     </div>
-    <div id=studioPatternGrid class=studio-pattern-grid>${studioPatternCards(patterns)}</div>
+
+    <div class="crochet-tools">
+      <button onclick="studioGo('yarns')"><span>🧶</span><b>Yarn Library</b><small>Colours & favourites</small></button>
+      <button onclick="studioGo('models')"><span>♡</span><b>Measurements</b><small>Saved models</small></button>
+      <button onclick="studioGo('calculator')"><span>✦</span><b>Calculator</b><small>Stitches & rows</small></button>
+    </div>
+
+    <section class="crochet-patterns-panel">
+      <div class="orders-section-head"><div><span>PATTERNS</span><h3>${patterns.length} saved</h3></div></div>
+      <div class="orders-search-wrap"><span>⌕</span><input id=studioSearch placeholder="Search patterns…" oninput=studioApplyFilters()></div>
+      <div class="studio-filters crochet-filters">
+        <select id=studioTechnique onchange=studioApplyFilters()><option value="">Crochet + Knit</option><option>Crochet</option><option>Knit</option></select>
+        <select id=studioCategory onchange=studioApplyFilters()><option value="">All categories</option>${cats.map(x=>`<option>${esc(x)}</option>`).join("")}</select>
+        <select id=studioStatus onchange=studioApplyFilters()><option value="">All statuses</option><option>Draft</option><option>Testing</option><option>Final</option></select>
+        <select id=studioCollection onchange=studioApplyFilters()><option value="">All collections</option>${cols.map(x=>`<option>${esc(x)}</option>`).join("")}</select>
+      </div>
+      <div id=studioPatternGrid class="studio-pattern-grid crochet-pattern-grid">${studioPatternCards(patterns)}</div>
+    </section>
   </div>`;
 }
 function studioPatternCards(patterns){
