@@ -5,7 +5,7 @@ function S(k,v){
   localStorage.setItem("ah_"+k,JSON.stringify(v));
   if(cloudReady)queueCloudSync(k,v);
 }
-let cur="home";const O=()=>G("orders"),C=()=>G("customers"),I=()=>G("inventory"),E=()=>G("expenses"),SUP=()=>G("suppliers"),ITEMS=()=>G("items"),
+let cur="home",orderHubTab="orders";const O=()=>G("orders"),C=()=>G("customers"),I=()=>G("inventory"),E=()=>G("expenses"),SUP=()=>G("suppliers"),ITEMS=()=>G("items"),
 PATTERNS=()=>G("studio_patterns"),MODELS=()=>G("studio_models"),YARNS=()=>G("studio_yarns"),VERSIONS=()=>G("studio_versions");
 const M=n=>new Intl.NumberFormat("en-JM",{style:"currency",currency:"JMD",maximumFractionDigits:0}).format(+n||0);
 const AMEA_LOGO_DATA="data:image/png;base64,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";
@@ -1402,95 +1402,62 @@ function renderCalendarPage(){
     </section>
   </div>`;
 }
-function page(x){cur=x;render()}function render(){document.body.classList.toggle("studio-mode",cur==="crochet");const navPage=cur==="crochet"?"studio":["customers","invoices","items","inventory","expenses","analytics","settings"].includes(cur)?"more":cur;document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===navPage));let v=$("#view");if(cur=="home"){
-  const orders=O(),expenses=E(),inventory=I();
+function page(x){
+  if(x==="customers"||x==="invoices"){orderHubTab=x;activeOrderViewId="";cur="orders";render();return}
+  if(x==="orders"&&cur!=="orders"){orderHubTab="orders";activeOrderViewId=""}
+  cur=x;render()
+}function render(){document.body.classList.toggle("studio-mode",cur==="crochet");const navPage=cur==="crochet"?"studio":["customers","invoices"].includes(cur)?"orders":["items","inventory","expenses","analytics","settings"].includes(cur)?"more":cur;document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===navPage));let v=$("#view");if(cur=="home"){
+  const orders=O(),customers=C(),expenses=E(),inventory=I();
   const sales=orders.reduce((a,x)=>a+(+x.paid||0),0);
+  const exp=expenses.reduce((a,x)=>a+(+x.amount||0),0);
   const active=orders.filter(x=>!["Delivered","Cancelled"].includes(x.status)).length;
   const inStudio=orders.filter(x=>x.status==="In Studio").length;
-  const today=todayStart();
-  const dueSoon=orders.filter(x=>{
-    if(["Delivered","Cancelled"].includes(x.status))return false;
-    const d=parseDateOnly(x.due);if(!d)return false;
-    const diff=Math.round((d-today)/86400000);
-    return diff>=0&&diff<=7;
-  }).sort((a,b)=>(parseDateOnly(a.due)||Infinity)-(parseDateOnly(b.due)||Infinity));
+  const invoiceDue=orders.filter(x=>!["Cancelled"].includes(x.status)&&Math.max(0,(+x.price||0)-(+x.paid||0))>0).length;
   const lowStock=inventory.filter(x=>(+x.qty||0)<=(+x.low||0)).length;
-  const exp=expenses.reduce((a,x)=>a+(+x.amount||0),0);
-  const upcoming=dueSoon.slice(0,3);
-  const studioOrders=orders.filter(x=>x.status==="In Studio").slice(-3).reverse();
+  const recent=orders.slice().sort((a,b)=>new Date(b.created||0)-new Date(a.created||0)).slice(0,4);
 
-  v.innerHTML=`<div class="hq-home">
+  v.innerHTML=`<div class="hq-home core-hq-home">
     <section class="hq-welcome">
-      <div>
-        <span class="hq-kicker">AMÉA HQ</span>
-        <h2 id="homeGreeting">${greeting()}, Améa Boss ✨</h2>
-        <p>Your overall business at a glance.</p>
-      </div>
-      <button class="hq-new-order" onclick="newOrder()">＋ <span>New Order</span></button>
+      <div><span class="hq-kicker">AMÉA HQ</span><h2 id="homeGreeting">${greeting()}, Améa Boss ♡</h2><p>Your order-tracking business hub.</p></div>
     </section>
 
-    <section class="hq-stat-grid">
-      <button class="hq-stat primary-stat" onclick="page('orders')">
-        <span>Total received</span><strong>${M(sales)}</strong><small>${orders.length} order${orders.length===1?"":"s"} all time</small>
-      </button>
-      <button class="hq-stat" onclick="page('orders')">
-        <span>Active orders</span><strong>${active}</strong><small>${inStudio} in studio</small>
-      </button>
-      <button class="hq-stat" onclick="page('calendar')">
-        <span>Due soon</span><strong>${dueSoon.length}</strong><small>Next 7 days</small>
-      </button>
-      <button class="hq-stat" onclick="page('inventory')">
-        <span>Low stock</span><strong>${lowStock}</strong><small>Needs attention</small>
-      </button>
+    <section class="hq-overall-grid">
+      <div><span>Total received</span><strong>${M(sales)}</strong><small>All time</small></div>
+      <div><span>Total orders</span><strong>${orders.length}</strong><small>All time</small></div>
+      <div><span>Total expenses</span><strong>${M(exp)}</strong><small>All time</small></div>
     </section>
 
-    <section class="hq-panel">
-      <div class="hq-panel-head">
-        <div><span class="hq-section-kicker">UP NEXT</span><h3>Due soon</h3></div>
-        <button onclick="page('calendar')">Calendar →</button>
-      </div>
-      <div class="hq-upcoming">
-        ${upcoming.length?upcoming.map(o=>{
-          const diff=orderDueOffset(o);
-          const when=diff===0?"Today":diff===1?"Tomorrow":`In ${diff} days`;
-          return `<button class="hq-due-row" onclick="viewOrder('${o.id}')">
-            <span class="hq-date-dot">${parseDateOnly(o.due)?.getDate()||""}</span>
-            <span><b>${esc(o.customer||"Customer")}</b><small>${esc(o.product||"Order")} · ${when}</small></span>
-            <i>›</i>
-          </button>`;
-        }).join(""):`<div class="hq-empty">Nothing due in the next 7 days 💗</div>`}
-      </div>
+    <section class="hq-tracking-grid">
+      <button onclick="setOrderHubTab('orders')"><span class="hq-mini-icon">▤</span><div><small>Active orders</small><strong>${active}</strong></div></button>
+      <button onclick="setOrderHubTab('customers')"><span class="hq-mini-icon">♡</span><div><small>Customers</small><strong>${customers.length}</strong></div></button>
+      <button onclick="page('inventory')"><span class="hq-mini-icon">◇</span><div><small>Low stock</small><strong>${lowStock}</strong></div></button>
+      <button onclick="setOrderHubTab('invoices')"><span class="hq-mini-icon">▧</span><div><small>Invoices due</small><strong>${invoiceDue}</strong></div></button>
     </section>
 
-    <section class="hq-studio-card" onclick="page('studio')" role="button" tabindex="0">
-      <div class="hq-studio-top">
-        <div><span class="hq-section-kicker light">STUDIO PULSE</span><h3>Creative work</h3></div><span class="hq-studio-arrow">→</span>
-      </div>
-      <div class="hq-studio-numbers">
-        <div><strong>${inStudio}</strong><span>Orders in studio</span></div>
-        <div><strong>${PATTERNS().filter(p=>String(p.status||"").toLowerCase()!=="completed").length}</strong><span>Active patterns</span></div>
-      </div>
-      <div class="hq-studio-projects">
-        ${studioOrders.length?studioOrders.map(o=>`<span>${esc(o.product||o.no||"Project")}</span>`).join(""):`<span>No active studio orders yet</span>`}
+    <button class="hq-manage-orders" onclick="setOrderHubTab('orders')">
+      <span class="hq-manage-icon">◇</span>
+      <span><b>View & Manage Orders</b><small>Orders, Customers & Invoices</small></span>
+      <i>›</i>
+    </button>
+
+    <section class="hq-quick-section">
+      <div class="hq-panel-head"><div><span class="hq-section-kicker">QUICK ACTIONS</span><h3>Get it done</h3></div></div>
+      <div class="hq-quick-grid">
+        <button onclick="newOrder()"><span>＋</span><b>New Order</b></button>
+        <button onclick="newCustomer()"><span>♡</span><b>New Customer</b></button>
+        <button onclick="setOrderHubTab('invoices')"><span>▧</span><b>Invoices</b></button>
+        <button onclick="newItem()"><span>✿</span><b>New Product</b></button>
       </div>
     </section>
 
     <section class="hq-panel">
-      <div class="hq-panel-head">
-        <div><span class="hq-section-kicker">RECENT</span><h3>Orders</h3></div>
-        <button onclick="page('orders')">View all →</button>
-      </div>
+      <div class="hq-panel-head"><div><span class="hq-section-kicker">RECENT</span><h3>Order activity</h3></div><button onclick="setOrderHubTab('orders')">View all →</button></div>
       <div class="hq-recent-orders">
-        ${orders.length?orders.slice(-4).reverse().map(o=>`<button class="hq-order-row" onclick="viewOrder('${o.id}')">
-          <span><b>${esc(o.customer||"Customer")}</b><small>${esc(o.product||o.no||"Order")}</small></span>
-          <span class="hq-order-side"><em class="hq-status ${String(o.status||"").toLowerCase().replaceAll(" ","-")}">${esc(o.status||"New")}</em><b>${M(o.price)}</b></span>
+        ${recent.length?recent.map(o=>`<button class="hq-order-row" onclick="openOrderView('${o.id}')">
+          <span><b>${esc(o.no||"Order")} · ${esc(o.customer||"Customer")}</b><small>${esc(orderSummaryProduct(orderItemsFor(o))||o.product||"Order")} · ${esc(orderDueLabel(o))}</small></span>
+          <span class="hq-order-side"><em class="hq-status ${String(o.status||"").toLowerCase().replaceAll(" ","-")}">${esc(o.status||"New")}</em></span>
         </button>`).join(""):`<div class="hq-empty">No orders yet.</div>`}
       </div>
-    </section>
-
-    <section class="hq-mini-summary">
-      <div><span>Total expenses</span><strong>${M(exp)}</strong></div>
-      <button onclick="page('analytics')">Open Analytics →</button>
     </section>
   </div>`;
 }
@@ -1549,37 +1516,15 @@ else if(cur=="more"){
   let state=localStorage.getItem("ah_cloud_state")||"ok";
   let last=localStorage.getItem("ah_cloud_last");
   let when=last?new Date(last).toLocaleString("en-JM",{dateStyle:"medium",timeStyle:"short"}):"Not synced yet";
-  v.innerHTML=`<div class="more-page">
-    <div class="tool-page-head more-head"><div><span>AMÉA HQ</span><h2>More</h2><p>Everything else that keeps the business moving.</p></div><span class="more-spark">✦</span></div>
-
-    <section class="more-group">
-      <div class="more-group-title"><span>PEOPLE & SALES</span></div>
-      <div class="more-grid">
-        <button onclick="page('customers')"><span class="more-icon-bubble">♡</span><b>Customers</b><small>People & history</small></button>
-        <button onclick="page('invoices')"><span class="more-icon-bubble">▧</span><b>Invoices</b><small>Payments & balances</small></button>
-        <button onclick="page('analytics')"><span class="more-icon-bubble">↗</span><b>Analytics</b><small>Growth & insights</small></button>
-      </div>
-    </section>
-
-    <section class="more-group">
-      <div class="more-group-title"><span>STOCK & MONEY</span></div>
-      <div class="more-grid">
-        <button onclick="page('items')"><span class="more-icon-bubble">✿</span><b>Items</b><small>Product catalogue</small></button>
-        <button onclick="page('inventory')"><span class="more-icon-bubble">◇</span><b>Inventory</b><small>Materials & stock</small></button>
-        <button onclick="page('expenses')"><span class="more-icon-bubble">↘</span><b>Expenses</b><small>Business spending</small></button>
-      </div>
-    </section>
-
-    <section class="more-group">
-      <div class="more-group-title"><span>BUSINESS</span></div>
-      <button class="more-wide-link" onclick="page('settings')"><span class="more-icon-bubble">⚙</span><span><b>Settings</b><small>Business info, delivery & preferences</small></span><i>›</i></button>
-    </section>
-
-    <section class="cloud-modern-card">
-      <div class="cloud-modern-head"><div><span>AMÉA CLOUD</span><h3>Your HQ is backed up</h3></div><em class="sync-pill ${state==="error"?"error":"ok"}">${esc(cs)}</em></div>
-      <p>Customers, orders, products, inventory, expenses and settings are synced to your private account.</p>
-      <div class="cloud-last"><span>Last sync</span><b>${esc(when)}</b></div>
-      <div class="cloud-actions"><button id="syncNowBtn" onclick="syncNow()">Sync Now</button><button onclick="logoutHQ()">Sign Out</button></div>
+  v.innerHTML=`<div class="more-page clean-more-page">
+    <div class="tool-page-head more-head"><div><span>AMÉA HQ</span><h2>More</h2><p>Secondary tools for everything else.</p></div></div>
+    <section class="more-menu-list">
+      <button onclick="page('items')"><span class="more-line-icon">✿</span><span><b>Products</b><small>Manage your product catalogue</small></span><i>›</i></button>
+      <button onclick="page('inventory')"><span class="more-line-icon">◇</span><span><b>Inventory</b><small>Track materials and stock levels</small></span><i>›</i></button>
+      <button onclick="page('expenses')"><span class="more-line-icon">▤</span><span><b>Expenses</b><small>Log and manage business costs</small></span><i>›</i></button>
+      <button onclick="page('analytics')"><span class="more-line-icon">↗</span><span><b>Analytics</b><small>View detailed reports and insights</small></span><i>›</i></button>
+      <button onclick="syncNow()"><span class="more-line-icon">☁</span><span><b>Cloud Sync</b><small>${esc(cs)} · ${esc(when)}</small></span><i class="${state==="error"?"sync-error":""}">↻</i></button>
+      <button onclick="page('settings')"><span class="more-line-icon">⚙</span><span><b>Settings</b><small>Business info and app preferences</small></span><i>›</i></button>
     </section>
   </div>`;
 }
@@ -1654,30 +1599,82 @@ function orderDueLabel(o){
   if(d===1)return "Due tomorrow";
   return `Due in ${d} days`;
 }
+function setOrderHubTab(tab){
+  orderHubTab=["orders","customers","invoices"].includes(tab)?tab:"orders";
+  activeOrderViewId="";
+  cur="orders";
+  render();
+}
+function orderHubHeader(action=""){
+  return `<div class="orders-title-row order-hub-title">
+    <div><span class="orders-kicker">ORDER TRACKING</span><h2>Orders</h2><p>Orders, customers and invoices — all connected.</p></div>
+    ${action}
+  </div>
+  <div class="order-hub-tabs">
+    <button class="${orderHubTab==="orders"?"active":""}" onclick="setOrderHubTab('orders')">Orders</button>
+    <button class="${orderHubTab==="customers"?"active":""}" onclick="setOrderHubTab('customers')">Customers</button>
+    <button class="${orderHubTab==="invoices"?"active":""}" onclick="setOrderHubTab('invoices')">Invoices</button>
+  </div>`;
+}
+function filterOrderHubRows(q,selector){
+  q=String(q||"").trim().toLowerCase();
+  document.querySelectorAll(selector).forEach(el=>el.style.display=!q||String(el.dataset.search||"").includes(q)?"grid":"none");
+}
+function renderCustomersHubTab(){
+  const customers=C(),repeat=customers.filter(x=>customerStats(x).orders.length>1).length;
+  return `<div class="orders-page orders-redesign order-hub-page">
+    ${orderHubHeader('<button onclick="newCustomer()">＋ Customer</button>')}
+    <div class="tool-summary-grid two order-hub-summary"><div><span>Total customers</span><strong>${customers.length}</strong></div><div><span>Repeat customers</span><strong>${repeat}</strong></div></div>
+    <section class="orders-library">
+      <div class="orders-search-wrap"><span>⌕</span><input placeholder="Search customers…" oninput="filterOrderHubRows(this.value,'.customer-modern-row')"></div>
+      <div class="tool-list-card hub-tool-list">
+        ${customers.map(x=>{const st=customerStats(x),last=st.last?st.last.toLocaleDateString("en-JM",{day:"numeric",month:"short",year:"numeric"}):"";const search=esc([x.name,x.phone,x.email].filter(Boolean).join(" ").toLowerCase());return `<button class="customer-modern-row" data-search="${search}" onclick="openCustomer('${x.id}')">
+          <span class="customer-avatar">${esc((x.name||"?").trim().charAt(0).toUpperCase())}</span>
+          <span class="customer-main"><b>${esc(x.name)}</b><small>${st.orders.length?st.orders.length+" order"+(st.orders.length===1?"":"s"):"No orders yet"}${last?" · Last "+last:""}</small></span>
+          <span class="customer-value"><b>${M(st.paid)}</b><small>lifetime</small></span><i>›</i>
+        </button>`}).join("")||'<div class=empty>No customers yet.</div>'}
+      </div>
+    </section>
+  </div>`;
+}
+function renderInvoicesHubTab(){
+  const orders=O().slice().reverse();
+  const due=orders.filter(o=>Math.max(0,(+o.price||0)-(+o.paid||0))>0);
+  const dueTotal=due.reduce((a,o)=>a+Math.max(0,(+o.price||0)-(+o.paid||0)),0);
+  return `<div class="orders-page orders-redesign order-hub-page">
+    ${orderHubHeader()}
+    <div class="tool-summary-grid two order-hub-summary"><div><span>Balance due</span><strong>${M(dueTotal)}</strong></div><div><span>Open invoices</span><strong>${due.length}</strong></div></div>
+    <section class="orders-library">
+      <div class="orders-search-wrap"><span>⌕</span><input placeholder="Search invoices…" oninput="filterOrderHubRows(this.value,'.invoice-modern-row')"></div>
+      <div class="tool-list-card hub-tool-list">
+        ${orders.length?orders.map(o=>{const bal=Math.max(0,(+o.price||0)-(+o.paid||0));const search=esc([o.no,o.customer,orderSummaryProduct(orderItemsFor(o))].filter(Boolean).join(" ").toLowerCase());return `<button class="invoice-modern-row" data-search="${search}" onclick="openInvoice('${o.id}')">
+          <span class="invoice-icon">▧</span><span class="invoice-main"><b>${esc("INV-"+o.no)}</b><small>${esc(o.customer||"")} · ${esc(orderSummaryProduct(orderItemsFor(o)))}</small></span>
+          <span class="invoice-value"><b>${bal>0?M(bal):"Paid"}</b><small>${bal>0?"balance":"complete"}</small></span><i>›</i>
+        </button>`}).join(""):'<div class=empty>No invoices yet. Create an order first.</div>'}
+      </div>
+    </section>
+  </div>`;
+}
 function renderOrdersPage(){
+  if(orderHubTab==="customers")return renderCustomersHubTab();
+  if(orderHubTab==="invoices")return renderInvoicesHubTab();
   const orders=sortOrdersSmart(O());
   const statusCount=st=>orders.filter(o=>o.status===st).length;
   const today=orders.filter(o=>o.status!=="Delivered"&&orderDueOffset(o)===0);
   const soon=orders.filter(o=>o.status!=="Delivered"&&orderDueOffset(o)>0&&orderDueOffset(o)<=7);
-  return `<div class="orders-page orders-redesign">
-    <div class="orders-title-row">
-      <div><span class="orders-kicker">AMÉA HQ</span><h2>Orders</h2><p>Everything you’re making, in one place.</p></div>
-      <button onclick=newOrder()>＋ New Order</button>
-    </div>
-
+  return `<div class="orders-page orders-redesign order-hub-page">
+    ${orderHubHeader('<button onclick="newOrder()">＋ New Order</button>')}
     <div class="orders-status-strip">
       <div><span>New</span><strong>${statusCount("New")}</strong></div>
       <div><span>In Studio</span><strong>${statusCount("In Studio")}</strong></div>
       <div><span>Ready</span><strong>${statusCount("Ready")}</strong></div>
       <div><span>Delivered</span><strong>${statusCount("Delivered")}</strong></div>
     </div>
-
     ${(today.length||soon.length)?`<section class="orders-priority">
       <div class="orders-section-head"><div><span>PRIORITY</span><h3>Coming up</h3></div><button onclick="page('calendar')">Calendar →</button></div>
       ${today.length?`<div class="priority-group"><b>Due today</b>${list(today,true)}</div>`:""}
       ${soon.length?`<div class="priority-group"><b>Next 7 days</b>${list(soon.slice(0,5),true)}</div>`:""}
     </section>`:""}
-
     <section class="orders-library">
       <div class="orders-section-head"><div><span>ALL ORDERS</span><h3>${orders.length} total</h3></div></div>
       <div class="orders-search-wrap"><span>⌕</span><input placeholder="Search customer, order or item…" oninput="searchO(this.value)"></div>
@@ -1692,7 +1689,7 @@ function list(a,compact=false){return a.map(x=>{
   return `<div class="item order-list-card ${pinned?"pinned":""}" onclick="openOrderView('${x.id}')"><div class=top><b>${pinned?"★ ":""}${esc(x.no)} · ${esc(x.customer)}</b><span class=badge>${esc(x.status)}</span></div><div class=meta>${items.length>1?'<span class="multi-order-tag">MULTI-ITEM</span> ':""}${esc(summary||x.product)}<br>${esc(orderDueLabel(x))}${compact?"":` · ${esc(x.delivery||"—")}`}</div>${compact?"":`<div class=order-list-actions><button class=order-pin-btn onclick="toggleOrderPin('${x.id}',event)">${pinned?"★ Pinned":"☆ Pin"}</button>${orderHasPattern(x)?`<button class=order-work-quick onclick="event.stopPropagation();openOrderPatternChooser('${x.id}')">✓ Work on Pattern</button>`:""}</div>`}</div>`;
 }).join("")}
 function searchO(q){q=q.toLowerCase();const el=$("#ol");if(el)el.innerHTML=list(sortOrdersSmart(O().filter(x=>JSON.stringify(x).toLowerCase().includes(q))))}
-function openOrderView(id,mode="maker"){activeOrderViewId=id;activeOrderViewMode=mode;cur="orders";render()}
+function openOrderView(id,mode="maker"){orderHubTab="orders";activeOrderViewId=id;activeOrderViewMode=mode;cur="orders";render()}
 function closeOrderView(){activeOrderViewId="";activeOrderViewMode="maker";cur="orders";render()}
 function setOrderViewMode(mode){activeOrderViewMode=mode==="full"?"full":"maker";render()}
 function orderInspirationPhotos(o){
