@@ -5,7 +5,7 @@ function S(k,v){
   localStorage.setItem("ah_"+k,JSON.stringify(v));
   if(cloudReady)queueCloudSync(k,v);
 }
-let cur="home";const O=()=>G("orders"),C=()=>G("customers"),I=()=>G("inventory"),E=()=>G("expenses"),SUP=()=>G("suppliers"),ITEMS=()=>G("items"),
+let cur="home",orderHubTab="orders";const O=()=>G("orders"),C=()=>G("customers"),I=()=>G("inventory"),E=()=>G("expenses"),SUP=()=>G("suppliers"),ITEMS=()=>G("items"),
 PATTERNS=()=>G("studio_patterns"),MODELS=()=>G("studio_models"),YARNS=()=>G("studio_yarns"),VERSIONS=()=>G("studio_versions");
 const M=n=>new Intl.NumberFormat("en-JM",{style:"currency",currency:"JMD",maximumFractionDigits:0}).format(+n||0);
 const AMEA_LOGO_DATA="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAZsAAACICAYAAAAxrUZ5AAAN80lEQVR4nO3dPbPU1hnA8Yc7NraGW5qe29kNfANoIZ1JoyJtbNJEvRsvVWrNpMBmJrXSmNK08A1ICtOZxpVdpMCj4XrGpOAs3rt3tTrP0XnX/1cxF610Vis9j86rRAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQPmupC4AgPUZu+HtgT/fb/r2SfTCIAqSDYCoJhLN1lnTt69ilQXxnKQuAID1mEk0IiI/RikIoiPZAIjCItGgYiQbAMGRaECyARDU2A23U5cB6ZFsAIT2TLHtabBSIClGowEIRtt81vQtMalS1GwABEGiwS6SDQDvSDTYxw8MwJuxG26Icq4MiWYd+JEBLDZ2w00ReaH8GMvTrAjJBsCkneawxyLyVdO3v5i/fykij1z3S21mffjBAUzyPBnzvOnbjzzuDwUh2QCYtSTpUIuBCMkGgAPTR/O5iLQi8qm8a2b7Z9O3/0laMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAASU/XI1Yzd8LyJ3F+5m0/TtQx/lWZOxG96IyFWHj94qZdmSBd9RRORq07e/+SxPDZauCG3cafr2uY/ylKL2WJddsvG8yuyUl03ffhbhOEUZu+GaiLz2vNunTd/e87xPZ4G+49ZJ07cxrt+sjN3wrYj8NfBhrm9fb1CLtcW6LJJNpJM+KcdVaRXn5HHTt19EOtYiKc9z5GvsrOnbVxGPF52n2ouTHO9XW2uOdSlvfpc3+52LyMfap0fFq2qzCRKai9L1ArI8xmnTt79a7s8qAMW84G2+o6Y8yqf4YpoTbSmuS9W96hgPimjGJNa9Ez3ZODwReW+DtPjxkzf9hEw2cxekj2QwdsMP8m7p+SlB25Zn2r8X1wbNMax+o5KfxLcsv6uXl6ON3fC1iGxst8/1/BLrLor5hHlD7DLuVpT3k8/cRMlqOqGSzZH9BumQnfseIQLF1DFDBSXfNcSc+K4ZKo8998CyK5s+HWLdYVGSjbadMsWTyrEy5laefTblG7vhioj8fuC/go9emQsavs7vVBNXjN/P8vfKdqTQPpvaRaTzOnXdHpS6lkOsmxb0izpkeC/NG65mqr1R24d9JpuJ4b1RR6nM9XUsvcgnzlfs38xqGHXqgHiM5Wi96H0lMfowlyDWzQv2oziMGc/mqS+HWo6vmyuHIDxTlvd8DnRIFdAtf7dsBqLsyqU2M0VxT0SNJcQ6Oyc+d7Zlmk00J/88l5Mv4hS8szQVhFON4LGoganP7YHPPE4ZEC2PrXkCjsKcx82RTU4yqJHZTr7dmJpGcMQ6e96TjWlKsO3UExERHyNYApg8NyUknJye9vecHvtPzbk9sO1pyqaJHWdzG+R0DdnUOHOYrKp8SAqe0Il1ng7iYuyG26Jc+iOTAHiJubkmg4apOmcpt6f9XTYjssZu+MRimwvf0QTELEZ72TaRmX6spFKMFlxCOfLyZqhyEOv0fNdsnim3v+P5+F7NBI27ppMtK6bd/YJMnvZ3zT35/3zsPw8ESNe1zUK6b7FN6CVeJo3dcLO0RONAO5FSg1in5C3ZuFS3Slhob+aGe2SGZmbBPG1tdv+WY8CwefKfurgP1AZu5TiL3HbexNgNn4cuy4Fj3pCZQJzjdbPjaFPsrrEbPvR9cGKdmyADBGxkfjFrWM8BCMncVBeetgo/x5eGZZrvuFsbeFrBcjDfJTjm0f6M3K8bZXNpqEVXreV+PhUWxTovycaMyKjZ0fOUujnNPHGc7/6tgAv8wdwGB54g979jNqtJT3iZugD7LJ7Ks27uceC1iZVY5x7rfNVstCMycg+EF1iMxEmy+u2O/ScO62aGVJq+/cZmOzPJ8OCAgBDl8sl20myskWmWS89k39yTGLHOUbJmtAKdH/vPnIay5jIqy5PXB85tdjWG3KVc4wzFCRLroiebgi/oj1MXwEbB59dazGV2amA5dNVm9FxOsn/gKPheDBLrYiebW5GP543NpLYM2nOfJj5+DLMTJvEHM2dpdoZ7jFWHPVM1ZyVArNsTNdlUMHJoTtIboIAO88VyXFPMh23fVABH5yyJFP0Eni1i3WW+ks3sfriggaP+4nuHhyb4YjFinSMvycZUuybbUNd08lM1pa3hHFf+HUOMaNxYbFP7ICGvQ7mJdX/QxjpvF5rptL2697crazr5Ru5tyVgBxSursxlFGUKIodzEuvdUse4Dn0c2y4as7YQjjuxHHxWoyE7s1JOoRYh1LmqvQnsT6/0YLtbwRMVwZ3uKWk2pndi2TY6bkIWoVahYR7Kxl90Lr4AFjk7cy5VmMcicXlJWmCCxjmRjIafVAYBjFLWaHF/iZSOLhW9rFTLWkWyOGLvhB8dXFUdfNh6onc1L9bbW0LTsU4xY53WAQC3MO1OWvNjqO6HzEJGtYF7N7ARVo8iBDynEjHUkG8Nk6BTvFgF82VhuN/t6h9xonroLHvgQRapYt9pkY17EVWQnKbCE7esdcqFMNLQo7Mkl1q0m2ZjhfIwoQ5VqbUIbu+GN7bYkmndyjXVVJhszPNJ11MrJoVnVjEhD5japC+Cb6U+wfdPm9ZBlyVVJsa6KZGNmFLusLfW46dsvLLc9kwyfFoAamX4F247r08peGDip5FhXXLJZ2P7ofFE2fftq7AbHwwLZyH5wgFng0Xbdratm6Zjq1Bbrsk82jtXEB6V1ggKuxm64qdj8X8EK4sGaBwPUHuuyTDbmNbazbxc0qn2yASy9sN0w13tF26ldS6JZU6zLJtmY0TQbi02vN337S+DiAIhE2SFddMAVWW+sS5psTPXf5qnsFhO1gLqsqTZDrEuUbGw7AEu+uAAcZtY4s116RkTkftO3T0KVJyRi3R+iJhvFirTVn3hgbcZuuCYirxUfKabzex+x7rIoyUbRJnvW9O2rkGUBENfKajLEuglBk43mSWZNGR5IZeyGNzHeZeM4jPdO07fPQ5QnNGLdvGDJRpHhi32KAQpku/yLE8elTopeAYBYZ8d7slFWmYu+yIASjd3w1tfT9YJ1tGoYwkysU/CabMZuuC0iz2y2XWtVEsjBXpI42hFvhih/JctesiUysfBjiYh1et6SjWaBOE4+kJVHYze4LO44p8pOcGKdGy/JRvlq0aBtxgCSqKbWcgyxzt3iZKNcofVO6e20QIVeisiXe3/7n4j8dw0JxBaxbplFycYsgW178qXUYY1AhTZN3z5MXYhSEOuWO1n4eet3LdB2CeSDRKNGrFvIOdkohzyeuR4HgF8EQx1inR9OycbMDrZW44gUICNPUxegVsQ6f1xrNpplKJY21QE47k+pC1AxYp0n6pPjkOkZzQIEpL3HTGc3ZhDr/HLJxJpMf99h/wDCsu7sXjlinUdBq31rXnQOwHoQ6+apko1ZeA5AZhhh5hexzj9tzUbzAqTHyn0DiMQsrolpxDrPgjWjNX37Rah9A1jsx9QFqAWxzg5D9YB6MN8G2SLZAJVo+vaeZnuGQCMm62QzdsPNkAXJnVlaHKgJQ6APINaFiXWams2/QxSgIEvfUgjEcCd1ASpArAtAk2ysl9cGkIZ2aXvlIpNrQawLgD4bC2M3vEldBkDhQeoCoEwhYx3Jxg6vd0Uxmr79RrP92vsocEGwWEeymUEzAwqlmWj4IlgpEtMuprlmoWMdyeYIZlmjVNqJhjU+VI3dcE1Efh+74S3DvI+LEes0yUY1YWzshtvKsmTFnHxmWaNkL1MXILHXO//WDPMm1gWgSTZ/U+77mXL7bJiLh0SDojV9+5lm+5pqNwv7oYh1AVgnm7W87nTshi+l4IsH2KVdDbqiwQIX+qE054FYF0bQPpvSluk2M2cf7f35zFyoZwmKBPhwXbFt8YMFDtTQgg8FJ9bN0yYbbRuwZpnupMZu+EH2Zs42fXtl+5Szlqcd1Kfp218025fcnHaoZqYdCm4Q6zxTJRttG7CIyNgNX2s/E5u5uXZnDZ/zMirUxKE5rdSE49x8tvc5Yp1nMYY+byIcw8nYDdcO3FTXm779KEmBgIBqTzgHyruJXITYx7OWQ6xTJxuXLJjjRWvKtDs0cluVVDU5AIVRzRDP8d495FA5m759uGSfxDq/ok3qzOVHmMjwvMMdq9D07W+11XByu59zOV+5xTqnZONa2NQ/wqEMLyIPSDRYG5eEk9uIq7EbPgkdTIl1/nyw4LMnIvK79kNjN7yN/YXNSqaXmg9IMlizpm+vKIPiz2M3vHTpPPdt7IbvReTu/t8D3dPEOg+cm9Gavn0rjiuEmqek4Mv2m+McKuetHE4+kJq5DzTLs3xq7qskkz/HbvjQ3NOxEg2xzpMlNRtp+va3sRuuitvrZa9un6p8ngwzK3Z/stJ7uZx4IBdN395zWB/rxdgNIu8mAr4KUa59x2phoe9rYt1yi5KNyPsf4VQutw9a27mI1FV00448O6EqtxMP5MQkDG2zmojIjybpPG369p7vcpka1LFVDc5jDd8l1i2zONmIiDR9+6u4Xaj7Pg3QsXa/6dsnnvcJVGkbqBzuw7t7n3Gu8Uz1xxxwamJPNMQ6d16SzZbpcLTKvhFslo6zB9ZqQdLZ2tZ4QkgeVIl1el6Tjcj7dZiumKUbNr73byFaGzJQOw9Jx6cgTXWuiHU6wdv2zBvyXDrVNKK12wJrFzvx5NoHsY9Yd1zsMeDXZEHn2p6snnKANbLowHd1YoYcF4lYd1nyJwbT7vlnmR7Cdy4ifxeRb0u++IC1MPf0TzI/N+WpiPyj6dvn4UuVHrEOAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACU7/+HdwOtwboY9QAAAABJRU5ErkJggg==";
@@ -554,6 +554,51 @@ function applyAmeaBrandHeader(){
 }
 
 let studioPatternId="";
+function renderStudioHub(){
+  const patterns=PATTERNS();
+  const activePatterns=patterns.filter(p=>String(p.status||"").toLowerCase()!=="final").length;
+  const inStudio=O().filter(o=>o.status==="In Studio").length;
+  const designCount=Number(localStorage.getItem("ah_design_count")||0);
+  return `<div class="studio-hub-page">
+    <div class="studio-hub-head">
+      <div><span class="studio-hub-eyebrow">AMÉA HQ</span><h2>Studio</h2><p>Create • Plan • Grow</p></div>
+      <span class="studio-hub-spark">✦</span>
+    </div>
+
+    <button class="studio-feature-card crochet" onclick="page('crochet')">
+      <div class="studio-feature-art"><span>🧶</span><i>♡</i></div>
+      <div class="studio-feature-copy">
+        <span>MAKE & TRACK</span>
+        <h3>Crochet Studio</h3>
+        <p>Patterns, yarn, projects and all the making details.</p>
+      </div>
+      <b class="studio-feature-arrow">→</b>
+      <div class="studio-feature-stats">
+        <span><strong>${activePatterns}</strong> active patterns</span>
+        <span><strong>${YARNS().length}</strong> yarns saved</span>
+        <span><strong>${inStudio}</strong> in studio</span>
+      </div>
+    </button>
+
+    <button class="studio-feature-card design" onclick="window.location.href='design-studio.html'">
+      <div class="studio-feature-art"><span>✎</span><i>✿</i></div>
+      <div class="studio-feature-copy">
+        <span>CREATE & PLAN</span>
+        <h3>Design Studio</h3>
+        <p>Sketch, colour, motifs and bring new ideas to life.</p>
+      </div>
+      <b class="studio-feature-arrow">→</b>
+      <div class="studio-feature-stats">
+        <span><strong>${designCount}</strong> saved ideas</span>
+        <span><strong>∞</strong> colour options</span>
+        <span><strong>✦</strong> your canvas</span>
+      </div>
+    </button>
+
+    <div class="studio-hub-note">Different processes. <b>Same big vision.</b> ♡</div>
+  </div>`;
+}
+
 let studioSub="patterns";
 let studioMainPhoto="";
 let studioExtraPhotos=[];
@@ -579,6 +624,16 @@ function studioDefaultPattern(){
 function studioLogoBlock(subtitle="Crochet Studio"){
   return `<div class=studio-brand><div class=studio-brand-line><img src="amea-logo.png" alt="Améa"><span>STUDIO</span></div><div class=studio-subtitle>${esc(subtitle)}</div></div>`;
 }
+function studioSectionNav(active="patterns"){
+  const tabs=[
+    ["patterns","Patterns"],
+    ["yarns","Yarn"],
+    ["models","Models"],
+    ["calculator","Calculator"]
+  ];
+  return `<div class="crochet-section-nav">${tabs.map(([key,label])=>`<button class="${active===key?"active":""}" onclick="studioGo('${key}')">${label}</button>`).join("")}</div>`;
+}
+
 function renderStudio(){
   if(studioSub==="work")return renderStudioWorkPage();
   if(studioPatternId)return renderStudioPattern(studioPatternId);
@@ -603,29 +658,63 @@ function renderStudioLibrary(){
   const patterns=PATTERNS().slice().sort((a,b)=>(+!!b.pinned)-(+!!a.pinned)||new Date(b.updated||b.created||0)-new Date(a.updated||a.created||0));
   const cats=[...new Set(patterns.map(x=>x.category).filter(Boolean))].sort();
   const cols=[...new Set(patterns.map(x=>x.collection).filter(Boolean))].sort();
-  v.innerHTML=`<div class=studio-page>
-    <div class=studio-topbar>${studioLogoBlock()}<button class=studio-new-btn onclick=newStudioPattern()>＋ New Pattern</button></div>
-    <div class=studio-tool-grid>
-      <button onclick="studioGo('yarns')"><span>🧶</span><b>Yarn Library</b><small>${YARNS().length} saved</small></button>
-      <button onclick="studioGo('models')"><span>♡</span><b>My Models</b><small>${MODELS().length} saved</small></button>
-      <button onclick="studioGo('calculator')"><span>⌁</span><b>Calculator</b><small>Stitches & rows</small></button>
+  const active=patterns.filter(p=>String(p.status||"").toLowerCase()!=="final").length;
+  const finals=patterns.filter(p=>String(p.status||"").toLowerCase()==="final").length;
+  const inStudio=O().filter(o=>o.status==="In Studio");
+  const linked=inStudio.filter(o=>orderHasPattern(o)).length;
+  v.innerHTML=`<div class="studio-page crochet-studio-v1">
+    <div class="crochet-v1-head">
+      <button class="crochet-back" onclick="page('studio')">‹</button>
+      <div><span>AMÉA STUDIO</span><h2>Crochet Studio</h2><p>Patterns, yarn and your making progress.</p></div>
+      <button class="crochet-new-pattern" onclick="newStudioPattern()">＋</button>
     </div>
-    <div class=studio-library-head><div><h2>Patterns</h2><div class=meta>${patterns.length} pattern${patterns.length===1?"":"s"} saved</div></div></div>
-    <input id=studioSearch class=studio-search placeholder="Search patterns…" oninput=studioApplyFilters()>
-    <div class=studio-filters>
-      <select id=studioTechnique onchange=studioApplyFilters()><option value="">Crochet + Knit</option><option>Crochet</option><option>Knit</option></select>
-      <select id=studioCategory onchange=studioApplyFilters()><option value="">All categories</option>${cats.map(x=>`<option>${esc(x)}</option>`).join("")}</select>
-      <select id=studioStatus onchange=studioApplyFilters()><option value="">All statuses</option><option>Draft</option><option>Testing</option><option>Final</option></select>
-      <select id=studioCollection onchange=studioApplyFilters()><option value="">All collections</option>${cols.map(x=>`<option>${esc(x)}</option>`).join("")}</select>
+
+    ${studioSectionNav("patterns")}
+
+    <section class="crochet-work-banner">
+      <div>
+        <span>IN THE STUDIO</span>
+        <h3>${inStudio.length} active order${inStudio.length===1?"":"s"}</h3>
+        <p>${linked} linked to a saved pattern</p>
+      </div>
+      <button onclick="setOrderHubTab('orders')">View orders <b>›</b></button>
+    </section>
+
+    <div class="crochet-v1-stats">
+      <div><strong>${active}</strong><span>Active patterns</span></div>
+      <div><strong>${finals}</strong><span>Final patterns</span></div>
+      <div><strong>${YARNS().length}</strong><span>Saved yarns</span></div>
     </div>
-    <div id=studioPatternGrid class=studio-pattern-grid>${studioPatternCards(patterns)}</div>
+
+    <section class="crochet-library-v1">
+      <div class="crochet-library-head">
+        <div><span>PATTERN LIBRARY</span><h3>Your patterns</h3></div>
+        <button onclick="newStudioPattern()">＋ New</button>
+      </div>
+      <div class="orders-search-wrap crochet-search"><span>⌕</span><input id="studioSearch" placeholder="Search patterns…" oninput="studioApplyFilters()"></div>
+      <div class="studio-filters crochet-filter-row">
+        <select id="studioTechnique" onchange="studioApplyFilters()"><option value="">All techniques</option><option>Crochet</option><option>Knit</option></select>
+        <select id="studioCategory" onchange="studioApplyFilters()"><option value="">All categories</option>${cats.map(x=>`<option>${esc(x)}</option>`).join("")}</select>
+        <select id="studioStatus" onchange="studioApplyFilters()"><option value="">All status</option><option>Draft</option><option>Testing</option><option>Final</option></select>
+        <select id="studioCollection" onchange="studioApplyFilters()"><option value="">All collections</option>${cols.map(x=>`<option>${esc(x)}</option>`).join("")}</select>
+      </div>
+      <div id="studioPatternGrid" class="studio-pattern-grid crochet-pattern-grid crochet-card-grid">${studioPatternCards(patterns)}</div>
+    </section>
   </div>`;
 }
 function studioPatternCards(patterns){
-  if(!patterns.length)return `<div class="empty studio-empty">No patterns yet. Tap <b>＋ New Pattern</b> to create your first one 💗</div>`;
-  return patterns.map(x=>`<button class=studio-pattern-card data-search="${esc([x.name,x.technique,x.category,x.status,x.collection,(x.tags||[]).join(" ")].join(" ").toLowerCase())}" data-technique="${esc(x.technique||"")}" data-category="${esc(x.category||"")}" data-status="${esc(x.status||"")}" data-collection="${esc(x.collection||"")}" onclick="openStudioPattern('${x.id}')">
-    <div class=studio-pattern-photo>${x.mainPhoto?`<img src="${x.mainPhoto}" alt="${esc(x.name)}">`:`<div class=studio-pattern-placeholder><img src="amea-logo.png" alt=""><span>Pattern</span></div>`}${x.pinned?'<span class=studio-pin>★</span>':""}</div>
-    <div class=studio-pattern-copy><b>${esc(x.name||"Untitled Pattern")}</b><span>${esc(x.technique||"Crochet")} • ${esc(x.category||"Other")} • ${esc(x.status||"Draft")}</span></div>
+  if(!patterns.length)return `<div class="empty studio-empty crochet-empty"><b>No patterns yet.</b><span>Start your first pattern and keep every row, yarn and measurement together.</span><button onclick="newStudioPattern()">＋ Create Pattern</button></div>`;
+  return patterns.map(x=>`<button class="studio-pattern-card crochet-v1-card" data-search="${esc([x.name,x.technique,x.category,x.status,x.collection,(x.tags||[]).join(" ")].join(" ").toLowerCase())}" data-technique="${esc(x.technique||"")}" data-category="${esc(x.category||"")}" data-status="${esc(x.status||"")}" data-collection="${esc(x.collection||"")}" onclick="openStudioPattern('${x.id}')">
+    <div class="studio-pattern-photo">
+      ${x.mainPhoto?`<img src="${x.mainPhoto}" alt="${esc(x.name)}">`:`<div class="studio-pattern-placeholder crochet-placeholder"><img src="amea-logo.png" alt=""><span>${esc(x.category||"Pattern")}</span></div>`}
+      ${x.pinned?'<span class="studio-pin">★</span>':""}
+      <span class="crochet-status-chip ${String(x.status||"Draft").toLowerCase()}">${esc(x.status||"Draft")}</span>
+    </div>
+    <div class="studio-pattern-copy">
+      <b>${esc(x.name||"Untitled Pattern")}</b>
+      <span>${esc(x.technique||"Crochet")} · ${esc(x.category||"Other")}</span>
+      ${x.collection?`<small>${esc(x.collection)}</small>`:""}
+    </div>
   </button>`).join("");
 }
 function studioApplyFilters(){
@@ -712,7 +801,7 @@ function renderStudioWorkPage(){
   }).join("");
   const v=$("#view");
   v.innerHTML=`<div class=studio-work-page>
-    <div class=studio-work-nav><button onclick=studioWorkBack()>← Back</button>${studioLogoBlock("Work Pattern")}</div>
+    <div class=studio-work-nav><button onclick=studioWorkBack()>← Back</button>${studioLogoBlock("Making Mode")}</div>
     <div class=studio-work-hero>${p.mainPhoto?`<img src="${p.mainPhoto}" alt="${esc(p.name)}">`:""}<div><span>${esc(p.technique)} • ${esc(p.category)} • ${esc(p.status)}</span><h2>${esc(p.name)}</h2>${order&&item?`<p>Order ${esc(order.no)} · ${esc(orderItemLabel(item))}</p>`:'<p>Instructions only</p>'}</div></div>
     ${order?`<div class=studio-work-progress><div><b>${done} of ${rows.length} rows done</b><strong>${pct}%</strong></div><div class=studio-work-progress-track><i style="width:${pct}%"></i></div><p>${next?`Next: <b>${esc(next.section)}</b> · Row ${next.row}`:'Pattern complete 🎉'}</p></div>`:""}
     <div class=studio-work-pieces>${sections||'<div class=empty>No pattern instructions yet.</div>'}</div>
@@ -1169,8 +1258,25 @@ function saveStudioPattern(id=""){
 }
 
 function renderStudioYarns(){
-  const v=$("#view");
-  v.innerHTML=`<div class=studio-subpage><div class=studio-detail-nav><button onclick="studioGo('patterns')">← Patterns</button><button onclick=newStudioYarn()>＋ Add Yarn</button></div>${studioLogoBlock("Yarn Library")}<div class=meta studio-page-note>Save yarns you use often. You can still type a custom yarn inside any pattern.</div><div class=studio-library-list>${YARNS().map(y=>`<div class=studio-library-item><div><b>${esc(y.yarnName||"Yarn")}</b><span>${esc([y.brand,y.colour,y.weightType].filter(Boolean).join(" · "))}</span></div><button onclick="newStudioYarn('${y.id}')">Edit</button></div>`).join("")||'<div class=empty>No yarns saved yet.</div>'}</div></div>`;
+  const v=$("#view"),yarns=YARNS();
+  v.innerHTML=`<div class="studio-subpage crochet-studio-v1 crochet-library-subpage">
+    <div class="crochet-v1-head compact">
+      <button class="crochet-back" onclick="page('studio')">‹</button>
+      <div><span>AMÉA STUDIO</span><h2>Yarn Library</h2><p>Save the yarns you reach for most.</p></div>
+      <button class="crochet-new-pattern" onclick="newStudioYarn()">＋</button>
+    </div>
+    ${studioSectionNav("yarns")}
+    <section class="crochet-sub-card">
+      <div class="crochet-library-head"><div><span>YOUR STASH</span><h3>${yarns.length} saved yarn${yarns.length===1?"":"s"}</h3></div><button onclick="newStudioYarn()">＋ Add Yarn</button></div>
+      <div class="crochet-yarn-grid">
+        ${yarns.map(y=>`<button class="crochet-yarn-card" onclick="newStudioYarn('${y.id}')">
+          <span class="crochet-yarn-swatch"></span>
+          <span><b>${esc(y.yarnName||"Yarn")}</b><small>${esc([y.brand,y.colour,y.weightType].filter(Boolean).join(" · ")||"Add details")}</small></span>
+          <i>›</i>
+        </button>`).join("")||'<div class="empty crochet-empty"><b>No yarns saved yet.</b><span>Add yarns you use often so they are ready for patterns.</span></div>'}
+      </div>
+    </section>
+  </div>`;
 }
 function newStudioYarn(id=""){
   const y=id?studioYarnById(id):{};
@@ -1188,8 +1294,25 @@ function deleteStudioYarn(id){
 }
 
 function renderStudioModels(){
-  const v=$("#view");
-  v.innerHTML=`<div class=studio-subpage><div class=studio-detail-nav><button onclick="studioGo('patterns')">← Patterns</button><button onclick=newStudioModel()>＋ Add Model</button></div>${studioLogoBlock("My Models")}<div class=meta studio-page-note>Save each model once, then link them to patterns. Pattern-specific measurements can still be different.</div><div class=studio-library-list>${MODELS().map(m=>`<div class=studio-library-item><div><b>${esc(m.name)}</b><span>${esc(m.usualSize||"No usual size")} · ${(m.measurements||[]).length} measurements</span></div><button onclick="newStudioModel('${m.id}')">Edit</button></div>`).join("")||'<div class=empty>No models saved yet.</div>'}</div></div>`;
+  const v=$("#view"),models=MODELS();
+  v.innerHTML=`<div class="studio-subpage crochet-studio-v1 crochet-library-subpage">
+    <div class="crochet-v1-head compact">
+      <button class="crochet-back" onclick="page('studio')">‹</button>
+      <div><span>AMÉA STUDIO</span><h2>Models</h2><p>Saved measurements for repeat fittings.</p></div>
+      <button class="crochet-new-pattern" onclick="newStudioModel()">＋</button>
+    </div>
+    ${studioSectionNav("models")}
+    <section class="crochet-sub-card">
+      <div class="crochet-library-head"><div><span>MEASUREMENTS</span><h3>${models.length} saved model${models.length===1?"":"s"}</h3></div><button onclick="newStudioModel()">＋ Add Model</button></div>
+      <div class="crochet-model-grid">
+        ${models.map(m=>`<button class="crochet-model-card" onclick="newStudioModel('${m.id}')">
+          <span class="crochet-model-avatar">${esc((m.name||"?").trim().charAt(0).toUpperCase())}</span>
+          <span><b>${esc(m.name||"Model")}</b><small>${esc(m.usualSize||"No usual size")} · ${(m.measurements||[]).length} measurements</small></span>
+          <i>›</i>
+        </button>`).join("")||'<div class="empty crochet-empty"><b>No models saved yet.</b><span>Save someone once, then reuse their measurements across patterns.</span></div>'}
+      </div>
+    </section>
+  </div>`;
 }
 function studioModelMeasureRow(m={}){
   return `<div class=studio-measure-edit data-model-measure><input data-mm-name placeholder="Measurement" value="${esc(m.name||"")}"><input data-mm-value placeholder="Value" value="${esc(m.value||"")}"><select data-mm-unit><option ${m.unit==="in"?"selected":""}>in</option><option ${m.unit==="cm"?"selected":""}>cm</option></select><button type=button onclick="this.parentElement.remove()">×</button></div>`;
@@ -1215,17 +1338,23 @@ function deleteStudioModel(id){
 
 function renderStudioCalculator(){
   const v=$("#view");
-  v.innerHTML=`<div class=studio-subpage><div class=studio-detail-nav><button onclick="studioGo('patterns')">← Patterns</button></div>${studioLogoBlock("Measurement Calculator")}
-    <div class=studio-calc-card>
-      <div class=studio-calc-switch><button id=calcSimpleBtn class=active onclick="studioCalcMode('simple')">Simple</button><button id=calcAdvancedBtn onclick="studioCalcMode('advanced')">Advanced</button></div>
-      <label>Units</label><select id=calcUnit><option value=in>Inches</option><option value=cm>Centimetres</option></select>
-      <div class=studio-two><div><label>Target width / circumference</label><input id=calcWidth type=number step=.01 placeholder="e.g. 34"></div><div><label>Target length</label><input id=calcLength type=number step=.01 placeholder="e.g. 20"></div></div>
-      <div class=studio-calc-gauge><h3>Your gauge</h3><div class=studio-two><input id=calcGaugeSt type=number step=.01 placeholder="Stitches"><input id=calcGaugeWidth type=number step=.01 value=4 placeholder="Across this width"></div><div class=studio-two><input id=calcGaugeRows type=number step=.01 placeholder="Rows"><input id=calcGaugeHeight type=number step=.01 value=4 placeholder="Across this height"></div></div>
-      <div id=calcAdvanced style="display:none"><h3>Advanced</h3><div class=studio-two><div><label>Ease %</label><input id=calcEase type=number step=.1 value=0 placeholder="-10 or 5"></div><div><label>Stretch reduction %</label><input id=calcStretch type=number step=.1 value=0></div></div><div class=studio-two><div><label>Total seam allowance</label><input id=calcSeam type=number step=.01 value=0></div><div><label>Panels</label><input id=calcPanels type=number min=1 step=1 value=1></div></div></div>
-      <button class=primary onclick=calculateStudioGauge()>Calculate</button>
-      <div id=calcResult class=studio-calc-result><span>Your stitch and row counts will show here.</span></div>
+  v.innerHTML=`<div class="studio-subpage crochet-studio-v1 crochet-library-subpage">
+    <div class="crochet-v1-head compact">
+      <button class="crochet-back" onclick="page('studio')">‹</button>
+      <div><span>AMÉA STUDIO</span><h2>Calculator</h2><p>Turn your swatch gauge into stitches and rows.</p></div>
+      <span class="crochet-head-spacer"></span>
     </div>
-    <div class="meta studio-calc-note">Use your own swatch gauge. Counts are a starting point — always check fit and fabric stretch on the actual piece.</div>
+    ${studioSectionNav("calculator")}
+    <div class="studio-calc-card crochet-calc-v1">
+      <div class="studio-calc-switch"><button id="calcSimpleBtn" class="active" onclick="studioCalcMode('simple')">Simple</button><button id="calcAdvancedBtn" onclick="studioCalcMode('advanced')">Advanced</button></div>
+      <label>Units</label><select id="calcUnit"><option value="in">Inches</option><option value="cm">Centimetres</option></select>
+      <div class="studio-two"><div><label>Target width / circumference</label><input id="calcWidth" type="number" step=".01" placeholder="e.g. 34"></div><div><label>Target length</label><input id="calcLength" type="number" step=".01" placeholder="e.g. 20"></div></div>
+      <div class="studio-calc-gauge"><span class="calc-kicker">YOUR SWATCH</span><h3>Gauge</h3><div class="studio-two"><input id="calcGaugeSt" type="number" step=".01" placeholder="Stitches"><input id="calcGaugeWidth" type="number" step=".01" value="4" placeholder="Across this width"></div><div class="studio-two"><input id="calcGaugeRows" type="number" step=".01" placeholder="Rows"><input id="calcGaugeHeight" type="number" step=".01" value="4" placeholder="Across this height"></div></div>
+      <div id="calcAdvanced" style="display:none"><span class="calc-kicker">FIT CONTROL</span><h3>Advanced</h3><div class="studio-two"><div><label>Ease %</label><input id="calcEase" type="number" step=".1" value="0" placeholder="-10 or 5"></div><div><label>Stretch reduction %</label><input id="calcStretch" type="number" step=".1" value="0"></div></div><div class="studio-two"><div><label>Total seam allowance</label><input id="calcSeam" type="number" step=".01" value="0"></div><div><label>Panels</label><input id="calcPanels" type="number" min="1" step="1" value="1"></div></div></div>
+      <button class="primary crochet-calc-btn" onclick="calculateStudioGauge()">Calculate</button>
+      <div id="calcResult" class="studio-calc-result"><span>Your stitch and row counts will show here.</span></div>
+    </div>
+    <div class="meta studio-calc-note crochet-calc-note">Use your own swatch gauge. The result is a starting point — always check the fit and stretch of the actual fabric.</div>
   </div>`;
 }
 function studioCalcMode(mode){
@@ -1291,129 +1420,215 @@ function renderCalendarPage(){
     else if(i>=startDay+daysInMonth){day=i-(startDay+daysInMonth)+1;cm=m+1;muted=true;if(cm>11){cm=0;cy++}}
     else day=i-startDay+1;
     const key=calendarDayKey(cy,cm,day),orders=byDue[key]||[];
-    const names=orders.slice(0,3).map(o=>`<span class=calendar-name title="${esc(o.customer||"Customer")}">${esc(o.customer||"Customer")}</span>`).join("");
-    const extra=orders.length>3?`<span class=calendar-more>+${orders.length-3} more</span>`:"";
-    cells.push(`<div class="calendar-cell ${muted?"muted":""} ${key===todayKey?"today":""}"><div class=calendar-date>${day}</div><div class=calendar-due-list>${names}${extra}</div></div>`);
+    const name=orders[0]?esc(orders[0].customer||"Order"):"";
+    const extra=orders.length>1?`<span class=calendar-more>+${orders.length-1}</span>`:"";
+    cells.push(`<div class="calendar-cell ${muted?"muted":""} ${key===todayKey?"today":""} ${orders.length?"has-orders":""}">
+      <div class=calendar-date>${day}</div>
+      ${orders.length?`<div class=calendar-due-list><span class=calendar-name title="${name}">${name}</span>${extra}</div>`:""}
+    </div>`);
   }
+
   const month=calendarCursor.toLocaleDateString("en-JM",{month:"long",year:"numeric"});
-  const dueCount=Object.entries(byDue).filter(([k])=>k.startsWith(`${y}-${String(m+1).padStart(2,"0")}-`)).reduce((n,[,v])=>n+v.length,0);
-  return `<div class=calendar-page>
-    <div class=calendar-title-row><div><span class=calendar-eyebrow>AMÉA HQ</span><h2>Calendar</h2><p>See exactly who is due each day.</p></div><button class=calendar-export onclick=ics()>Export .ics</button></div>
+  const prefix=`${y}-${String(m+1).padStart(2,"0")}-`;
+  const monthOrders=O().filter(o=>o.due&&o.due.startsWith(prefix)).sort((a,b)=>String(a.due).localeCompare(String(b.due)));
+  const dueCount=monthOrders.length;
+  const openCount=monthOrders.filter(o=>o.status!=="Delivered").length;
+  const readyCount=monthOrders.filter(o=>o.status==="Ready").length;
+
+  return `<div class="calendar-page calendar-redesign">
+    <div class=calendar-title-row>
+      <div><span class=calendar-eyebrow>AMÉA HQ</span><h2>Calendar</h2><p>Deadlines without the clutter.</p></div>
+      <button class=calendar-export onclick=ics()>Export</button>
+    </div>
+
+    <div class="calendar-summary">
+      <div><span>This month</span><strong>${dueCount}</strong><small>orders due</small></div>
+      <div><span>Still open</span><strong>${openCount}</strong><small>to finish</small></div>
+      <div><span>Ready</span><strong>${readyCount}</strong><small>for delivery</small></div>
+    </div>
+
     <div class=calendar-shell>
-      <div class=calendar-month-head><button onclick="calendarMove(-1)" aria-label="Previous month">‹</button><div><h3>${esc(month)}</h3><span>${dueCount} order${dueCount===1?"":"s"} due</span></div><button onclick="calendarMove(1)" aria-label="Next month">›</button></div>
+      <div class=calendar-month-head><button onclick="calendarMove(-1)" aria-label="Previous month">‹</button><div><h3>${esc(month)}</h3><span>${dueCount} deadline${dueCount===1?"":"s"}</span></div><button onclick="calendarMove(1)" aria-label="Next month">›</button></div>
       <div class=calendar-weekdays>${["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map(d=>`<span>${d}</span>`).join("")}</div>
       <div class=calendar-grid>${cells.join("")}</div>
-      <button class=calendar-today onclick=calendarGoToday()>Today</button>
+      <button class=calendar-today onclick=calendarGoToday()>Jump to today</button>
+    </div>
+
+    <section class="calendar-agenda">
+      <div class="orders-section-head"><div><span>DEADLINES</span><h3>${esc(month)}</h3></div></div>
+      <div class="calendar-agenda-list">
+        ${monthOrders.length?monthOrders.map(o=>{
+          const d=parseDateOnly(o.due);
+          const day=d?d.toLocaleDateString("en-JM",{day:"numeric"}):"";
+          const mon=d?d.toLocaleDateString("en-JM",{month:"short"}):"";
+          return `<button onclick="openOrderView('${o.id}')">
+            <span class=agenda-date><b>${day}</b><small>${mon}</small></span>
+            <span class=agenda-copy><b>${esc(o.customer||"Customer")}</b><small>${esc(o.product||o.no||"Order")}</small></span>
+            <em class="hq-status ${String(o.status||"").toLowerCase().replaceAll(" ","-")}">${esc(o.status||"New")}</em>
+          </button>`;
+        }).join(""):`<div class="hq-empty">No deadlines this month.</div>`}
+      </div>
+    </section>
+  </div>`;
+}
+function page(x){
+  if(x==="customers"||x==="invoices"){orderHubTab=x;activeOrderViewId="";cur="orders";render();return}
+  if(x==="orders"&&cur!=="orders"){orderHubTab="orders";activeOrderViewId=""}
+  cur=x;render()
+}function render(){document.body.classList.toggle("studio-mode",cur==="crochet");const navPage=cur==="crochet"?"studio":["customers","invoices"].includes(cur)?"orders":["items","inventory","expenses","analytics","settings"].includes(cur)?"more":cur;document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===navPage));let v=$("#view");if(cur=="home"){
+  const orders=O(),customers=C(),expenses=E(),inventory=I();
+  const sales=orders.reduce((a,x)=>a+(+x.paid||0),0);
+  const exp=expenses.reduce((a,x)=>a+(+x.amount||0),0);
+  const active=orders.filter(x=>!["Delivered","Cancelled"].includes(x.status)).length;
+  const inStudio=orders.filter(x=>x.status==="In Studio").length;
+  const invoiceDue=orders.filter(x=>!["Cancelled"].includes(x.status)&&Math.max(0,(+x.price||0)-(+x.paid||0))>0).length;
+  const lowStock=inventory.filter(x=>(+x.qty||0)<=(+x.low||0)).length;
+  const recent=orders.slice().sort((a,b)=>new Date(b.created||0)-new Date(a.created||0)).slice(0,4);
+
+  v.innerHTML=`<div class="hq-home core-hq-home">
+    <section class="hq-welcome">
+      <div><span class="hq-kicker">AMÉA HQ</span><h2 id="homeGreeting">${greeting()}, Améa Boss ♡</h2><p>Your order-tracking business hub.</p></div>
+    </section>
+
+    <section class="hq-overall-grid">
+      <div><span>Total received</span><strong>${M(sales)}</strong><small>All time</small></div>
+      <div><span>Total orders</span><strong>${orders.length}</strong><small>All time</small></div>
+      <div><span>Total expenses</span><strong>${M(exp)}</strong><small>All time</small></div>
+    </section>
+
+    <section class="hq-tracking-grid">
+      <button onclick="setOrderHubTab('orders')"><span class="hq-mini-icon">▤</span><div><small>Active orders</small><strong>${active}</strong></div></button>
+      <button onclick="setOrderHubTab('customers')"><span class="hq-mini-icon">♡</span><div><small>Customers</small><strong>${customers.length}</strong></div></button>
+      <button onclick="page('inventory')"><span class="hq-mini-icon">◇</span><div><small>Low stock</small><strong>${lowStock}</strong></div></button>
+      <button onclick="setOrderHubTab('invoices')"><span class="hq-mini-icon">▧</span><div><small>Invoices due</small><strong>${invoiceDue}</strong></div></button>
+    </section>
+
+    <button class="hq-manage-orders" onclick="setOrderHubTab('orders')">
+      <span class="hq-manage-icon">◇</span>
+      <span><b>View & Manage Orders</b><small>Orders, Customers & Invoices</small></span>
+      <i>›</i>
+    </button>
+
+    <section class="hq-quick-section">
+      <div class="hq-panel-head"><div><span class="hq-section-kicker">QUICK ACTIONS</span><h3>Get it done</h3></div></div>
+      <div class="hq-quick-grid">
+        <button onclick="newOrder()"><span>＋</span><b>New Order</b></button>
+        <button onclick="newCustomer()"><span>♡</span><b>New Customer</b></button>
+        <button onclick="setOrderHubTab('invoices')"><span>▧</span><b>Invoices</b></button>
+        <button onclick="newItem()"><span>✿</span><b>New Product</b></button>
+      </div>
+    </section>
+
+    <section class="hq-panel">
+      <div class="hq-panel-head"><div><span class="hq-section-kicker">RECENT</span><h3>Order activity</h3></div><button onclick="setOrderHubTab('orders')">View all →</button></div>
+      <div class="hq-recent-orders">
+        ${recent.length?recent.map(o=>`<button class="hq-order-row" onclick="openOrderView('${o.id}')">
+          <span><b>${esc(o.no||"Order")} · ${esc(o.customer||"Customer")}</b><small>${esc(orderSummaryProduct(orderItemsFor(o))||o.product||"Order")} · ${esc(orderDueLabel(o))}</small></span>
+          <span class="hq-order-side"><em class="hq-status ${String(o.status||"").toLowerCase().replaceAll(" ","-")}">${esc(o.status||"New")}</em></span>
+        </button>`).join(""):`<div class="hq-empty">No orders yet.</div>`}
+      </div>
+    </section>
+  </div>`;
+}
+ else if(cur=="orders")v.innerHTML=activeOrderViewId?renderOrderView(activeOrderViewId):renderOrdersPage();
+else if(cur=="studio")v.innerHTML=renderStudioHub();
+else if(cur=="customers"){
+  const customers=C(),repeat=customers.filter(x=>customerStats(x).orders.length>1).length;
+  v.innerHTML=`<div class="tool-page">
+    <div class="tool-page-head"><div><span>PEOPLE & SALES</span><h2>Customers</h2><p>Your Améa babes, order history and spending.</p></div><button onclick=newCustomer()>＋ Add</button></div>
+    <div class="tool-summary-grid two"><div><span>Total customers</span><strong>${customers.length}</strong></div><div><span>Repeat customers</span><strong>${repeat}</strong></div></div>
+    <div class="tool-list-card">
+      ${customers.map(x=>{let st=customerStats(x),last=st.last?st.last.toLocaleDateString("en-JM",{day:"numeric",month:"short",year:"numeric"}):"";return `<button class="customer-modern-row" onclick="openCustomer('${x.id}')">
+        <span class="customer-avatar">${esc((x.name||"?").trim().charAt(0).toUpperCase())}</span>
+        <span class="customer-main"><b>${esc(x.name)}</b><small>${st.orders.length?st.orders.length+" order"+(st.orders.length===1?"":"s"):"No orders yet"}${last?" · Last "+last:""}</small></span>
+        <span class="customer-value"><b>${M(st.paid)}</b><small>lifetime</small></span><i>›</i>
+      </button>`}).join("")||'<div class=empty>No customers yet.</div>'}
     </div>
   </div>`;
 }
-
-function page(x){cur=x;render()}function render(){document.body.classList.toggle("studio-mode",cur==="crochet");document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===cur));let v=$("#view");if(cur=="home"){let o=O(),e=E(),now=new Date(),mo=o.filter(x=>new Date(x.created).getMonth()==now.getMonth()),sales=mo.reduce((a,x)=>a+x.paid,0),out=mo.reduce((a,x)=>a+Math.max(0,x.price-x.paid),0),ex=e.filter(x=>new Date(x.date).getMonth()==now.getMonth()).reduce((a,x)=>a+x.amount,0),today=new Date().toISOString().slice(0,10);v.innerHTML=`<div class=hero><h2 id=homeGreeting>${greeting()}, Améa Boss ✨</h2><div class=meta>Everything in your studio, in one pretty place.</div></div><div class=grid><div class=card>Sales<b>${M(sales)}</b></div><div class=card>Orders<b>${mo.length}</b></div><div class=card>Outstanding<b>${M(out)}</b></div><div class=card>Expenses<b>${M(ex)}</b></div></div><div class=section><h3>Today</h3><div class=card>${list(O().filter(x=>x.due==today),true)||'<div class=meta>No orders due today 💗</div>'}</div></div><button class=studio-home-shortcut onclick="page(\'crochet\')"><div><span class=studio-home-eyebrow>AMÉA HQ</span><b>Crochet Studio</b><small>Patterns · Yarn · Models · Calculator</small></div><span class=studio-home-arrow>→</span></button><button class=studio-home-shortcut onclick="window.location.href=\'design-studio.html\'"><div><span class=studio-home-eyebrow>AMÉA HQ</span><b>Design Studio</b><small>Sketch · Colour · Motifs · Mannequins</small></div><span class=studio-home-arrow>→</span></button><div class="section home-analytics-section"><div class=analytics-home-head><div><h3>Order Activity</h3><div class=meta>See which weeks or months bring in the most orders.</div></div><div class=analytics-home-toggle><button data-home-analytics=months class="${homeAnalyticsMode==="months"?"active":""}" onclick="setHomeAnalytics('months')">Months</button><button data-home-analytics=weeks class="${homeAnalyticsMode==="weeks"?"active":""}" onclick="setHomeAnalytics('weeks')">Weeks</button></div></div><div id=homeAnalytics>${homeActivityMarkup(homeAnalyticsMode)}</div></div><div class=section><h3>Recent Orders</h3>${list(O().slice(-5).reverse())||'<div class=empty>No orders yet.</div>'}</div>`}
- else if(cur=="orders")v.innerHTML=activeOrderViewId?renderOrderView(activeOrderViewId):renderOrdersPage();
-else if(cur=="customers")v.innerHTML=`<div class=top><h2>Customers</h2><button onclick=newCustomer()>＋ Add</button></div>${C().map(x=>{let st=customerStats(x),last=st.last?st.last.toLocaleDateString("en-JM",{day:"numeric",month:"short",year:"numeric"}):"";return `<div class="item customer-row" onclick="openCustomer('${x.id}')"><div class=top><b>${esc(x.name)}</b><span class="customer-badge ${st.orders.length?"returning":"new"}">${st.orders.length?"RETURNING":"NEW"}</span></div><div class=meta>${esc(x.phone||"")}${x.email?" · "+esc(x.email):""}<br><b>${customerStatusText(x)}</b>${st.orders.length?` · ${M(st.paid)} lifetime`:""}${last?`<br>Last order: ${last}`:""}</div><div class=customer-chevron>View customer →</div></div>`}).join("")||'<div class=empty>No customers yet.</div>'}`;
 else if(cur=="invoices"){
   const orders=O().slice().reverse();
-  v.innerHTML=`<div class=top><div><h2>Invoices</h2><div class=meta>Invoices are created from your saved orders.</div></div></div>
-  ${orders.length?orders.map(o=>{
-    const bal=Math.max(0,(+o.price||0)-(+o.paid||0));
-    return `<div class=item>
-      <div class=top><b>${esc("INV-"+o.no)}</b><span class="badge invoice-status ${bal>0?"due":"paid"}">${bal>0?"Balance due":"Paid"}</span></div>
-      <div class=meta>${esc(o.customer||"")} · ${esc(orderSummaryProduct(orderItemsFor(o)))}<br>Total: ${M(o.price)} · <span class=invoice-paid-text>Paid: ${M(o.paid)}</span> · <span class=invoice-due-text>Balance: ${M(bal)}</span></div>
-      <button class=invoice-list-btn onclick="openInvoice('${o.id}')">Open Invoice</button>
-    </div>`
-  }).join(""):'<div class=empty>No invoices yet. Create an order first.</div>'}`;
+  const due=orders.filter(o=>Math.max(0,(+o.price||0)-(+o.paid||0))>0);
+  const dueTotal=due.reduce((a,o)=>a+Math.max(0,(+o.price||0)-(+o.paid||0)),0);
+  v.innerHTML=`<div class="tool-page">
+    <div class="tool-page-head"><div><span>PEOPLE & SALES</span><h2>Invoices</h2><p>Created directly from your saved orders.</p></div></div>
+    <div class="tool-summary-grid two"><div><span>Balance due</span><strong>${M(dueTotal)}</strong></div><div><span>Open invoices</span><strong>${due.length}</strong></div></div>
+    <div class="tool-list-card">
+      ${orders.length?orders.map(o=>{const bal=Math.max(0,(+o.price||0)-(+o.paid||0));return `<button class="invoice-modern-row" onclick="openInvoice('${o.id}')">
+        <span class="invoice-icon">▧</span><span class="invoice-main"><b>${esc("INV-"+o.no)}</b><small>${esc(o.customer||"")} · ${esc(orderSummaryProduct(orderItemsFor(o)))}</small></span>
+        <span class="invoice-value"><b>${bal>0?M(bal):"Paid"}</b><small>${bal>0?"balance":"complete"}</small></span><i>›</i>
+      </button>`}).join(""):'<div class=empty>No invoices yet. Create an order first.</div>'}
+    </div>
+  </div>`;
 }
-
 else if(cur=="crochet"){renderStudio()}
-else if(cur=="items")v.innerHTML=`<div class=top><div><h2>Items</h2><div class=meta>Products you sell — separate from materials inventory.</div></div><button onclick=newItem()>＋ Add</button></div><div class=item-catalog>${ITEMS().map(x=>`<div class=item-card onclick="newItem('${x.id}')">${x.photo?`<img src="${x.photo}" alt="${esc(x.name)}">`:`<div class=item-photo-placeholder>AMÉA</div>`}<div class=item-card-body><b>${esc(x.name)}</b><div class=meta>${esc(x.category||"Other")} · ${M(x.price)}</div><div class=meta>${x.status=="Ready-made"?"Ready-made":"Made to order"}${x.sizes?` · ${esc(x.sizes)}`:""}</div></div></div>`).join("")||'<div class=empty>No items yet. Add your first product so orders can select from a list.</div>'}</div>`;
-else if(cur=="inventory")v.innerHTML=`<div class=top><h2>Inventory</h2><button onclick=newInventory()>＋ Add</button></div>${I().map(x=>`<div class=item><div class=top><b>${x.name}</b><span class=${x.qty<=x.low?"money":""}>${x.qty}</span></div><div class=meta>${x.type}${x.qty<=x.low?" · LOW STOCK":""}</div></div>`).join("")||'<div class=empty>No inventory yet.</div>'}`;
+else if(cur=="items"){
+  const items=ITEMS();
+  v.innerHTML=`<div class="tool-page">
+    <div class="tool-page-head"><div><span>STOCK & MONEY</span><h2>Items</h2><p>Your product catalogue for orders and pricing.</p></div><button onclick=newItem()>＋ Add</button></div>
+    <div class="item-catalog modern-item-catalog">${items.map(x=>`<button class="item-card" onclick="newItem('${x.id}')">${x.photo?`<img src="${x.photo}" alt="${esc(x.name)}">`:`<div class=item-photo-placeholder>AMÉA</div>`}<div class=item-card-body><b>${esc(x.name)}</b><div class=meta>${esc(x.category||"Other")} · ${M(x.price)}</div><div class=meta>${x.status=="Ready-made"?"Ready-made":"Made to order"}${x.sizes?` · ${esc(x.sizes)}`:""}</div></div></button>`).join("")||'<div class=empty>No items yet.</div>'}</div>
+  </div>`;
+}
+else if(cur=="inventory"){
+  const stock=I(),low=stock.filter(x=>(+x.qty||0)<=(+x.low||0));
+  v.innerHTML=`<div class="tool-page">
+    <div class="tool-page-head"><div><span>STOCK & MONEY</span><h2>Inventory</h2><p>Materials and supplies you need to keep making.</p></div><button onclick=newInventory()>＋ Add</button></div>
+    <div class="tool-summary-grid two"><div><span>Inventory items</span><strong>${stock.length}</strong></div><div class="${low.length?"alert":""}"><span>Low stock</span><strong>${low.length}</strong></div></div>
+    <div class="tool-list-card">${stock.map(x=>`<button class="stock-modern-row" onclick="newInventory('${x.id}')">
+      <span class="stock-icon">${(+x.qty||0)<=(+x.low||0)?"!":"◇"}</span><span class="stock-main"><b>${esc(x.name)}</b><small>${esc(x.type||"Material")}</small></span>
+      <span class="stock-count ${(+x.qty||0)<=(+x.low||0)?"low":""}"><b>${x.qty}</b><small>${esc(x.unit||"")}</small></span><i>›</i>
+    </button>`).join("")||'<div class=empty>No inventory yet.</div>'}</div>
+  </div>`;
+}
 else if(cur=="more"){
   let cs=localStorage.getItem("ah_cloud_status")||"Connected";
   let state=localStorage.getItem("ah_cloud_state")||"ok";
   let last=localStorage.getItem("ah_cloud_last");
   let when=last?new Date(last).toLocaleString("en-JM",{dateStyle:"medium",timeStyle:"short"}):"Not synced yet";
-  v.innerHTML=`<h2>More</h2>
-  <div class=quick>
-    <button onclick="page('items')">♢ Items</button>
-    <button onclick="page('inventory')">▦ Inventory</button>
-    <button onclick="page('expenses')">↘ Expenses</button>
-    <button onclick="page('analytics')">▥ Analytics</button>
-    <button onclick="page('crochet')">✦ Crochet Studio</button>
-    <button onclick="page('calendar')">♡ Calendar</button>
-    <button onclick="page('settings')">⚙ Settings</button>
-  </div>
-
-  <div class="section">
-    <div class="card backup-card">
-      <div class="backup-head">
-        <div>
-          <span class="backup-eyebrow">AMÉA CLOUD</span>
-          <h3>Cloud Backup</h3>
-        </div>
-        <span class="sync-pill ${state==="error"?"error":"ok"}">${esc(cs)}</span>
-      </div>
-
-      <div class="backup-row">
-        <span>Last backup</span>
-        <b>${esc(when)}</b>
-      </div>
-
-      <div class="backup-note">
-        Your customers, orders, items, inventory, expenses, suppliers and business settings are stored in your private Améa cloud account.
-      </div>
-<button id="syncNowBtn" class="primary backup-sync" onclick="syncNow()">Sync Now</button>
-      <button class="signout-btn backup-signout" onclick="logoutHQ()">Sign Out</button>
-    </div>
+  v.innerHTML=`<div class="more-page clean-more-page">
+    <div class="tool-page-head more-head"><div><span>AMÉA HQ</span><h2>More</h2><p>Secondary tools for everything else.</p></div></div>
+    <section class="more-menu-list">
+      <button onclick="page('items')"><span class="more-line-icon">✿</span><span><b>Products</b><small>Manage your product catalogue</small></span><i>›</i></button>
+      <button onclick="page('inventory')"><span class="more-line-icon">◇</span><span><b>Inventory</b><small>Track materials and stock levels</small></span><i>›</i></button>
+      <button onclick="page('expenses')"><span class="more-line-icon">▤</span><span><b>Expenses</b><small>Log and manage business costs</small></span><i>›</i></button>
+      <button onclick="page('analytics')"><span class="more-line-icon">↗</span><span><b>Analytics</b><small>View detailed reports and insights</small></span><i>›</i></button>
+      <button onclick="syncNow()"><span class="more-line-icon">☁</span><span><b>Cloud Sync</b><small>${esc(cs)} · ${esc(when)}</small></span><i class="${state==="error"?"sync-error":""}">↻</i></button>
+      <button onclick="page('settings')"><span class="more-line-icon">⚙</span><span><b>Settings</b><small>Business info and app preferences</small></span><i>›</i></button>
+    </section>
   </div>`;
 }
-else if(cur=="expenses")v.innerHTML=`<div class=top><h2>Expenses</h2><div class=top-actions><button onclick=manageSuppliers()>Suppliers</button><button onclick=newExpense()>＋ Add</button></div></div>${E().slice().reverse().map(x=>`<div class=item><div class=top><b>${x.category}</b><span class=money>${M(x.amount)}</span></div><div class=meta>${x.date}${x.supplier?" · Supplier: "+x.supplier:""}${x.note?" · "+x.note:""}</div></div>`).join("")||'<div class=empty>No expenses yet.</div>'}`;
+else if(cur=="expenses"){
+  const expenses=E().slice().reverse();
+  const total=expenses.reduce((a,x)=>a+(+x.amount||0),0);
+  v.innerHTML=`<div class="tool-page">
+    <div class="tool-page-head"><div><span>STOCK & MONEY</span><h2>Expenses</h2><p>Keep track of what the business spends.</p></div><div class=top-actions><button onclick=manageSuppliers()>Suppliers</button><button class=tool-add-btn onclick=newExpense()>＋ Add</button></div></div>
+    <div class="tool-summary-grid one"><div><span>Total recorded</span><strong>${M(total)}</strong></div></div>
+    <div class="tool-list-card">${expenses.map(x=>`<div class="expense-modern-row"><span class="expense-icon">↘</span><span class=expense-main><b>${esc(x.category||"Expense")}</b><small>${esc(x.date||"")}${x.supplier?" · "+esc(x.supplier):""}${x.note?" · "+esc(x.note):""}</small></span><strong>${M(x.amount)}</strong></div>`).join("")||'<div class=empty>No expenses yet.</div>'}</div>
+  </div>`;
+}
 else if(cur=="analytics"){renderAnalytics("month")}
 else if(cur=="calendar")v.innerHTML=renderCalendarPage();
 else if(cur=="settings"){
   let s=G("settings",{});
-  v.innerHTML=`<h2>Settings</h2>
-
-  <div class="card settings-card">
-    <div class=settings-title>
-      <div>
-        <b>Business & Invoice Info</b>
-        <span>These details automatically appear on your invoices.</span>
-      </div>
+  v.innerHTML=`<div class="tool-page settings-redesign">
+    <div class="tool-page-head"><div><span>BUSINESS</span><h2>Settings</h2><p>Your business details and app preferences.</p></div></div>
+    <div class="settings-modern-card">
+      <div class="settings-modern-title"><span>BUSINESS & INVOICES</span><h3>Améa details</h3></div>
+      <label>Business name</label><input id=sbn value="${esc(s.businessName||"Améa")}" placeholder="Améa">
+      <label>Business email</label><input id=se type=email value="${esc(s.email||"")}" placeholder="Add when ready">
+      <label>Phone / WhatsApp</label><input id=sp value="${esc(s.phone||"")}" placeholder="Add when ready">
+      <label>Website</label><input id=sw value="${esc(s.website||"")}" placeholder="Add later">
+      <label>Instagram</label><input id=si value="${esc(s.instagram||"")}" placeholder="@ameastudio">
+      <label>Business address <span class=meta>(optional)</span></label><textarea id=sa placeholder="Leave blank if you don't want an address on invoices">${esc(s.address||"")}</textarea>
+      <label>Invoice closing message</label><input id=sin value="${esc(s.invoiceNote||"Thank you for choosing Améa ♡")}" placeholder="Thank you for choosing Améa ♡">
+      <label>Delivery options</label><input id=sd value="${esc((s.delivery||["Pickup","Delivery"]).join(", "))}">
+      <button class="primary settings-save" onclick=saveSettings()>Save Business Info</button>
     </div>
-
-    <label>Business name</label>
-    <input id=sbn value="${esc(s.businessName||"Améa")}" placeholder="Améa">
-
-    <label>Business email</label>
-    <input id=se type=email value="${esc(s.email||"")}" placeholder="Add when ready">
-
-    <label>Phone / WhatsApp</label>
-    <input id=sp value="${esc(s.phone||"")}" placeholder="Add when ready">
-
-    <label>Website</label>
-    <input id=sw value="${esc(s.website||"")}" placeholder="Add later">
-
-    <label>Instagram</label>
-    <input id=si value="${esc(s.instagram||"")}" placeholder="@ameastudio">
-
-    <label>Business address <span class=meta>(optional)</span></label>
-    <textarea id=sa placeholder="Leave blank if you don't want an address on invoices">${esc(s.address||"")}</textarea>
-
-    <label>Invoice closing message</label>
-    <input id=sin value="${esc(s.invoiceNote||"Thank you for choosing Améa ♡")}" placeholder="Thank you for choosing Améa ♡">
-
-    <label>Delivery options</label>
-    <input id=sd value="${esc((s.delivery||["Pickup","Delivery"]).join(", "))}">
-
-    <button class=primary onclick=saveSettings()>Save Business Info</button>
-  </div>
-
-  <div class="section quick">
-    <button onclick=notify()>Allow Notifications</button>
-    <button onclick=backup()>Export Backup</button>
-  </div>
-  <p class=meta>Your HQ data is synced to your private cloud account. Device storage is kept as a local copy too.</p>`
+    <div class="settings-action-grid"><button onclick=notify()><span>♡</span><b>Notifications</b><small>Allow app alerts</small></button><button onclick=backup()><span>⇩</span><b>Export Backup</b><small>Download your data</small></button></div>
+    <p class="settings-footnote">HQ data is synced to your private cloud account, with a local copy kept on this device.</p>
+  </div>`;
 }}
+
 let activeOrderViewId="";
 let activeOrderViewMode="maker";
 let photoViewerState=null;
@@ -1453,16 +1668,87 @@ function orderDueLabel(o){
   if(d===1)return "Due tomorrow";
   return `Due in ${d} days`;
 }
+function setOrderHubTab(tab){
+  orderHubTab=["orders","customers","invoices"].includes(tab)?tab:"orders";
+  activeOrderViewId="";
+  cur="orders";
+  render();
+}
+function orderHubHeader(action=""){
+  return `<div class="orders-title-row order-hub-title">
+    <div><span class="orders-kicker">ORDER TRACKING</span><h2>Orders</h2><p>Orders, customers and invoices — all connected.</p></div>
+    ${action}
+  </div>
+  <div class="order-hub-tabs">
+    <button class="${orderHubTab==="orders"?"active":""}" onclick="setOrderHubTab('orders')">Orders</button>
+    <button class="${orderHubTab==="customers"?"active":""}" onclick="setOrderHubTab('customers')">Customers</button>
+    <button class="${orderHubTab==="invoices"?"active":""}" onclick="setOrderHubTab('invoices')">Invoices</button>
+  </div>`;
+}
+function filterOrderHubRows(q,selector){
+  q=String(q||"").trim().toLowerCase();
+  document.querySelectorAll(selector).forEach(el=>el.style.display=!q||String(el.dataset.search||"").includes(q)?"grid":"none");
+}
+function renderCustomersHubTab(){
+  const customers=C(),repeat=customers.filter(x=>customerStats(x).orders.length>1).length;
+  return `<div class="orders-page orders-redesign order-hub-page">
+    ${orderHubHeader('<button onclick="newCustomer()">＋ Customer</button>')}
+    <div class="tool-summary-grid two order-hub-summary"><div><span>Total customers</span><strong>${customers.length}</strong></div><div><span>Repeat customers</span><strong>${repeat}</strong></div></div>
+    <section class="orders-library">
+      <div class="orders-search-wrap"><span>⌕</span><input placeholder="Search customers…" oninput="filterOrderHubRows(this.value,'.customer-modern-row')"></div>
+      <div class="tool-list-card hub-tool-list">
+        ${customers.map(x=>{const st=customerStats(x),last=st.last?st.last.toLocaleDateString("en-JM",{day:"numeric",month:"short",year:"numeric"}):"";const search=esc([x.name,x.phone,x.email].filter(Boolean).join(" ").toLowerCase());return `<button class="customer-modern-row" data-search="${search}" onclick="openCustomer('${x.id}')">
+          <span class="customer-avatar">${esc((x.name||"?").trim().charAt(0).toUpperCase())}</span>
+          <span class="customer-main"><b>${esc(x.name)}</b><small>${st.orders.length?st.orders.length+" order"+(st.orders.length===1?"":"s"):"No orders yet"}${last?" · Last "+last:""}</small></span>
+          <span class="customer-value"><b>${M(st.paid)}</b><small>lifetime</small></span><i>›</i>
+        </button>`}).join("")||'<div class=empty>No customers yet.</div>'}
+      </div>
+    </section>
+  </div>`;
+}
+function renderInvoicesHubTab(){
+  const orders=O().slice().reverse();
+  const due=orders.filter(o=>Math.max(0,(+o.price||0)-(+o.paid||0))>0);
+  const dueTotal=due.reduce((a,o)=>a+Math.max(0,(+o.price||0)-(+o.paid||0)),0);
+  return `<div class="orders-page orders-redesign order-hub-page">
+    ${orderHubHeader()}
+    <div class="tool-summary-grid two order-hub-summary"><div><span>Balance due</span><strong>${M(dueTotal)}</strong></div><div><span>Open invoices</span><strong>${due.length}</strong></div></div>
+    <section class="orders-library">
+      <div class="orders-search-wrap"><span>⌕</span><input placeholder="Search invoices…" oninput="filterOrderHubRows(this.value,'.invoice-modern-row')"></div>
+      <div class="tool-list-card hub-tool-list">
+        ${orders.length?orders.map(o=>{const bal=Math.max(0,(+o.price||0)-(+o.paid||0));const search=esc([o.no,o.customer,orderSummaryProduct(orderItemsFor(o))].filter(Boolean).join(" ").toLowerCase());return `<button class="invoice-modern-row" data-search="${search}" onclick="openInvoice('${o.id}')">
+          <span class="invoice-icon">▧</span><span class="invoice-main"><b>${esc("INV-"+o.no)}</b><small>${esc(o.customer||"")} · ${esc(orderSummaryProduct(orderItemsFor(o)))}</small></span>
+          <span class="invoice-value"><b>${bal>0?M(bal):"Paid"}</b><small>${bal>0?"balance":"complete"}</small></span><i>›</i>
+        </button>`}).join(""):'<div class=empty>No invoices yet. Create an order first.</div>'}
+      </div>
+    </section>
+  </div>`;
+}
 function renderOrdersPage(){
+  if(orderHubTab==="customers")return renderCustomersHubTab();
+  if(orderHubTab==="invoices")return renderInvoicesHubTab();
   const orders=sortOrdersSmart(O());
+  const statusCount=st=>orders.filter(o=>o.status===st).length;
   const today=orders.filter(o=>o.status!=="Delivered"&&orderDueOffset(o)===0);
   const soon=orders.filter(o=>o.status!=="Delivered"&&orderDueOffset(o)>0&&orderDueOffset(o)<=7);
-  return `<div class=orders-page>
-    <div class=orders-title-row><div><h2>Orders</h2><div class=meta>Open an order to see the making details first.</div></div><button onclick=newOrder()>＋ New Order</button></div>
-    ${(today.length||soon.length)?`<div class=due-priority-wrap>${today.length?`<section class=due-priority today-due><div class=due-priority-head><div><span>TODAY</span><b>${today.length} order${today.length===1?"":"s"} due</b></div></div>${list(today,true)}</section>`:""}${soon.length?`<section class=due-priority><div class=due-priority-head><div><span>DUE SOON</span><b>Next 7 days</b></div></div>${list(soon,true)}</section>`:""}</div>`:""}
-    <div class=orders-all-head><h3>All Orders</h3><span>${orders.length}</span></div>
-    <input placeholder="Search orders, customers, products…" oninput="searchO(this.value)">
-    <div id=ol>${list(orders)||'<div class=empty>No orders yet.</div>'}</div>
+  return `<div class="orders-page orders-redesign order-hub-page">
+    ${orderHubHeader('<button onclick="newOrder()">＋ New Order</button>')}
+    <div class="orders-status-strip">
+      <div><span>New</span><strong>${statusCount("New")}</strong></div>
+      <div><span>In Studio</span><strong>${statusCount("In Studio")}</strong></div>
+      <div><span>Ready</span><strong>${statusCount("Ready")}</strong></div>
+      <div><span>Delivered</span><strong>${statusCount("Delivered")}</strong></div>
+    </div>
+    ${(today.length||soon.length)?`<section class="orders-priority">
+      <div class="orders-section-head"><div><span>PRIORITY</span><h3>Coming up</h3></div><button onclick="page('calendar')">Calendar →</button></div>
+      ${today.length?`<div class="priority-group"><b>Due today</b>${list(today,true)}</div>`:""}
+      ${soon.length?`<div class="priority-group"><b>Next 7 days</b>${list(soon.slice(0,5),true)}</div>`:""}
+    </section>`:""}
+    <section class="orders-library">
+      <div class="orders-section-head"><div><span>ALL ORDERS</span><h3>${orders.length} total</h3></div></div>
+      <div class="orders-search-wrap"><span>⌕</span><input placeholder="Search customer, order or item…" oninput="searchO(this.value)"></div>
+      <div id=ol class="orders-list">${list(orders)||'<div class=empty>No orders yet.</div>'}</div>
+    </section>
   </div>`;
 }
 function list(a,compact=false){return a.map(x=>{
@@ -1472,7 +1758,7 @@ function list(a,compact=false){return a.map(x=>{
   return `<div class="item order-list-card ${pinned?"pinned":""}" onclick="openOrderView('${x.id}')"><div class=top><b>${pinned?"★ ":""}${esc(x.no)} · ${esc(x.customer)}</b><span class=badge>${esc(x.status)}</span></div><div class=meta>${items.length>1?'<span class="multi-order-tag">MULTI-ITEM</span> ':""}${esc(summary||x.product)}<br>${esc(orderDueLabel(x))}${compact?"":` · ${esc(x.delivery||"—")}`}</div>${compact?"":`<div class=order-list-actions><button class=order-pin-btn onclick="toggleOrderPin('${x.id}',event)">${pinned?"★ Pinned":"☆ Pin"}</button>${orderHasPattern(x)?`<button class=order-work-quick onclick="event.stopPropagation();openOrderPatternChooser('${x.id}')">✓ Work on Pattern</button>`:""}</div>`}</div>`;
 }).join("")}
 function searchO(q){q=q.toLowerCase();const el=$("#ol");if(el)el.innerHTML=list(sortOrdersSmart(O().filter(x=>JSON.stringify(x).toLowerCase().includes(q))))}
-function openOrderView(id,mode="maker"){activeOrderViewId=id;activeOrderViewMode=mode;cur="orders";render()}
+function openOrderView(id,mode="maker"){orderHubTab="orders";activeOrderViewId=id;activeOrderViewMode=mode;cur="orders";render()}
 function closeOrderView(){activeOrderViewId="";activeOrderViewMode="maker";cur="orders";render()}
 function setOrderViewMode(mode){activeOrderViewMode=mode==="full"?"full":"maker";render()}
 function orderInspirationPhotos(o){
@@ -1589,7 +1875,7 @@ function normalizeDialogClose(){
   const closes=[...dlg.querySelectorAll(".close")].filter(b=>b.parentElement===dlg||b.parentElement?.id==="form");
   closes.slice(1).forEach(b=>b.remove());
 }
-function openF(h){dlg.classList.remove("photo-viewer-dialog");$("#form").innerHTML=h;normalizeDialogClose();if(!dlg.open)dlg.showModal()}function openAddMenu(){openF(`<h2>Add to Améa HQ</h2><div class=add-menu><button onclick="newOrder()">＋ New Order</button><button onclick="newCustomer()">＋ Customer</button><button onclick="newItem()">＋ Item</button><button onclick="newExpense()">＋ Expense</button><button onclick="newInventory()">＋ Inventory</button><button onclick="dlg.close();page(\'crochet\');setTimeout(newStudioPattern,0)">＋ Pattern</button></div>`)}
+function openF(h){dlg.classList.remove("photo-viewer-dialog");$("#form").innerHTML=h;normalizeDialogClose();if(!dlg.open)dlg.showModal()}function openAddMenu(){openF(`<div class="add-sheet-head"><span>QUICK ADD</span><h2>Add to Améa HQ</h2><p>Choose what you want to create.</p></div><div class="add-menu polished-add-menu"><button onclick="newOrder()"><span>▤</span><b>New Order</b><small>Customer order</small></button><button onclick="newCustomer()"><span>♡</span><b>Customer</b><small>Save a client</small></button><button onclick="newItem()"><span>✿</span><b>Item</b><small>Product catalogue</small></button><button onclick="newInventory()"><span>◇</span><b>Inventory</b><small>Materials & stock</small></button><button onclick="newExpense()"><span>↘</span><b>Expense</b><small>Business spending</small></button><button onclick="dlg.close();page('crochet');setTimeout(newStudioPattern,0)"><span>🧶</span><b>Pattern</b><small>Crochet Studio</small></button></div>`)}
 function dels(){return G("settings",{}).delivery||["Pickup","Delivery"]}
 
 function itemById(id){return ITEMS().find(x=>x.id===id)}
@@ -2457,7 +2743,7 @@ function renderAnalytics(range="month",selectedMonth=currentMonthKey()){
   const annualRows=annualSummaryRows();
   const title=range=="month"?monthLabel(monthKey):range=="year"?String(now.getFullYear()):"All Time";
 
-  $("#view").innerHTML=`<h2>Analytics</h2>
+  $("#view").innerHTML=`<div class="tool-page analytics-redesign"><div class="tool-page-head"><div><span>PEOPLE & SALES</span><h2>Analytics</h2><p>See what’s growing, selling and costing you.</p></div></div>
   <div class=analytics-intro>Full business performance from the orders and expenses saved in Améa HQ.</div>
 
   <div class=analytics-picker>
@@ -2555,7 +2841,7 @@ function renderAnalytics(range="month",selectedMonth=currentMonthKey()){
     ${analyticsProgressRows(expenseRows,ex,"gold")}
   </div>
 
-  <div class=analytics-note>“Payments received” uses the Paid amount saved on each order. “Est. cash profit” is payments received minus recorded expenses.</div>`;
+  <div class=analytics-note>“Payments received” uses the Paid amount saved on each order. “Est. cash profit” is payments received minus recorded expenses.</div></div>`;
 }
 
 function saveSettings(){
