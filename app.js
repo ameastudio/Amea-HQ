@@ -1403,13 +1403,8 @@ function renderCalendarPage(){
   </div>`;
 }
 function page(x){cur=x;render()}function render(){document.body.classList.toggle("studio-mode",cur==="crochet");const navPage=cur==="crochet"?"studio":["customers","invoices","items","inventory","expenses","analytics","settings"].includes(cur)?"more":cur;document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===navPage));let v=$("#view");if(cur=="home"){
-  const orders=O(),expenses=E(),inventory=I(),now=new Date();
-  const sameMonth=d=>{
-    const x=new Date(d||0);
-    return !Number.isNaN(x.getTime())&&x.getFullYear()===now.getFullYear()&&x.getMonth()===now.getMonth();
-  };
-  const monthOrders=orders.filter(x=>sameMonth(x.created));
-  const sales=monthOrders.reduce((a,x)=>a+(+x.paid||0),0);
+  const orders=O(),expenses=E(),inventory=I();
+  const sales=orders.reduce((a,x)=>a+(+x.paid||0),0);
   const active=orders.filter(x=>!["Delivered","Cancelled"].includes(x.status)).length;
   const inStudio=orders.filter(x=>x.status==="In Studio").length;
   const today=todayStart();
@@ -1420,7 +1415,7 @@ function page(x){cur=x;render()}function render(){document.body.classList.toggle
     return diff>=0&&diff<=7;
   }).sort((a,b)=>(parseDateOnly(a.due)||Infinity)-(parseDateOnly(b.due)||Infinity));
   const lowStock=inventory.filter(x=>(+x.qty||0)<=(+x.low||0)).length;
-  const exp=expenses.filter(x=>sameMonth(x.date)).reduce((a,x)=>a+(+x.amount||0),0);
+  const exp=expenses.reduce((a,x)=>a+(+x.amount||0),0);
   const upcoming=dueSoon.slice(0,3);
   const studioOrders=orders.filter(x=>x.status==="In Studio").slice(-3).reverse();
 
@@ -1429,14 +1424,14 @@ function page(x){cur=x;render()}function render(){document.body.classList.toggle
       <div>
         <span class="hq-kicker">AMÉA HQ</span>
         <h2 id="homeGreeting">${greeting()}, Améa Boss ✨</h2>
-        <p>Your business at a glance.</p>
+        <p>Your overall business at a glance.</p>
       </div>
       <button class="hq-new-order" onclick="newOrder()">＋ <span>New Order</span></button>
     </section>
 
     <section class="hq-stat-grid">
       <button class="hq-stat primary-stat" onclick="page('orders')">
-        <span>Sales this month</span><strong>${M(sales)}</strong><small>${monthOrders.length} order${monthOrders.length===1?"":"s"}</small>
+        <span>Total received</span><strong>${M(sales)}</strong><small>${orders.length} order${orders.length===1?"":"s"} all time</small>
       </button>
       <button class="hq-stat" onclick="page('orders')">
         <span>Active orders</span><strong>${active}</strong><small>${inStudio} in studio</small>
@@ -1494,7 +1489,7 @@ function page(x){cur=x;render()}function render(){document.body.classList.toggle
     </section>
 
     <section class="hq-mini-summary">
-      <div><span>Expenses this month</span><strong>${M(exp)}</strong></div>
+      <div><span>Total expenses</span><strong>${M(exp)}</strong></div>
       <button onclick="page('analytics')">Open Analytics →</button>
     </section>
   </div>`;
