@@ -1402,7 +1402,7 @@ function renderCalendarPage(){
     </section>
   </div>`;
 }
-function page(x){cur=x;render()}function render(){document.body.classList.toggle("studio-mode",cur==="crochet");const navPage=cur==="crochet"?"studio":cur;document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===navPage));let v=$("#view");if(cur=="home"){
+function page(x){cur=x;render()}function render(){document.body.classList.toggle("studio-mode",cur==="crochet");const navPage=cur==="crochet"?"studio":["customers","invoices","items","inventory","expenses","analytics","settings"].includes(cur)?"more":cur;document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===navPage));let v=$("#view");if(cur=="home"){
   const orders=O(),expenses=E(),inventory=I(),now=new Date();
   const sameMonth=d=>{
     const x=new Date(d||0);
@@ -1501,110 +1501,125 @@ function page(x){cur=x;render()}function render(){document.body.classList.toggle
 }
  else if(cur=="orders")v.innerHTML=activeOrderViewId?renderOrderView(activeOrderViewId):renderOrdersPage();
 else if(cur=="studio")v.innerHTML=renderStudioHub();
-else if(cur=="customers")v.innerHTML=`<div class=top><h2>Customers</h2><button onclick=newCustomer()>＋ Add</button></div>${C().map(x=>{let st=customerStats(x),last=st.last?st.last.toLocaleDateString("en-JM",{day:"numeric",month:"short",year:"numeric"}):"";return `<div class="item customer-row" onclick="openCustomer('${x.id}')"><div class=top><b>${esc(x.name)}</b><span class="customer-badge ${st.orders.length?"returning":"new"}">${st.orders.length?"RETURNING":"NEW"}</span></div><div class=meta>${esc(x.phone||"")}${x.email?" · "+esc(x.email):""}<br><b>${customerStatusText(x)}</b>${st.orders.length?` · ${M(st.paid)} lifetime`:""}${last?`<br>Last order: ${last}`:""}</div><div class=customer-chevron>View customer →</div></div>`}).join("")||'<div class=empty>No customers yet.</div>'}`;
+else if(cur=="customers"){
+  const customers=C(),repeat=customers.filter(x=>customerStats(x).orders.length>1).length;
+  v.innerHTML=`<div class="tool-page">
+    <div class="tool-page-head"><div><span>PEOPLE & SALES</span><h2>Customers</h2><p>Your Améa babes, order history and spending.</p></div><button onclick=newCustomer()>＋ Add</button></div>
+    <div class="tool-summary-grid two"><div><span>Total customers</span><strong>${customers.length}</strong></div><div><span>Repeat customers</span><strong>${repeat}</strong></div></div>
+    <div class="tool-list-card">
+      ${customers.map(x=>{let st=customerStats(x),last=st.last?st.last.toLocaleDateString("en-JM",{day:"numeric",month:"short",year:"numeric"}):"";return `<button class="customer-modern-row" onclick="openCustomer('${x.id}')">
+        <span class="customer-avatar">${esc((x.name||"?").trim().charAt(0).toUpperCase())}</span>
+        <span class="customer-main"><b>${esc(x.name)}</b><small>${st.orders.length?st.orders.length+" order"+(st.orders.length===1?"":"s"):"No orders yet"}${last?" · Last "+last:""}</small></span>
+        <span class="customer-value"><b>${M(st.paid)}</b><small>lifetime</small></span><i>›</i>
+      </button>`}).join("")||'<div class=empty>No customers yet.</div>'}
+    </div>
+  </div>`;
+}
 else if(cur=="invoices"){
   const orders=O().slice().reverse();
-  v.innerHTML=`<div class=top><div><h2>Invoices</h2><div class=meta>Invoices are created from your saved orders.</div></div></div>
-  ${orders.length?orders.map(o=>{
-    const bal=Math.max(0,(+o.price||0)-(+o.paid||0));
-    return `<div class=item>
-      <div class=top><b>${esc("INV-"+o.no)}</b><span class="badge invoice-status ${bal>0?"due":"paid"}">${bal>0?"Balance due":"Paid"}</span></div>
-      <div class=meta>${esc(o.customer||"")} · ${esc(orderSummaryProduct(orderItemsFor(o)))}<br>Total: ${M(o.price)} · <span class=invoice-paid-text>Paid: ${M(o.paid)}</span> · <span class=invoice-due-text>Balance: ${M(bal)}</span></div>
-      <button class=invoice-list-btn onclick="openInvoice('${o.id}')">Open Invoice</button>
-    </div>`
-  }).join(""):'<div class=empty>No invoices yet. Create an order first.</div>'}`;
+  const due=orders.filter(o=>Math.max(0,(+o.price||0)-(+o.paid||0))>0);
+  const dueTotal=due.reduce((a,o)=>a+Math.max(0,(+o.price||0)-(+o.paid||0)),0);
+  v.innerHTML=`<div class="tool-page">
+    <div class="tool-page-head"><div><span>PEOPLE & SALES</span><h2>Invoices</h2><p>Created directly from your saved orders.</p></div></div>
+    <div class="tool-summary-grid two"><div><span>Balance due</span><strong>${M(dueTotal)}</strong></div><div><span>Open invoices</span><strong>${due.length}</strong></div></div>
+    <div class="tool-list-card">
+      ${orders.length?orders.map(o=>{const bal=Math.max(0,(+o.price||0)-(+o.paid||0));return `<button class="invoice-modern-row" onclick="openInvoice('${o.id}')">
+        <span class="invoice-icon">▧</span><span class="invoice-main"><b>${esc("INV-"+o.no)}</b><small>${esc(o.customer||"")} · ${esc(orderSummaryProduct(orderItemsFor(o)))}</small></span>
+        <span class="invoice-value"><b>${bal>0?M(bal):"Paid"}</b><small>${bal>0?"balance":"complete"}</small></span><i>›</i>
+      </button>`}).join(""):'<div class=empty>No invoices yet. Create an order first.</div>'}
+    </div>
+  </div>`;
 }
-
 else if(cur=="crochet"){renderStudio()}
-else if(cur=="items")v.innerHTML=`<div class=top><div><h2>Items</h2><div class=meta>Products you sell — separate from materials inventory.</div></div><button onclick=newItem()>＋ Add</button></div><div class=item-catalog>${ITEMS().map(x=>`<div class=item-card onclick="newItem('${x.id}')">${x.photo?`<img src="${x.photo}" alt="${esc(x.name)}">`:`<div class=item-photo-placeholder>AMÉA</div>`}<div class=item-card-body><b>${esc(x.name)}</b><div class=meta>${esc(x.category||"Other")} · ${M(x.price)}</div><div class=meta>${x.status=="Ready-made"?"Ready-made":"Made to order"}${x.sizes?` · ${esc(x.sizes)}`:""}</div></div></div>`).join("")||'<div class=empty>No items yet. Add your first product so orders can select from a list.</div>'}</div>`;
-else if(cur=="inventory")v.innerHTML=`<div class=top><h2>Inventory</h2><button onclick=newInventory()>＋ Add</button></div>${I().map(x=>`<div class=item><div class=top><b>${x.name}</b><span class=${x.qty<=x.low?"money":""}>${x.qty}</span></div><div class=meta>${x.type}${x.qty<=x.low?" · LOW STOCK":""}</div></div>`).join("")||'<div class=empty>No inventory yet.</div>'}`;
+else if(cur=="items"){
+  const items=ITEMS();
+  v.innerHTML=`<div class="tool-page">
+    <div class="tool-page-head"><div><span>STOCK & MONEY</span><h2>Items</h2><p>Your product catalogue for orders and pricing.</p></div><button onclick=newItem()>＋ Add</button></div>
+    <div class="item-catalog modern-item-catalog">${items.map(x=>`<button class="item-card" onclick="newItem('${x.id}')">${x.photo?`<img src="${x.photo}" alt="${esc(x.name)}">`:`<div class=item-photo-placeholder>AMÉA</div>`}<div class=item-card-body><b>${esc(x.name)}</b><div class=meta>${esc(x.category||"Other")} · ${M(x.price)}</div><div class=meta>${x.status=="Ready-made"?"Ready-made":"Made to order"}${x.sizes?` · ${esc(x.sizes)}`:""}</div></div></button>`).join("")||'<div class=empty>No items yet.</div>'}</div>
+  </div>`;
+}
+else if(cur=="inventory"){
+  const stock=I(),low=stock.filter(x=>(+x.qty||0)<=(+x.low||0));
+  v.innerHTML=`<div class="tool-page">
+    <div class="tool-page-head"><div><span>STOCK & MONEY</span><h2>Inventory</h2><p>Materials and supplies you need to keep making.</p></div><button onclick=newInventory()>＋ Add</button></div>
+    <div class="tool-summary-grid two"><div><span>Inventory items</span><strong>${stock.length}</strong></div><div class="${low.length?"alert":""}"><span>Low stock</span><strong>${low.length}</strong></div></div>
+    <div class="tool-list-card">${stock.map(x=>`<button class="stock-modern-row" onclick="newInventory('${x.id}')">
+      <span class="stock-icon">${(+x.qty||0)<=(+x.low||0)?"!":"◇"}</span><span class="stock-main"><b>${esc(x.name)}</b><small>${esc(x.type||"Material")}</small></span>
+      <span class="stock-count ${(+x.qty||0)<=(+x.low||0)?"low":""}"><b>${x.qty}</b><small>${esc(x.unit||"")}</small></span><i>›</i>
+    </button>`).join("")||'<div class=empty>No inventory yet.</div>'}</div>
+  </div>`;
+}
 else if(cur=="more"){
   let cs=localStorage.getItem("ah_cloud_status")||"Connected";
   let state=localStorage.getItem("ah_cloud_state")||"ok";
   let last=localStorage.getItem("ah_cloud_last");
   let when=last?new Date(last).toLocaleString("en-JM",{dateStyle:"medium",timeStyle:"short"}):"Not synced yet";
-  v.innerHTML=`<h2>More</h2>
-  <div class=quick>
-    <button onclick="page('customers')">♙ Customers</button>
-    <button onclick="page('invoices')">▧ Invoices</button>
-    <button onclick="page('items')">♢ Items</button>
-    <button onclick="page('inventory')">▦ Inventory</button>
-    <button onclick="page('expenses')">↘ Expenses</button>
-    <button onclick="page('analytics')">▥ Analytics</button>
-    <button onclick="page('settings')">⚙ Settings</button>
-  </div>
+  v.innerHTML=`<div class="more-page">
+    <div class="tool-page-head more-head"><div><span>AMÉA HQ</span><h2>More</h2><p>Everything else that keeps the business moving.</p></div><span class="more-spark">✦</span></div>
 
-  <div class="section">
-    <div class="card backup-card">
-      <div class="backup-head">
-        <div>
-          <span class="backup-eyebrow">AMÉA CLOUD</span>
-          <h3>Cloud Backup</h3>
-        </div>
-        <span class="sync-pill ${state==="error"?"error":"ok"}">${esc(cs)}</span>
+    <section class="more-group">
+      <div class="more-group-title"><span>PEOPLE & SALES</span></div>
+      <div class="more-grid">
+        <button onclick="page('customers')"><span class="more-icon-bubble">♡</span><b>Customers</b><small>People & history</small></button>
+        <button onclick="page('invoices')"><span class="more-icon-bubble">▧</span><b>Invoices</b><small>Payments & balances</small></button>
+        <button onclick="page('analytics')"><span class="more-icon-bubble">↗</span><b>Analytics</b><small>Growth & insights</small></button>
       </div>
+    </section>
 
-      <div class="backup-row">
-        <span>Last backup</span>
-        <b>${esc(when)}</b>
+    <section class="more-group">
+      <div class="more-group-title"><span>STOCK & MONEY</span></div>
+      <div class="more-grid">
+        <button onclick="page('items')"><span class="more-icon-bubble">✿</span><b>Items</b><small>Product catalogue</small></button>
+        <button onclick="page('inventory')"><span class="more-icon-bubble">◇</span><b>Inventory</b><small>Materials & stock</small></button>
+        <button onclick="page('expenses')"><span class="more-icon-bubble">↘</span><b>Expenses</b><small>Business spending</small></button>
       </div>
+    </section>
 
-      <div class="backup-note">
-        Your customers, orders, items, inventory, expenses, suppliers and business settings are stored in your private Améa cloud account.
-      </div>
-<button id="syncNowBtn" class="primary backup-sync" onclick="syncNow()">Sync Now</button>
-      <button class="signout-btn backup-signout" onclick="logoutHQ()">Sign Out</button>
-    </div>
+    <section class="more-group">
+      <div class="more-group-title"><span>BUSINESS</span></div>
+      <button class="more-wide-link" onclick="page('settings')"><span class="more-icon-bubble">⚙</span><span><b>Settings</b><small>Business info, delivery & preferences</small></span><i>›</i></button>
+    </section>
+
+    <section class="cloud-modern-card">
+      <div class="cloud-modern-head"><div><span>AMÉA CLOUD</span><h3>Your HQ is backed up</h3></div><em class="sync-pill ${state==="error"?"error":"ok"}">${esc(cs)}</em></div>
+      <p>Customers, orders, products, inventory, expenses and settings are synced to your private account.</p>
+      <div class="cloud-last"><span>Last sync</span><b>${esc(when)}</b></div>
+      <div class="cloud-actions"><button id="syncNowBtn" onclick="syncNow()">Sync Now</button><button onclick="logoutHQ()">Sign Out</button></div>
+    </section>
   </div>`;
 }
-else if(cur=="expenses")v.innerHTML=`<div class=top><h2>Expenses</h2><div class=top-actions><button onclick=manageSuppliers()>Suppliers</button><button onclick=newExpense()>＋ Add</button></div></div>${E().slice().reverse().map(x=>`<div class=item><div class=top><b>${x.category}</b><span class=money>${M(x.amount)}</span></div><div class=meta>${x.date}${x.supplier?" · Supplier: "+x.supplier:""}${x.note?" · "+x.note:""}</div></div>`).join("")||'<div class=empty>No expenses yet.</div>'}`;
+else if(cur=="expenses"){
+  const expenses=E().slice().reverse();
+  const total=expenses.reduce((a,x)=>a+(+x.amount||0),0);
+  v.innerHTML=`<div class="tool-page">
+    <div class="tool-page-head"><div><span>STOCK & MONEY</span><h2>Expenses</h2><p>Keep track of what the business spends.</p></div><div class=top-actions><button onclick=manageSuppliers()>Suppliers</button><button class=tool-add-btn onclick=newExpense()>＋ Add</button></div></div>
+    <div class="tool-summary-grid one"><div><span>Total recorded</span><strong>${M(total)}</strong></div></div>
+    <div class="tool-list-card">${expenses.map(x=>`<div class="expense-modern-row"><span class="expense-icon">↘</span><span class=expense-main><b>${esc(x.category||"Expense")}</b><small>${esc(x.date||"")}${x.supplier?" · "+esc(x.supplier):""}${x.note?" · "+esc(x.note):""}</small></span><strong>${M(x.amount)}</strong></div>`).join("")||'<div class=empty>No expenses yet.</div>'}</div>
+  </div>`;
+}
 else if(cur=="analytics"){renderAnalytics("month")}
 else if(cur=="calendar")v.innerHTML=renderCalendarPage();
 else if(cur=="settings"){
   let s=G("settings",{});
-  v.innerHTML=`<h2>Settings</h2>
-
-  <div class="card settings-card">
-    <div class=settings-title>
-      <div>
-        <b>Business & Invoice Info</b>
-        <span>These details automatically appear on your invoices.</span>
-      </div>
+  v.innerHTML=`<div class="tool-page settings-redesign">
+    <div class="tool-page-head"><div><span>BUSINESS</span><h2>Settings</h2><p>Your business details and app preferences.</p></div></div>
+    <div class="settings-modern-card">
+      <div class="settings-modern-title"><span>BUSINESS & INVOICES</span><h3>Améa details</h3></div>
+      <label>Business name</label><input id=sbn value="${esc(s.businessName||"Améa")}" placeholder="Améa">
+      <label>Business email</label><input id=se type=email value="${esc(s.email||"")}" placeholder="Add when ready">
+      <label>Phone / WhatsApp</label><input id=sp value="${esc(s.phone||"")}" placeholder="Add when ready">
+      <label>Website</label><input id=sw value="${esc(s.website||"")}" placeholder="Add later">
+      <label>Instagram</label><input id=si value="${esc(s.instagram||"")}" placeholder="@ameastudio">
+      <label>Business address <span class=meta>(optional)</span></label><textarea id=sa placeholder="Leave blank if you don't want an address on invoices">${esc(s.address||"")}</textarea>
+      <label>Invoice closing message</label><input id=sin value="${esc(s.invoiceNote||"Thank you for choosing Améa ♡")}" placeholder="Thank you for choosing Améa ♡">
+      <label>Delivery options</label><input id=sd value="${esc((s.delivery||["Pickup","Delivery"]).join(", "))}">
+      <button class="primary settings-save" onclick=saveSettings()>Save Business Info</button>
     </div>
-
-    <label>Business name</label>
-    <input id=sbn value="${esc(s.businessName||"Améa")}" placeholder="Améa">
-
-    <label>Business email</label>
-    <input id=se type=email value="${esc(s.email||"")}" placeholder="Add when ready">
-
-    <label>Phone / WhatsApp</label>
-    <input id=sp value="${esc(s.phone||"")}" placeholder="Add when ready">
-
-    <label>Website</label>
-    <input id=sw value="${esc(s.website||"")}" placeholder="Add later">
-
-    <label>Instagram</label>
-    <input id=si value="${esc(s.instagram||"")}" placeholder="@ameastudio">
-
-    <label>Business address <span class=meta>(optional)</span></label>
-    <textarea id=sa placeholder="Leave blank if you don't want an address on invoices">${esc(s.address||"")}</textarea>
-
-    <label>Invoice closing message</label>
-    <input id=sin value="${esc(s.invoiceNote||"Thank you for choosing Améa ♡")}" placeholder="Thank you for choosing Améa ♡">
-
-    <label>Delivery options</label>
-    <input id=sd value="${esc((s.delivery||["Pickup","Delivery"]).join(", "))}">
-
-    <button class=primary onclick=saveSettings()>Save Business Info</button>
-  </div>
-
-  <div class="section quick">
-    <button onclick=notify()>Allow Notifications</button>
-    <button onclick=backup()>Export Backup</button>
-  </div>
-  <p class=meta>Your HQ data is synced to your private cloud account. Device storage is kept as a local copy too.</p>`
+    <div class="settings-action-grid"><button onclick=notify()><span>♡</span><b>Notifications</b><small>Allow app alerts</small></button><button onclick=backup()><span>⇩</span><b>Export Backup</b><small>Download your data</small></button></div>
+    <p class="settings-footnote">HQ data is synced to your private cloud account, with a local copy kept on this device.</p>
+  </div>`;
 }}
+
 let activeOrderViewId="";
 let activeOrderViewMode="maker";
 let photoViewerState=null;
@@ -2667,7 +2682,7 @@ function renderAnalytics(range="month",selectedMonth=currentMonthKey()){
   const annualRows=annualSummaryRows();
   const title=range=="month"?monthLabel(monthKey):range=="year"?String(now.getFullYear()):"All Time";
 
-  $("#view").innerHTML=`<h2>Analytics</h2>
+  $("#view").innerHTML=`<div class="tool-page analytics-redesign"><div class="tool-page-head"><div><span>PEOPLE & SALES</span><h2>Analytics</h2><p>See what’s growing, selling and costing you.</p></div></div>
   <div class=analytics-intro>Full business performance from the orders and expenses saved in Améa HQ.</div>
 
   <div class=analytics-picker>
@@ -2765,7 +2780,7 @@ function renderAnalytics(range="month",selectedMonth=currentMonthKey()){
     ${analyticsProgressRows(expenseRows,ex,"gold")}
   </div>
 
-  <div class=analytics-note>“Payments received” uses the Paid amount saved on each order. “Est. cash profit” is payments received minus recorded expenses.</div>`;
+  <div class=analytics-note>“Payments received” uses the Paid amount saved on each order. “Est. cash profit” is payments received minus recorded expenses.</div></div>`;
 }
 
 function saveSettings(){
