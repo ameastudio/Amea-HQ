@@ -1336,7 +1336,103 @@ function renderStudioHub(){
   </div>`;
 }
 
-function page(x){cur=x;render()}function render(){document.body.classList.toggle("studio-mode",cur==="crochet");const navPage=cur==="crochet"?"studio":cur;document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===navPage));let v=$("#view");if(cur=="home"){let o=O(),e=E(),now=new Date(),mo=o.filter(x=>new Date(x.created).getMonth()==now.getMonth()),sales=mo.reduce((a,x)=>a+x.paid,0),out=mo.reduce((a,x)=>a+Math.max(0,x.price-x.paid),0),ex=e.filter(x=>new Date(x.date).getMonth()==now.getMonth()).reduce((a,x)=>a+x.amount,0),today=new Date().toISOString().slice(0,10);v.innerHTML=`<div class=hero><h2 id=homeGreeting>${greeting()}, Améa Boss ✨</h2><div class=meta>Everything in your studio, in one pretty place.</div></div><div class=grid><div class=card>Sales<b>${M(sales)}</b></div><div class=card>Orders<b>${mo.length}</b></div><div class=card>Outstanding<b>${M(out)}</b></div><div class=card>Expenses<b>${M(ex)}</b></div></div><div class=section><h3>Today</h3><div class=card>${list(O().filter(x=>x.due==today),true)||'<div class=meta>No orders due today 💗</div>'}</div></div><button class=studio-home-shortcut onclick="page(\'crochet\')"><div><span class=studio-home-eyebrow>AMÉA HQ</span><b>Crochet Studio</b><small>Patterns · Yarn · Models · Calculator</small></div><span class=studio-home-arrow>→</span></button><button class=studio-home-shortcut onclick="window.location.href=\'design-studio.html\'"><div><span class=studio-home-eyebrow>AMÉA HQ</span><b>Design Studio</b><small>Sketch · Colour · Motifs · Mannequins</small></div><span class=studio-home-arrow>→</span></button><div class="section home-analytics-section"><div class=analytics-home-head><div><h3>Order Activity</h3><div class=meta>See which weeks or months bring in the most orders.</div></div><div class=analytics-home-toggle><button data-home-analytics=months class="${homeAnalyticsMode==="months"?"active":""}" onclick="setHomeAnalytics('months')">Months</button><button data-home-analytics=weeks class="${homeAnalyticsMode==="weeks"?"active":""}" onclick="setHomeAnalytics('weeks')">Weeks</button></div></div><div id=homeAnalytics>${homeActivityMarkup(homeAnalyticsMode)}</div></div><div class=section><h3>Recent Orders</h3>${list(O().slice(-5).reverse())||'<div class=empty>No orders yet.</div>'}</div>`}
+function page(x){cur=x;render()}function render(){document.body.classList.toggle("studio-mode",cur==="crochet");const navPage=cur==="crochet"?"studio":cur;document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===navPage));let v=$("#view");if(cur=="home"){
+  const orders=O(),expenses=E(),inventory=I(),now=new Date();
+  const sameMonth=d=>{
+    const x=new Date(d||0);
+    return !Number.isNaN(x.getTime())&&x.getFullYear()===now.getFullYear()&&x.getMonth()===now.getMonth();
+  };
+  const monthOrders=orders.filter(x=>sameMonth(x.created));
+  const sales=monthOrders.reduce((a,x)=>a+(+x.paid||0),0);
+  const active=orders.filter(x=>!["Delivered","Cancelled"].includes(x.status)).length;
+  const inStudio=orders.filter(x=>x.status==="In Studio").length;
+  const today=todayStart();
+  const dueSoon=orders.filter(x=>{
+    if(["Delivered","Cancelled"].includes(x.status))return false;
+    const d=parseDateOnly(x.due);if(!d)return false;
+    const diff=Math.round((d-today)/86400000);
+    return diff>=0&&diff<=7;
+  }).sort((a,b)=>(parseDateOnly(a.due)||Infinity)-(parseDateOnly(b.due)||Infinity));
+  const lowStock=inventory.filter(x=>(+x.qty||0)<=(+x.low||0)).length;
+  const exp=expenses.filter(x=>sameMonth(x.date)).reduce((a,x)=>a+(+x.amount||0),0);
+  const upcoming=dueSoon.slice(0,3);
+  const studioOrders=orders.filter(x=>x.status==="In Studio").slice(-3).reverse();
+
+  v.innerHTML=`<div class="hq-home">
+    <section class="hq-welcome">
+      <div>
+        <span class="hq-kicker">AMÉA HQ</span>
+        <h2 id="homeGreeting">${greeting()}, Améa Boss ✨</h2>
+        <p>Your business at a glance.</p>
+      </div>
+      <button class="hq-new-order" onclick="newOrder()">＋ <span>New Order</span></button>
+    </section>
+
+    <section class="hq-stat-grid">
+      <button class="hq-stat primary-stat" onclick="page('orders')">
+        <span>Sales this month</span><strong>${M(sales)}</strong><small>${monthOrders.length} order${monthOrders.length===1?"":"s"}</small>
+      </button>
+      <button class="hq-stat" onclick="page('orders')">
+        <span>Active orders</span><strong>${active}</strong><small>${inStudio} in studio</small>
+      </button>
+      <button class="hq-stat" onclick="page('calendar')">
+        <span>Due soon</span><strong>${dueSoon.length}</strong><small>Next 7 days</small>
+      </button>
+      <button class="hq-stat" onclick="page('inventory')">
+        <span>Low stock</span><strong>${lowStock}</strong><small>Needs attention</small>
+      </button>
+    </section>
+
+    <section class="hq-panel">
+      <div class="hq-panel-head">
+        <div><span class="hq-section-kicker">UP NEXT</span><h3>Due soon</h3></div>
+        <button onclick="page('calendar')">Calendar →</button>
+      </div>
+      <div class="hq-upcoming">
+        ${upcoming.length?upcoming.map(o=>{
+          const diff=orderDueOffset(o);
+          const when=diff===0?"Today":diff===1?"Tomorrow":`In ${diff} days`;
+          return `<button class="hq-due-row" onclick="viewOrder('${o.id}')">
+            <span class="hq-date-dot">${parseDateOnly(o.due)?.getDate()||""}</span>
+            <span><b>${esc(o.customer||"Customer")}</b><small>${esc(o.product||"Order")} · ${when}</small></span>
+            <i>›</i>
+          </button>`;
+        }).join(""):`<div class="hq-empty">Nothing due in the next 7 days 💗</div>`}
+      </div>
+    </section>
+
+    <section class="hq-studio-card" onclick="page('studio')" role="button" tabindex="0">
+      <div class="hq-studio-top">
+        <div><span class="hq-section-kicker light">STUDIO PULSE</span><h3>Creative work</h3></div><span class="hq-studio-arrow">→</span>
+      </div>
+      <div class="hq-studio-numbers">
+        <div><strong>${inStudio}</strong><span>Orders in studio</span></div>
+        <div><strong>${PATTERNS().filter(p=>String(p.status||"").toLowerCase()!=="completed").length}</strong><span>Active patterns</span></div>
+      </div>
+      <div class="hq-studio-projects">
+        ${studioOrders.length?studioOrders.map(o=>`<span>${esc(o.product||o.no||"Project")}</span>`).join(""):`<span>No active studio orders yet</span>`}
+      </div>
+    </section>
+
+    <section class="hq-panel">
+      <div class="hq-panel-head">
+        <div><span class="hq-section-kicker">RECENT</span><h3>Orders</h3></div>
+        <button onclick="page('orders')">View all →</button>
+      </div>
+      <div class="hq-recent-orders">
+        ${orders.length?orders.slice(-4).reverse().map(o=>`<button class="hq-order-row" onclick="viewOrder('${o.id}')">
+          <span><b>${esc(o.customer||"Customer")}</b><small>${esc(o.product||o.no||"Order")}</small></span>
+          <span class="hq-order-side"><em class="hq-status ${String(o.status||"").toLowerCase().replaceAll(" ","-")}">${esc(o.status||"New")}</em><b>${M(o.price)}</b></span>
+        </button>`).join(""):`<div class="hq-empty">No orders yet.</div>`}
+      </div>
+    </section>
+
+    <section class="hq-mini-summary">
+      <div><span>Expenses this month</span><strong>${M(exp)}</strong></div>
+      <button onclick="page('analytics')">Open Analytics →</button>
+    </section>
+  </div>`;
+}
  else if(cur=="orders")v.innerHTML=activeOrderViewId?renderOrderView(activeOrderViewId):renderOrdersPage();
 else if(cur=="studio")v.innerHTML=renderStudioHub();
 else if(cur=="customers")v.innerHTML=`<div class=top><h2>Customers</h2><button onclick=newCustomer()>＋ Add</button></div>${C().map(x=>{let st=customerStats(x),last=st.last?st.last.toLocaleDateString("en-JM",{day:"numeric",month:"short",year:"numeric"}):"";return `<div class="item customer-row" onclick="openCustomer('${x.id}')"><div class=top><b>${esc(x.name)}</b><span class="customer-badge ${st.orders.length?"returning":"new"}">${st.orders.length?"RETURNING":"NEW"}</span></div><div class=meta>${esc(x.phone||"")}${x.email?" · "+esc(x.email):""}<br><b>${customerStatusText(x)}</b>${st.orders.length?` · ${M(st.paid)} lifetime`:""}${last?`<br>Last order: ${last}`:""}</div><div class=customer-chevron>View customer →</div></div>`}).join("")||'<div class=empty>No customers yet.</div>'}`;
