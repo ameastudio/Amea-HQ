@@ -1022,3 +1022,89 @@ main{padding:14px 16px 22px}
   .hq-stat{min-height:98px;padding:13px}
   .hq-welcome h2{font-size:24px}
 }
+
+
+/* ===== Améa HQ redesign: Orders + Calendar ===== */
+.orders-redesign,.calendar-redesign{padding-bottom:18px}
+.orders-title-row{align-items:flex-start;margin:2px 0 14px}
+.orders-title-row h2,.calendar-title-row h2{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif!important;color:var(--amea-ink)!important;font-size:30px!important;font-weight:800!important;letter-spacing:-1.2px;margin:3px 0 3px!important}
+.orders-title-row p,.calendar-title-row p{margin:0;color:var(--amea-muted);font-size:12px}
+.orders-kicker{display:block;color:var(--amea-gold);font-size:9px;font-weight:900;letter-spacing:2px}
+.orders-title-row>button{background:linear-gradient(145deg,var(--amea-pink),var(--amea-hot));border:0;border-radius:17px;padding:11px 13px;box-shadow:0 9px 20px rgba(227,28,115,.18)}
+
+.orders-status-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:14px}
+.orders-status-strip>div{min-width:0;padding:12px 8px;border-radius:19px;background:#fff;border:1px solid #f5dce7;text-align:center;box-shadow:0 5px 18px rgba(104,35,69,.04)}
+.orders-status-strip span{display:block;color:var(--amea-muted);font-size:8px;font-weight:800;white-space:nowrap}
+.orders-status-strip strong{display:block;color:var(--amea-hot);font-size:21px;margin-top:5px}
+
+.orders-priority,.orders-library,.calendar-agenda{background:#fff;border:1px solid #f5dce7;border-radius:26px;padding:15px;box-shadow:0 10px 28px rgba(104,35,69,.05);margin-top:12px}
+.orders-priority{background:linear-gradient(160deg,#fff 0%,#fff7fb 100%)}
+.orders-section-head{display:flex;justify-content:space-between;align-items:end;gap:10px;margin-bottom:8px}
+.orders-section-head span{display:block;color:var(--amea-gold);font-size:8px;font-weight:900;letter-spacing:1.7px}
+.orders-section-head h3{margin:3px 0 0;font-size:19px;letter-spacing:-.5px;color:var(--amea-ink)}
+.orders-section-head button{background:transparent;color:var(--amea-hot);font-size:10px;font-weight:800;padding:5px}
+.priority-group{margin-top:9px;padding-top:9px;border-top:1px solid #f7e6ed}
+.priority-group>b{display:block;color:var(--amea-hot);font-size:10px;margin-bottom:2px}
+.orders-search-wrap{display:flex;align-items:center;gap:8px;background:var(--amea-blush);border:1px solid #f7dce8;border-radius:17px;padding:0 12px;margin:10px 0 6px}
+.orders-search-wrap>span{font-size:20px;color:#b9839b}
+.orders-search-wrap input{border:0!important;background:transparent!important;margin:0!important;padding:12px 0!important;box-shadow:none!important}
+.orders-search-wrap input:focus{outline:none}
+
+.orders-list .order-list-card,.orders-priority .order-list-card{padding:13px 2px;border-bottom:1px solid #f7e6ed;background:transparent}
+.orders-list .order-list-card:last-child,.orders-priority .order-list-card:last-child{border-bottom:0}
+.order-list-card .top>b{font-size:12px;color:var(--amea-ink)}
+.order-list-card .badge{font-size:8px;padding:5px 8px;background:#fff0f6;color:var(--amea-hot)}
+.order-list-card .meta{font-size:10px;color:var(--amea-muted);line-height:1.55;margin-top:3px}
+.order-list-actions{margin-top:7px}
+.order-pin-btn,.order-work-quick{border-radius:12px!important;padding:7px 9px!important;font-size:9px!important}
+.order-work-quick{background:#fff4da!important;color:#805b19!important}
+
+.order-view-page{padding-bottom:20px}
+.order-view-nav>button{border-radius:15px;background:#fff!important;border:1px solid #f2dbe5!important}
+.order-edit-btn{background:linear-gradient(145deg,var(--amea-pink),var(--amea-hot))!important;border-radius:14px!important}
+.order-view-title>span{color:var(--amea-gold)}
+.order-view-title h2{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--amea-ink);font-size:27px;font-weight:800;letter-spacing:-1px}
+.order-view-tabs{background:#ffeaf3;border-radius:17px}
+.order-view-tabs button.active{color:var(--amea-hot);border-radius:13px}
+.maker-photo-section,.maker-item-card,.maker-measurements,.maker-note-card,.maker-status-card,.full-detail-card{border-color:#f3dce6;border-radius:23px;box-shadow:0 7px 22px rgba(104,35,69,.035)}
+.maker-section-head h3,.maker-item-head h3,.full-detail-card h3{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif!important;color:var(--amea-ink)!important;font-weight:800!important}
+.quick-status{border-radius:12px}
+.quick-status.active{background:linear-gradient(145deg,var(--amea-pink),var(--amea-hot))}
+.view-full-details-btn{border-radius:15px;border-color:#f1cfde;color:var(--amea-hot)}
+
+.calendar-title-row{margin:2px 0 12px}
+.calendar-eyebrow{color:var(--amea-gold);font-size:9px;letter-spacing:2px}
+.calendar-export{border:1px solid #f0d5e1;border-radius:15px;color:var(--amea-hot);padding:10px 12px}
+.calendar-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.calendar-summary>div{padding:12px 9px;border-radius:19px;background:#fff;border:1px solid #f4dce6;text-align:center}
+.calendar-summary span,.calendar-summary small{display:block;color:var(--amea-muted);font-size:8px}
+.calendar-summary strong{display:block;color:var(--amea-hot);font-size:22px;margin:5px 0 2px}
+.calendar-shell{border-color:#f4dce6;border-radius:26px;padding:14px 8px 12px;box-shadow:0 10px 30px rgba(104,35,69,.05)}
+.calendar-month-head h3{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:21px;font-weight:800;letter-spacing:-.6px;color:var(--amea-ink)}
+.calendar-month-head button{background:#ffeaf3;color:var(--amea-hot)}
+.calendar-cell{min-height:67px;border-color:#f4e5ec;background:#fff;border-radius:11px;padding:6px 4px}
+.calendar-cell.today{border-color:var(--amea-gold);background:#fffaf0;box-shadow:inset 0 0 0 1px rgba(200,161,90,.16)}
+.calendar-cell.has-orders:not(.today){background:#fff8fb}
+.calendar-date{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:11px;font-weight:800;color:var(--amea-ink)}
+.calendar-name{padding:3px 4px;background:#ffe0ec;color:#8c3158;font-size:6.5px}
+.calendar-more{font-size:6.5px;color:var(--amea-hot);font-weight:800}
+.calendar-today{border-radius:13px;color:var(--amea-hot);border-color:#f0d3df}
+
+.calendar-agenda{margin-top:13px}
+.calendar-agenda-list>button{width:100%;display:grid;grid-template-columns:44px 1fr auto;gap:10px;align-items:center;text-align:left;background:transparent;border-bottom:1px solid #f7e5ed;border-radius:0;padding:10px 2px}
+.calendar-agenda-list>button:last-child{border-bottom:0}
+.agenda-date{width:42px;height:46px;border-radius:15px;background:var(--amea-blush);display:grid;place-content:center;text-align:center}
+.agenda-date b{font-size:16px;line-height:1;color:var(--amea-hot)}
+.agenda-date small{font-size:7px;text-transform:uppercase;color:var(--amea-muted);margin-top:2px}
+.agenda-copy{min-width:0}
+.agenda-copy b,.agenda-copy small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.agenda-copy b{font-size:12px;color:var(--amea-ink)}
+.agenda-copy small{font-size:9px;color:var(--amea-muted);margin-top:3px}
+
+@media(max-width:390px){
+  .orders-status-strip{gap:5px}
+  .orders-status-strip>div{padding:10px 4px}
+  .orders-status-strip span{font-size:7px}
+  .calendar-cell{min-height:61px}
+  .calendar-name{font-size:6px}
+}
