@@ -1308,8 +1308,37 @@ function renderCalendarPage(){
   </div>`;
 }
 
-function page(x){cur=x;render()}function render(){document.body.classList.toggle("studio-mode",cur==="crochet");document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===cur));let v=$("#view");if(cur=="home"){let o=O(),e=E(),now=new Date(),mo=o.filter(x=>new Date(x.created).getMonth()==now.getMonth()),sales=mo.reduce((a,x)=>a+x.paid,0),out=mo.reduce((a,x)=>a+Math.max(0,x.price-x.paid),0),ex=e.filter(x=>new Date(x.date).getMonth()==now.getMonth()).reduce((a,x)=>a+x.amount,0),today=new Date().toISOString().slice(0,10);v.innerHTML=`<div class=hero><h2 id=homeGreeting>${greeting()}, Améa Boss ✨</h2><div class=meta>Everything in your studio, in one pretty place.</div></div><div class=grid><div class=card>Sales<b>${M(sales)}</b></div><div class=card>Orders<b>${mo.length}</b></div><div class=card>Outstanding<b>${M(out)}</b></div><div class=card>Expenses<b>${M(ex)}</b></div></div><div class=section><h3>Today</h3><div class=card>${list(O().filter(x=>x.due==today),true)||'<div class=meta>No orders due today 💗</div>'}</div></div><button class=studio-home-shortcut onclick="page(\'crochet\')"><div><span class=studio-home-eyebrow>AMÉA HQ</span><b>Crochet Studio</b><small>Patterns · Yarn · Models · Calculator</small></div><span class=studio-home-arrow>→</span></button><button class=studio-home-shortcut onclick="window.location.href=\'design-studio.html\'"><div><span class=studio-home-eyebrow>AMÉA HQ</span><b>Design Studio</b><small>Sketch · Colour · Motifs · Mannequins</small></div><span class=studio-home-arrow>→</span></button><div class="section home-analytics-section"><div class=analytics-home-head><div><h3>Order Activity</h3><div class=meta>See which weeks or months bring in the most orders.</div></div><div class=analytics-home-toggle><button data-home-analytics=months class="${homeAnalyticsMode==="months"?"active":""}" onclick="setHomeAnalytics('months')">Months</button><button data-home-analytics=weeks class="${homeAnalyticsMode==="weeks"?"active":""}" onclick="setHomeAnalytics('weeks')">Weeks</button></div></div><div id=homeAnalytics>${homeActivityMarkup(homeAnalyticsMode)}</div></div><div class=section><h3>Recent Orders</h3>${list(O().slice(-5).reverse())||'<div class=empty>No orders yet.</div>'}</div>`}
+function renderStudioHub(){
+  const active=PATTERNS().filter(p=>String(p.status||"").toLowerCase()!=="completed").length;
+  const yarns=YARNS().length;
+  return `<div class="studio-hub-page">
+    <div class="studio-hub-head">
+      <span class="studio-hub-eyebrow">AMÉA HQ</span>
+      <h2>Studio</h2>
+      <p>Your creative spaces, together.</p>
+    </div>
+    <div class="studio-hub-grid">
+      <button class="studio-hub-card crochet" onclick="page('crochet')">
+        <div class="studio-hub-icon">🧶</div>
+        <div class="studio-hub-copy"><span>MAKE & TRACK</span><h3>Crochet Studio</h3><p>Patterns, yarn, measurements, progress and maker tools.</p></div>
+        <b>→</b>
+      </button>
+      <button class="studio-hub-card design" onclick="window.location.href='design-studio.html'">
+        <div class="studio-hub-icon">✎</div>
+        <div class="studio-hub-copy"><span>CREATE & PLAN</span><h3>Design Studio</h3><p>Sketch, colour, motifs, references and design ideas.</p></div>
+        <b>→</b>
+      </button>
+    </div>
+    <div class="studio-hub-mini">
+      <div><span>Active patterns</span><strong>${active}</strong></div>
+      <div><span>Yarns saved</span><strong>${yarns}</strong></div>
+    </div>
+  </div>`;
+}
+
+function page(x){cur=x;render()}function render(){document.body.classList.toggle("studio-mode",cur==="crochet");const navPage=cur==="crochet"?"studio":cur;document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===navPage));let v=$("#view");if(cur=="home"){let o=O(),e=E(),now=new Date(),mo=o.filter(x=>new Date(x.created).getMonth()==now.getMonth()),sales=mo.reduce((a,x)=>a+x.paid,0),out=mo.reduce((a,x)=>a+Math.max(0,x.price-x.paid),0),ex=e.filter(x=>new Date(x.date).getMonth()==now.getMonth()).reduce((a,x)=>a+x.amount,0),today=new Date().toISOString().slice(0,10);v.innerHTML=`<div class=hero><h2 id=homeGreeting>${greeting()}, Améa Boss ✨</h2><div class=meta>Everything in your studio, in one pretty place.</div></div><div class=grid><div class=card>Sales<b>${M(sales)}</b></div><div class=card>Orders<b>${mo.length}</b></div><div class=card>Outstanding<b>${M(out)}</b></div><div class=card>Expenses<b>${M(ex)}</b></div></div><div class=section><h3>Today</h3><div class=card>${list(O().filter(x=>x.due==today),true)||'<div class=meta>No orders due today 💗</div>'}</div></div><button class=studio-home-shortcut onclick="page(\'crochet\')"><div><span class=studio-home-eyebrow>AMÉA HQ</span><b>Crochet Studio</b><small>Patterns · Yarn · Models · Calculator</small></div><span class=studio-home-arrow>→</span></button><button class=studio-home-shortcut onclick="window.location.href=\'design-studio.html\'"><div><span class=studio-home-eyebrow>AMÉA HQ</span><b>Design Studio</b><small>Sketch · Colour · Motifs · Mannequins</small></div><span class=studio-home-arrow>→</span></button><div class="section home-analytics-section"><div class=analytics-home-head><div><h3>Order Activity</h3><div class=meta>See which weeks or months bring in the most orders.</div></div><div class=analytics-home-toggle><button data-home-analytics=months class="${homeAnalyticsMode==="months"?"active":""}" onclick="setHomeAnalytics('months')">Months</button><button data-home-analytics=weeks class="${homeAnalyticsMode==="weeks"?"active":""}" onclick="setHomeAnalytics('weeks')">Weeks</button></div></div><div id=homeAnalytics>${homeActivityMarkup(homeAnalyticsMode)}</div></div><div class=section><h3>Recent Orders</h3>${list(O().slice(-5).reverse())||'<div class=empty>No orders yet.</div>'}</div>`}
  else if(cur=="orders")v.innerHTML=activeOrderViewId?renderOrderView(activeOrderViewId):renderOrdersPage();
+else if(cur=="studio")v.innerHTML=renderStudioHub();
 else if(cur=="customers")v.innerHTML=`<div class=top><h2>Customers</h2><button onclick=newCustomer()>＋ Add</button></div>${C().map(x=>{let st=customerStats(x),last=st.last?st.last.toLocaleDateString("en-JM",{day:"numeric",month:"short",year:"numeric"}):"";return `<div class="item customer-row" onclick="openCustomer('${x.id}')"><div class=top><b>${esc(x.name)}</b><span class="customer-badge ${st.orders.length?"returning":"new"}">${st.orders.length?"RETURNING":"NEW"}</span></div><div class=meta>${esc(x.phone||"")}${x.email?" · "+esc(x.email):""}<br><b>${customerStatusText(x)}</b>${st.orders.length?` · ${M(st.paid)} lifetime`:""}${last?`<br>Last order: ${last}`:""}</div><div class=customer-chevron>View customer →</div></div>`}).join("")||'<div class=empty>No customers yet.</div>'}`;
 else if(cur=="invoices"){
   const orders=O().slice().reverse();
