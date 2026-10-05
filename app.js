@@ -624,6 +624,16 @@ function studioDefaultPattern(){
 function studioLogoBlock(subtitle="Crochet Studio"){
   return `<div class=studio-brand><div class=studio-brand-line><img src="amea-logo.png" alt="Améa"><span>STUDIO</span></div><div class=studio-subtitle>${esc(subtitle)}</div></div>`;
 }
+function studioSectionNav(active="patterns"){
+  const tabs=[
+    ["patterns","Patterns"],
+    ["yarns","Yarn"],
+    ["models","Models"],
+    ["calculator","Calculator"]
+  ];
+  return `<div class="crochet-section-nav">${tabs.map(([key,label])=>`<button class="${active===key?"active":""}" onclick="studioGo('${key}')">${label}</button>`).join("")}</div>`;
+}
+
 function renderStudio(){
   if(studioSub==="work")return renderStudioWorkPage();
   if(studioPatternId)return renderStudioPattern(studioPatternId);
@@ -649,43 +659,62 @@ function renderStudioLibrary(){
   const cats=[...new Set(patterns.map(x=>x.category).filter(Boolean))].sort();
   const cols=[...new Set(patterns.map(x=>x.collection).filter(Boolean))].sort();
   const active=patterns.filter(p=>String(p.status||"").toLowerCase()!=="final").length;
-  v.innerHTML=`<div class="studio-page crochet-redesign">
-    <div class="crochet-page-head">
-      <button class="studio-back-hub" onclick="page('studio')">← Studio</button>
-      <div><span class="studio-hub-eyebrow">AMÉA HQ</span><h2>Crochet Studio</h2><p>Make, track and keep the details together.</p></div>
-      <button class="studio-new-btn" onclick=newStudioPattern()>＋</button>
+  const finals=patterns.filter(p=>String(p.status||"").toLowerCase()==="final").length;
+  const inStudio=O().filter(o=>o.status==="In Studio");
+  const linked=inStudio.filter(o=>orderHasPattern(o)).length;
+  v.innerHTML=`<div class="studio-page crochet-studio-v1">
+    <div class="crochet-v1-head">
+      <button class="crochet-back" onclick="page('studio')">‹</button>
+      <div><span>AMÉA STUDIO</span><h2>Crochet Studio</h2><p>Patterns, yarn and your making progress.</p></div>
+      <button class="crochet-new-pattern" onclick="newStudioPattern()">＋</button>
     </div>
 
-    <div class="crochet-summary">
-      <div><span>Active</span><strong>${active}</strong><small>patterns</small></div>
-      <div><span>Yarns</span><strong>${YARNS().length}</strong><small>saved</small></div>
-      <div><span>Models</span><strong>${MODELS().length}</strong><small>saved</small></div>
-    </div>
+    ${studioSectionNav("patterns")}
 
-    <div class="crochet-tools">
-      <button onclick="studioGo('yarns')"><span>🧶</span><b>Yarn Library</b><small>Colours & favourites</small></button>
-      <button onclick="studioGo('models')"><span>♡</span><b>Measurements</b><small>Saved models</small></button>
-      <button onclick="studioGo('calculator')"><span>✦</span><b>Calculator</b><small>Stitches & rows</small></button>
-    </div>
-
-    <section class="crochet-patterns-panel">
-      <div class="orders-section-head"><div><span>PATTERNS</span><h3>${patterns.length} saved</h3></div></div>
-      <div class="orders-search-wrap"><span>⌕</span><input id=studioSearch placeholder="Search patterns…" oninput=studioApplyFilters()></div>
-      <div class="studio-filters crochet-filters">
-        <select id=studioTechnique onchange=studioApplyFilters()><option value="">Crochet + Knit</option><option>Crochet</option><option>Knit</option></select>
-        <select id=studioCategory onchange=studioApplyFilters()><option value="">All categories</option>${cats.map(x=>`<option>${esc(x)}</option>`).join("")}</select>
-        <select id=studioStatus onchange=studioApplyFilters()><option value="">All statuses</option><option>Draft</option><option>Testing</option><option>Final</option></select>
-        <select id=studioCollection onchange=studioApplyFilters()><option value="">All collections</option>${cols.map(x=>`<option>${esc(x)}</option>`).join("")}</select>
+    <section class="crochet-work-banner">
+      <div>
+        <span>IN THE STUDIO</span>
+        <h3>${inStudio.length} active order${inStudio.length===1?"":"s"}</h3>
+        <p>${linked} linked to a saved pattern</p>
       </div>
-      <div id=studioPatternGrid class="studio-pattern-grid crochet-pattern-grid">${studioPatternCards(patterns)}</div>
+      <button onclick="setOrderHubTab('orders')">View orders <b>›</b></button>
+    </section>
+
+    <div class="crochet-v1-stats">
+      <div><strong>${active}</strong><span>Active patterns</span></div>
+      <div><strong>${finals}</strong><span>Final patterns</span></div>
+      <div><strong>${YARNS().length}</strong><span>Saved yarns</span></div>
+    </div>
+
+    <section class="crochet-library-v1">
+      <div class="crochet-library-head">
+        <div><span>PATTERN LIBRARY</span><h3>Your patterns</h3></div>
+        <button onclick="newStudioPattern()">＋ New</button>
+      </div>
+      <div class="orders-search-wrap crochet-search"><span>⌕</span><input id="studioSearch" placeholder="Search patterns…" oninput="studioApplyFilters()"></div>
+      <div class="studio-filters crochet-filter-row">
+        <select id="studioTechnique" onchange="studioApplyFilters()"><option value="">All techniques</option><option>Crochet</option><option>Knit</option></select>
+        <select id="studioCategory" onchange="studioApplyFilters()"><option value="">All categories</option>${cats.map(x=>`<option>${esc(x)}</option>`).join("")}</select>
+        <select id="studioStatus" onchange="studioApplyFilters()"><option value="">All status</option><option>Draft</option><option>Testing</option><option>Final</option></select>
+        <select id="studioCollection" onchange="studioApplyFilters()"><option value="">All collections</option>${cols.map(x=>`<option>${esc(x)}</option>`).join("")}</select>
+      </div>
+      <div id="studioPatternGrid" class="studio-pattern-grid crochet-pattern-grid crochet-card-grid">${studioPatternCards(patterns)}</div>
     </section>
   </div>`;
 }
 function studioPatternCards(patterns){
-  if(!patterns.length)return `<div class="empty studio-empty">No patterns yet. Tap <b>＋ New Pattern</b> to create your first one 💗</div>`;
-  return patterns.map(x=>`<button class=studio-pattern-card data-search="${esc([x.name,x.technique,x.category,x.status,x.collection,(x.tags||[]).join(" ")].join(" ").toLowerCase())}" data-technique="${esc(x.technique||"")}" data-category="${esc(x.category||"")}" data-status="${esc(x.status||"")}" data-collection="${esc(x.collection||"")}" onclick="openStudioPattern('${x.id}')">
-    <div class=studio-pattern-photo>${x.mainPhoto?`<img src="${x.mainPhoto}" alt="${esc(x.name)}">`:`<div class=studio-pattern-placeholder><img src="amea-logo.png" alt=""><span>Pattern</span></div>`}${x.pinned?'<span class=studio-pin>★</span>':""}</div>
-    <div class=studio-pattern-copy><b>${esc(x.name||"Untitled Pattern")}</b><span>${esc(x.technique||"Crochet")} • ${esc(x.category||"Other")} • ${esc(x.status||"Draft")}</span></div>
+  if(!patterns.length)return `<div class="empty studio-empty crochet-empty"><b>No patterns yet.</b><span>Start your first pattern and keep every row, yarn and measurement together.</span><button onclick="newStudioPattern()">＋ Create Pattern</button></div>`;
+  return patterns.map(x=>`<button class="studio-pattern-card crochet-v1-card" data-search="${esc([x.name,x.technique,x.category,x.status,x.collection,(x.tags||[]).join(" ")].join(" ").toLowerCase())}" data-technique="${esc(x.technique||"")}" data-category="${esc(x.category||"")}" data-status="${esc(x.status||"")}" data-collection="${esc(x.collection||"")}" onclick="openStudioPattern('${x.id}')">
+    <div class="studio-pattern-photo">
+      ${x.mainPhoto?`<img src="${x.mainPhoto}" alt="${esc(x.name)}">`:`<div class="studio-pattern-placeholder crochet-placeholder"><img src="amea-logo.png" alt=""><span>${esc(x.category||"Pattern")}</span></div>`}
+      ${x.pinned?'<span class="studio-pin">★</span>':""}
+      <span class="crochet-status-chip ${String(x.status||"Draft").toLowerCase()}">${esc(x.status||"Draft")}</span>
+    </div>
+    <div class="studio-pattern-copy">
+      <b>${esc(x.name||"Untitled Pattern")}</b>
+      <span>${esc(x.technique||"Crochet")} · ${esc(x.category||"Other")}</span>
+      ${x.collection?`<small>${esc(x.collection)}</small>`:""}
+    </div>
   </button>`).join("");
 }
 function studioApplyFilters(){
@@ -772,7 +801,7 @@ function renderStudioWorkPage(){
   }).join("");
   const v=$("#view");
   v.innerHTML=`<div class=studio-work-page>
-    <div class=studio-work-nav><button onclick=studioWorkBack()>← Back</button>${studioLogoBlock("Work Pattern")}</div>
+    <div class=studio-work-nav><button onclick=studioWorkBack()>← Back</button>${studioLogoBlock("Making Mode")}</div>
     <div class=studio-work-hero>${p.mainPhoto?`<img src="${p.mainPhoto}" alt="${esc(p.name)}">`:""}<div><span>${esc(p.technique)} • ${esc(p.category)} • ${esc(p.status)}</span><h2>${esc(p.name)}</h2>${order&&item?`<p>Order ${esc(order.no)} · ${esc(orderItemLabel(item))}</p>`:'<p>Instructions only</p>'}</div></div>
     ${order?`<div class=studio-work-progress><div><b>${done} of ${rows.length} rows done</b><strong>${pct}%</strong></div><div class=studio-work-progress-track><i style="width:${pct}%"></i></div><p>${next?`Next: <b>${esc(next.section)}</b> · Row ${next.row}`:'Pattern complete 🎉'}</p></div>`:""}
     <div class=studio-work-pieces>${sections||'<div class=empty>No pattern instructions yet.</div>'}</div>
@@ -1229,8 +1258,25 @@ function saveStudioPattern(id=""){
 }
 
 function renderStudioYarns(){
-  const v=$("#view");
-  v.innerHTML=`<div class=studio-subpage><div class=studio-detail-nav><button onclick="studioGo('patterns')">← Patterns</button><button onclick=newStudioYarn()>＋ Add Yarn</button></div>${studioLogoBlock("Yarn Library")}<div class=meta studio-page-note>Save yarns you use often. You can still type a custom yarn inside any pattern.</div><div class=studio-library-list>${YARNS().map(y=>`<div class=studio-library-item><div><b>${esc(y.yarnName||"Yarn")}</b><span>${esc([y.brand,y.colour,y.weightType].filter(Boolean).join(" · "))}</span></div><button onclick="newStudioYarn('${y.id}')">Edit</button></div>`).join("")||'<div class=empty>No yarns saved yet.</div>'}</div></div>`;
+  const v=$("#view"),yarns=YARNS();
+  v.innerHTML=`<div class="studio-subpage crochet-studio-v1 crochet-library-subpage">
+    <div class="crochet-v1-head compact">
+      <button class="crochet-back" onclick="page('studio')">‹</button>
+      <div><span>AMÉA STUDIO</span><h2>Yarn Library</h2><p>Save the yarns you reach for most.</p></div>
+      <button class="crochet-new-pattern" onclick="newStudioYarn()">＋</button>
+    </div>
+    ${studioSectionNav("yarns")}
+    <section class="crochet-sub-card">
+      <div class="crochet-library-head"><div><span>YOUR STASH</span><h3>${yarns.length} saved yarn${yarns.length===1?"":"s"}</h3></div><button onclick="newStudioYarn()">＋ Add Yarn</button></div>
+      <div class="crochet-yarn-grid">
+        ${yarns.map(y=>`<button class="crochet-yarn-card" onclick="newStudioYarn('${y.id}')">
+          <span class="crochet-yarn-swatch"></span>
+          <span><b>${esc(y.yarnName||"Yarn")}</b><small>${esc([y.brand,y.colour,y.weightType].filter(Boolean).join(" · ")||"Add details")}</small></span>
+          <i>›</i>
+        </button>`).join("")||'<div class="empty crochet-empty"><b>No yarns saved yet.</b><span>Add yarns you use often so they are ready for patterns.</span></div>'}
+      </div>
+    </section>
+  </div>`;
 }
 function newStudioYarn(id=""){
   const y=id?studioYarnById(id):{};
@@ -1248,8 +1294,25 @@ function deleteStudioYarn(id){
 }
 
 function renderStudioModels(){
-  const v=$("#view");
-  v.innerHTML=`<div class=studio-subpage><div class=studio-detail-nav><button onclick="studioGo('patterns')">← Patterns</button><button onclick=newStudioModel()>＋ Add Model</button></div>${studioLogoBlock("My Models")}<div class=meta studio-page-note>Save each model once, then link them to patterns. Pattern-specific measurements can still be different.</div><div class=studio-library-list>${MODELS().map(m=>`<div class=studio-library-item><div><b>${esc(m.name)}</b><span>${esc(m.usualSize||"No usual size")} · ${(m.measurements||[]).length} measurements</span></div><button onclick="newStudioModel('${m.id}')">Edit</button></div>`).join("")||'<div class=empty>No models saved yet.</div>'}</div></div>`;
+  const v=$("#view"),models=MODELS();
+  v.innerHTML=`<div class="studio-subpage crochet-studio-v1 crochet-library-subpage">
+    <div class="crochet-v1-head compact">
+      <button class="crochet-back" onclick="page('studio')">‹</button>
+      <div><span>AMÉA STUDIO</span><h2>Models</h2><p>Saved measurements for repeat fittings.</p></div>
+      <button class="crochet-new-pattern" onclick="newStudioModel()">＋</button>
+    </div>
+    ${studioSectionNav("models")}
+    <section class="crochet-sub-card">
+      <div class="crochet-library-head"><div><span>MEASUREMENTS</span><h3>${models.length} saved model${models.length===1?"":"s"}</h3></div><button onclick="newStudioModel()">＋ Add Model</button></div>
+      <div class="crochet-model-grid">
+        ${models.map(m=>`<button class="crochet-model-card" onclick="newStudioModel('${m.id}')">
+          <span class="crochet-model-avatar">${esc((m.name||"?").trim().charAt(0).toUpperCase())}</span>
+          <span><b>${esc(m.name||"Model")}</b><small>${esc(m.usualSize||"No usual size")} · ${(m.measurements||[]).length} measurements</small></span>
+          <i>›</i>
+        </button>`).join("")||'<div class="empty crochet-empty"><b>No models saved yet.</b><span>Save someone once, then reuse their measurements across patterns.</span></div>'}
+      </div>
+    </section>
+  </div>`;
 }
 function studioModelMeasureRow(m={}){
   return `<div class=studio-measure-edit data-model-measure><input data-mm-name placeholder="Measurement" value="${esc(m.name||"")}"><input data-mm-value placeholder="Value" value="${esc(m.value||"")}"><select data-mm-unit><option ${m.unit==="in"?"selected":""}>in</option><option ${m.unit==="cm"?"selected":""}>cm</option></select><button type=button onclick="this.parentElement.remove()">×</button></div>`;
@@ -1275,17 +1338,23 @@ function deleteStudioModel(id){
 
 function renderStudioCalculator(){
   const v=$("#view");
-  v.innerHTML=`<div class=studio-subpage><div class=studio-detail-nav><button onclick="studioGo('patterns')">← Patterns</button></div>${studioLogoBlock("Measurement Calculator")}
-    <div class=studio-calc-card>
-      <div class=studio-calc-switch><button id=calcSimpleBtn class=active onclick="studioCalcMode('simple')">Simple</button><button id=calcAdvancedBtn onclick="studioCalcMode('advanced')">Advanced</button></div>
-      <label>Units</label><select id=calcUnit><option value=in>Inches</option><option value=cm>Centimetres</option></select>
-      <div class=studio-two><div><label>Target width / circumference</label><input id=calcWidth type=number step=.01 placeholder="e.g. 34"></div><div><label>Target length</label><input id=calcLength type=number step=.01 placeholder="e.g. 20"></div></div>
-      <div class=studio-calc-gauge><h3>Your gauge</h3><div class=studio-two><input id=calcGaugeSt type=number step=.01 placeholder="Stitches"><input id=calcGaugeWidth type=number step=.01 value=4 placeholder="Across this width"></div><div class=studio-two><input id=calcGaugeRows type=number step=.01 placeholder="Rows"><input id=calcGaugeHeight type=number step=.01 value=4 placeholder="Across this height"></div></div>
-      <div id=calcAdvanced style="display:none"><h3>Advanced</h3><div class=studio-two><div><label>Ease %</label><input id=calcEase type=number step=.1 value=0 placeholder="-10 or 5"></div><div><label>Stretch reduction %</label><input id=calcStretch type=number step=.1 value=0></div></div><div class=studio-two><div><label>Total seam allowance</label><input id=calcSeam type=number step=.01 value=0></div><div><label>Panels</label><input id=calcPanels type=number min=1 step=1 value=1></div></div></div>
-      <button class=primary onclick=calculateStudioGauge()>Calculate</button>
-      <div id=calcResult class=studio-calc-result><span>Your stitch and row counts will show here.</span></div>
+  v.innerHTML=`<div class="studio-subpage crochet-studio-v1 crochet-library-subpage">
+    <div class="crochet-v1-head compact">
+      <button class="crochet-back" onclick="page('studio')">‹</button>
+      <div><span>AMÉA STUDIO</span><h2>Calculator</h2><p>Turn your swatch gauge into stitches and rows.</p></div>
+      <span class="crochet-head-spacer"></span>
     </div>
-    <div class="meta studio-calc-note">Use your own swatch gauge. Counts are a starting point — always check fit and fabric stretch on the actual piece.</div>
+    ${studioSectionNav("calculator")}
+    <div class="studio-calc-card crochet-calc-v1">
+      <div class="studio-calc-switch"><button id="calcSimpleBtn" class="active" onclick="studioCalcMode('simple')">Simple</button><button id="calcAdvancedBtn" onclick="studioCalcMode('advanced')">Advanced</button></div>
+      <label>Units</label><select id="calcUnit"><option value="in">Inches</option><option value="cm">Centimetres</option></select>
+      <div class="studio-two"><div><label>Target width / circumference</label><input id="calcWidth" type="number" step=".01" placeholder="e.g. 34"></div><div><label>Target length</label><input id="calcLength" type="number" step=".01" placeholder="e.g. 20"></div></div>
+      <div class="studio-calc-gauge"><span class="calc-kicker">YOUR SWATCH</span><h3>Gauge</h3><div class="studio-two"><input id="calcGaugeSt" type="number" step=".01" placeholder="Stitches"><input id="calcGaugeWidth" type="number" step=".01" value="4" placeholder="Across this width"></div><div class="studio-two"><input id="calcGaugeRows" type="number" step=".01" placeholder="Rows"><input id="calcGaugeHeight" type="number" step=".01" value="4" placeholder="Across this height"></div></div>
+      <div id="calcAdvanced" style="display:none"><span class="calc-kicker">FIT CONTROL</span><h3>Advanced</h3><div class="studio-two"><div><label>Ease %</label><input id="calcEase" type="number" step=".1" value="0" placeholder="-10 or 5"></div><div><label>Stretch reduction %</label><input id="calcStretch" type="number" step=".1" value="0"></div></div><div class="studio-two"><div><label>Total seam allowance</label><input id="calcSeam" type="number" step=".01" value="0"></div><div><label>Panels</label><input id="calcPanels" type="number" min="1" step="1" value="1"></div></div></div>
+      <button class="primary crochet-calc-btn" onclick="calculateStudioGauge()">Calculate</button>
+      <div id="calcResult" class="studio-calc-result"><span>Your stitch and row counts will show here.</span></div>
+    </div>
+    <div class="meta studio-calc-note crochet-calc-note">Use your own swatch gauge. The result is a starting point — always check the fit and stretch of the actual fabric.</div>
   </div>`;
 }
 function studioCalcMode(mode){
