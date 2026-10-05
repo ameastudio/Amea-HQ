@@ -1291,51 +1291,57 @@ function renderCalendarPage(){
     else if(i>=startDay+daysInMonth){day=i-(startDay+daysInMonth)+1;cm=m+1;muted=true;if(cm>11){cm=0;cy++}}
     else day=i-startDay+1;
     const key=calendarDayKey(cy,cm,day),orders=byDue[key]||[];
-    const names=orders.slice(0,3).map(o=>`<span class=calendar-name title="${esc(o.customer||"Customer")}">${esc(o.customer||"Customer")}</span>`).join("");
-    const extra=orders.length>3?`<span class=calendar-more>+${orders.length-3} more</span>`:"";
-    cells.push(`<div class="calendar-cell ${muted?"muted":""} ${key===todayKey?"today":""}"><div class=calendar-date>${day}</div><div class=calendar-due-list>${names}${extra}</div></div>`);
+    const name=orders[0]?esc(orders[0].customer||"Order"):"";
+    const extra=orders.length>1?`<span class=calendar-more>+${orders.length-1}</span>`:"";
+    cells.push(`<div class="calendar-cell ${muted?"muted":""} ${key===todayKey?"today":""} ${orders.length?"has-orders":""}">
+      <div class=calendar-date>${day}</div>
+      ${orders.length?`<div class=calendar-due-list><span class=calendar-name title="${name}">${name}</span>${extra}</div>`:""}
+    </div>`);
   }
+
   const month=calendarCursor.toLocaleDateString("en-JM",{month:"long",year:"numeric"});
-  const dueCount=Object.entries(byDue).filter(([k])=>k.startsWith(`${y}-${String(m+1).padStart(2,"0")}-`)).reduce((n,[,v])=>n+v.length,0);
-  return `<div class=calendar-page>
-    <div class=calendar-title-row><div><span class=calendar-eyebrow>AMÉA HQ</span><h2>Calendar</h2><p>See exactly who is due each day.</p></div><button class=calendar-export onclick=ics()>Export .ics</button></div>
+  const prefix=`${y}-${String(m+1).padStart(2,"0")}-`;
+  const monthOrders=O().filter(o=>o.due&&o.due.startsWith(prefix)).sort((a,b)=>String(a.due).localeCompare(String(b.due)));
+  const dueCount=monthOrders.length;
+  const openCount=monthOrders.filter(o=>o.status!=="Delivered").length;
+  const readyCount=monthOrders.filter(o=>o.status==="Ready").length;
+
+  return `<div class="calendar-page calendar-redesign">
+    <div class=calendar-title-row>
+      <div><span class=calendar-eyebrow>AMÉA HQ</span><h2>Calendar</h2><p>Deadlines without the clutter.</p></div>
+      <button class=calendar-export onclick=ics()>Export</button>
+    </div>
+
+    <div class="calendar-summary">
+      <div><span>This month</span><strong>${dueCount}</strong><small>orders due</small></div>
+      <div><span>Still open</span><strong>${openCount}</strong><small>to finish</small></div>
+      <div><span>Ready</span><strong>${readyCount}</strong><small>for delivery</small></div>
+    </div>
+
     <div class=calendar-shell>
-      <div class=calendar-month-head><button onclick="calendarMove(-1)" aria-label="Previous month">‹</button><div><h3>${esc(month)}</h3><span>${dueCount} order${dueCount===1?"":"s"} due</span></div><button onclick="calendarMove(1)" aria-label="Next month">›</button></div>
+      <div class=calendar-month-head><button onclick="calendarMove(-1)" aria-label="Previous month">‹</button><div><h3>${esc(month)}</h3><span>${dueCount} deadline${dueCount===1?"":"s"}</span></div><button onclick="calendarMove(1)" aria-label="Next month">›</button></div>
       <div class=calendar-weekdays>${["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map(d=>`<span>${d}</span>`).join("")}</div>
       <div class=calendar-grid>${cells.join("")}</div>
-      <button class=calendar-today onclick=calendarGoToday()>Today</button>
+      <button class=calendar-today onclick=calendarGoToday()>Jump to today</button>
     </div>
+
+    <section class="calendar-agenda">
+      <div class="orders-section-head"><div><span>DEADLINES</span><h3>${esc(month)}</h3></div></div>
+      <div class="calendar-agenda-list">
+        ${monthOrders.length?monthOrders.map(o=>{
+          const d=parseDateOnly(o.due);
+          const day=d?d.toLocaleDateString("en-JM",{day:"numeric"}):"";
+          const mon=d?d.toLocaleDateString("en-JM",{month:"short"}):"";
+          return `<button onclick="openOrderView('${o.id}')">
+            <span class=agenda-date><b>${day}</b><small>${mon}</small></span>
+            <span class=agenda-copy><b>${esc(o.customer||"Customer")}</b><small>${esc(o.product||o.no||"Order")}</small></span>
+            <em class="hq-status ${String(o.status||"").toLowerCase().replaceAll(" ","-")}">${esc(o.status||"New")}</em>
+          </button>`;
+        }).join(""):`<div class="hq-empty">No deadlines this month.</div>`}
+      </div>
+    </section>
   </div>`;
 }
-
-function renderStudioHub(){
-  const active=PATTERNS().filter(p=>String(p.status||"").toLowerCase()!=="completed").length;
-  const yarns=YARNS().length;
-  return `<div class="studio-hub-page">
-    <div class="studio-hub-head">
-      <span class="studio-hub-eyebrow">AMÉA HQ</span>
-      <h2>Studio</h2>
-      <p>Your creative spaces, together.</p>
-    </div>
-    <div class="studio-hub-grid">
-      <button class="studio-hub-card crochet" onclick="page('crochet')">
-        <div class="studio-hub-icon">🧶</div>
-        <div class="studio-hub-copy"><span>MAKE & TRACK</span><h3>Crochet Studio</h3><p>Patterns, yarn, measurements, progress and maker tools.</p></div>
-        <b>→</b>
-      </button>
-      <button class="studio-hub-card design" onclick="window.location.href='design-studio.html'">
-        <div class="studio-hub-icon">✎</div>
-        <div class="studio-hub-copy"><span>CREATE & PLAN</span><h3>Design Studio</h3><p>Sketch, colour, motifs, references and design ideas.</p></div>
-        <b>→</b>
-      </button>
-    </div>
-    <div class="studio-hub-mini">
-      <div><span>Active patterns</span><strong>${active}</strong></div>
-      <div><span>Yarns saved</span><strong>${yarns}</strong></div>
-    </div>
-  </div>`;
-}
-
 function page(x){cur=x;render()}function render(){document.body.classList.toggle("studio-mode",cur==="crochet");const navPage=cur==="crochet"?"studio":cur;document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===navPage));let v=$("#view");if(cur=="home"){
   const orders=O(),expenses=E(),inventory=I(),now=new Date();
   const sameMonth=d=>{
@@ -1580,14 +1586,33 @@ function orderDueLabel(o){
 }
 function renderOrdersPage(){
   const orders=sortOrdersSmart(O());
+  const statusCount=st=>orders.filter(o=>o.status===st).length;
   const today=orders.filter(o=>o.status!=="Delivered"&&orderDueOffset(o)===0);
   const soon=orders.filter(o=>o.status!=="Delivered"&&orderDueOffset(o)>0&&orderDueOffset(o)<=7);
-  return `<div class=orders-page>
-    <div class=orders-title-row><div><h2>Orders</h2><div class=meta>Open an order to see the making details first.</div></div><button onclick=newOrder()>＋ New Order</button></div>
-    ${(today.length||soon.length)?`<div class=due-priority-wrap>${today.length?`<section class=due-priority today-due><div class=due-priority-head><div><span>TODAY</span><b>${today.length} order${today.length===1?"":"s"} due</b></div></div>${list(today,true)}</section>`:""}${soon.length?`<section class=due-priority><div class=due-priority-head><div><span>DUE SOON</span><b>Next 7 days</b></div></div>${list(soon,true)}</section>`:""}</div>`:""}
-    <div class=orders-all-head><h3>All Orders</h3><span>${orders.length}</span></div>
-    <input placeholder="Search orders, customers, products…" oninput="searchO(this.value)">
-    <div id=ol>${list(orders)||'<div class=empty>No orders yet.</div>'}</div>
+  return `<div class="orders-page orders-redesign">
+    <div class="orders-title-row">
+      <div><span class="orders-kicker">AMÉA HQ</span><h2>Orders</h2><p>Everything you’re making, in one place.</p></div>
+      <button onclick=newOrder()>＋ New Order</button>
+    </div>
+
+    <div class="orders-status-strip">
+      <div><span>New</span><strong>${statusCount("New")}</strong></div>
+      <div><span>In Studio</span><strong>${statusCount("In Studio")}</strong></div>
+      <div><span>Ready</span><strong>${statusCount("Ready")}</strong></div>
+      <div><span>Delivered</span><strong>${statusCount("Delivered")}</strong></div>
+    </div>
+
+    ${(today.length||soon.length)?`<section class="orders-priority">
+      <div class="orders-section-head"><div><span>PRIORITY</span><h3>Coming up</h3></div><button onclick="page('calendar')">Calendar →</button></div>
+      ${today.length?`<div class="priority-group"><b>Due today</b>${list(today,true)}</div>`:""}
+      ${soon.length?`<div class="priority-group"><b>Next 7 days</b>${list(soon.slice(0,5),true)}</div>`:""}
+    </section>`:""}
+
+    <section class="orders-library">
+      <div class="orders-section-head"><div><span>ALL ORDERS</span><h3>${orders.length} total</h3></div></div>
+      <div class="orders-search-wrap"><span>⌕</span><input placeholder="Search customer, order or item…" oninput="searchO(this.value)"></div>
+      <div id=ol class="orders-list">${list(orders)||'<div class=empty>No orders yet.</div>'}</div>
+    </section>
   </div>`;
 }
 function list(a,compact=false){return a.map(x=>{
