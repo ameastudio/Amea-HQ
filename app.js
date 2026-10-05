@@ -1363,12 +1363,12 @@ else if(cur=="more"){
   let when=last?new Date(last).toLocaleString("en-JM",{dateStyle:"medium",timeStyle:"short"}):"Not synced yet";
   v.innerHTML=`<h2>More</h2>
   <div class=quick>
+    <button onclick="page('customers')">♙ Customers</button>
+    <button onclick="page('invoices')">▧ Invoices</button>
     <button onclick="page('items')">♢ Items</button>
     <button onclick="page('inventory')">▦ Inventory</button>
     <button onclick="page('expenses')">↘ Expenses</button>
     <button onclick="page('analytics')">▥ Analytics</button>
-    <button onclick="page('crochet')">✦ Crochet Studio</button>
-    <button onclick="page('calendar')">♡ Calendar</button>
     <button onclick="page('settings')">⚙ Settings</button>
   </div>
 
