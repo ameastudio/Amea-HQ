@@ -573,7 +573,10 @@ function togglePanel(side,open){
 }
 function openStudioTab(tab){
   togglePanel("right",true);
-  const btn=$('.tab-btn[data-tab="'+tab+'"]');if(btn)btn.click();
+  $(".tab-panel").forEach(p=>p.classList.toggle("active",p.dataset.panel===tab));
+  $(".tab-btn").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));
+  const title=$("#toolPanelTitle");
+  if(title)title.textContent=tab==="colour"?"Colour":tab==="layers"?"Layers":tab==="croquis"?"Croquis":tab==="motifs"?"Motifs":"Reference";
 }
 $("#toggleLeft").onclick=()=>togglePanel("left",false);
 $("#toggleRight").onclick=()=>togglePanel("right",false);
