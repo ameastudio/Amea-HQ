@@ -153,37 +153,44 @@
       </div>
     </section>
 
-    <section class="tab-panel" data-panel="croquis">
+    <section class="tab-panel croquis-panel" data-panel="croquis">
       <div class="croquis-section-head">
-        <span class="mini-kicker">BODY TYPE</span>
-        <strong>Choose your base</strong>
+        <span class="mini-kicker">CROQUIS</span>
+        <strong>Choose your drawing base</strong>
+        <small>Minimal line • made to draw over</small>
       </div>
 
       <div class="body-type-switch">
         <button class="body-type-btn active" data-body-type="classic">
           <span class="body-type-preview"><canvas width="96" height="150" data-body-preview="classic"></canvas></span>
-          <span><strong>Classic</strong><small>Long fashion proportions</small></span>
+          <span><strong>Classic</strong><small>Long, natural fashion proportions</small></span>
         </button>
         <button class="body-type-btn" data-body-type="curvy">
           <span class="body-type-preview"><canvas width="96" height="150" data-body-preview="curvy"></canvas></span>
-          <span><strong>Curvy</strong><small>Fuller waist & hips</small></span>
+          <span><strong>Curvy</strong><small>Defined waist, fuller hips & thighs</small></span>
         </button>
       </div>
 
-      <div class="section-block">
-        <span class="field-title">View</span>
+      <div class="croquis-control-card">
+        <div class="croquis-control-title"><span>VIEW</span><small>Same base, different angle</small></div>
         <div class="view-choice-grid">
           <button class="view-choice active" data-view="front">Front</button>
           <button class="view-choice" data-view="back">Back</button>
-          <button class="view-choice" data-view="threequarter">3/4</button>
+          <button class="view-choice" data-view="threequarter">¾</button>
         </div>
       </div>
 
-      <div class="control-card">
-        <div class="control-row-head"><span>Croquis opacity</span><output id="croquisOpacityValue">100%</output></div>
+      <div class="croquis-control-card">
+        <div class="control-row-head"><span>Line opacity</span><output id="croquisOpacityValue">100%</output></div>
         <input id="croquisOpacity" type="range" min="0" max="100" value="100" />
+        <small class="croquis-tip">Lower it while sketching so your outfit stands out.</small>
       </div>
-      <label class="toggle-line"><input id="hideCroquis" type="checkbox" /><span>Hide croquis</span></label>
+
+      <label class="croquis-visibility-row">
+        <span><strong>Show croquis</strong><small>Turn the base on or off anytime</small></span>
+        <input id="hideCroquis" type="checkbox" />
+        <i class="croquis-switch" aria-hidden="true"></i>
+      </label>
     </section>
 
     <section class="tab-panel" data-panel="motifs">
