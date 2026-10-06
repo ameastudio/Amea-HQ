@@ -9,6 +9,29 @@ let cur="home",orderHubTab="orders";const O=()=>G("orders"),C=()=>G("customers")
 PATTERNS=()=>G("studio_patterns"),MODELS=()=>G("studio_models"),YARNS=()=>G("studio_yarns"),VERSIONS=()=>G("studio_versions");
 const M=n=>new Intl.NumberFormat("en-JM",{style:"currency",currency:"JMD",maximumFractionDigits:0}).format(+n||0);
 const AMEA_LOGO_DATA="data:image/png;base64,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";
+
+function ameaIcon(name,cls=""){
+  const icons={
+    home:'<path d="M3.8 10.7 12 3.8l8.2 6.9v8a1.5 1.5 0 0 1-1.5 1.5h-4.3v-5.7H9.6v5.7H5.3a1.5 1.5 0 0 1-1.5-1.5z"/>',
+    orders:'<path d="M5 7.2 12 3.8l7 3.4-7 3.5z"/><path d="M5 7.2v8.7l7 4.3 7-4.3V7.2M12 10.7v9.5"/>',
+    people:'<path d="M8.6 11.1a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4Z"/><path d="M3.5 19.4c.4-3.1 2.2-5.1 5.1-5.1s4.7 2 5.1 5.1"/><path d="M16.6 10.5a2.6 2.6 0 1 0 0-5.2M15.6 14.2c2.8 0 4.5 1.7 4.9 4.3"/>',
+    invoice:'<path d="M6 3.8h9l3 3v13.4H6z"/><path d="M15 3.8v3h3M9 11h6M9 14.5h6M9 18h4"/>',
+    inventory:'<path d="m4.5 8 7.5-3.7L19.5 8 12 11.7z"/><path d="M4.5 8v8l7.5 3.7 7.5-3.7V8M12 11.7v8"/>',
+    product:'<path d="M6 8.2h12l-1 11H7z"/><path d="M9 8.2V6.5a3 3 0 0 1 6 0v1.7"/>',
+    expense:'<path d="M5 6h14v12H5z"/><path d="M5 9.5h14M8 14h3"/>',
+    chart:'<path d="M5 19V9M10 19V5M15 19v-7M20 19V3"/><path d="M3.5 19.5h18"/>',
+    cloud:'<path d="M7.3 18.2h10.5a3.2 3.2 0 0 0 .5-6.4A5.5 5.5 0 0 0 7.7 10a4.1 4.1 0 0 0-.4 8.2Z"/><path d="m9.5 14 2.5-2.5 2.5 2.5M12 11.5v6"/>',
+    settings:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4v-.2a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H2.8v-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.6v-.2h4V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1Z"/>',
+    yarn:'<circle cx="12" cy="12" r="8.2"/><path d="M5.4 9.3c4.3-2 9.4-1.7 13.1.7M5.4 14.4c4.3 1.4 9.2 1.1 13.1-1.1M8.1 5c2.6 3 4.8 7.3 6.2 13.1M15.8 5.8c-2.1 3-3.7 6.7-4.7 12"/>',
+    pencil:'<path d="m5 16.7-.8 3.1 3.1-.8L18.7 7.6l-2.3-2.3z"/><path d="m14.9 6.8 2.3 2.3"/>',
+    plus:'<path d="M12 5v14M5 12h14"/>',
+    calendar:'<rect x="3.5" y="5.5" width="17" height="15" rx="2.5"/><path d="M8 3.5v4M16 3.5v4M3.5 10h17"/>',
+    more:'<circle cx="7" cy="7" r="1.7"/><circle cx="17" cy="7" r="1.7"/><circle cx="7" cy="17" r="1.7"/><circle cx="17" cy="17" r="1.7"/>',
+    warning:'<path d="M12 4 21 20H3z"/><path d="M12 9v5M12 17h.01"/>'
+  };
+  return `<svg class="amea-icon ${cls}" viewBox="0 0 24 24" aria-hidden="true">${icons[name]||icons.product}</svg>`;
+}
+
 function jamaicaHour(){
   try{
     const parts=new Intl.DateTimeFormat("en-US",{timeZone:"America/Jamaica",hour:"2-digit",hour12:false}).formatToParts(new Date());
@@ -566,7 +589,7 @@ function renderStudioHub(){
     </div>
 
     <button class="studio-feature-card crochet" onclick="page('crochet')">
-      <div class="studio-feature-art"><span>🧶</span><i>♡</i></div>
+      <div class="studio-feature-art">${ameaIcon("yarn")}<i></i></div>
       <div class="studio-feature-copy">
         <span>MAKE & TRACK</span>
         <h3>Crochet Studio</h3>
@@ -581,7 +604,7 @@ function renderStudioHub(){
     </button>
 
     <button class="studio-feature-card design" onclick="window.location.href='design-studio.html'">
-      <div class="studio-feature-art"><span>✎</span><i>✿</i></div>
+      <div class="studio-feature-art">${ameaIcon("pencil")}<i></i></div>
       <div class="studio-feature-copy">
         <span>CREATE & PLAN</span>
         <h3>Design Studio</h3>
@@ -1497,14 +1520,14 @@ function page(x){
     </section>
 
     <section class="hq-tracking-grid">
-      <button onclick="setOrderHubTab('orders')"><span class="hq-mini-icon">▤</span><div><small>Active orders</small><strong>${active}</strong></div></button>
-      <button onclick="setOrderHubTab('customers')"><span class="hq-mini-icon">♡</span><div><small>Customers</small><strong>${customers.length}</strong></div></button>
-      <button onclick="page('inventory')"><span class="hq-mini-icon">◇</span><div><small>Low stock</small><strong>${lowStock}</strong></div></button>
-      <button onclick="setOrderHubTab('invoices')"><span class="hq-mini-icon">▧</span><div><small>Invoices due</small><strong>${invoiceDue}</strong></div></button>
+      <button onclick="setOrderHubTab('orders')"><span class="hq-mini-icon">${ameaIcon("orders")}</span><div><small>Active orders</small><strong>${active}</strong></div></button>
+      <button onclick="setOrderHubTab('customers')"><span class="hq-mini-icon">${ameaIcon("people")}</span><div><small>Customers</small><strong>${customers.length}</strong></div></button>
+      <button onclick="page('inventory')"><span class="hq-mini-icon">${ameaIcon("inventory")}</span><div><small>Low stock</small><strong>${lowStock}</strong></div></button>
+      <button onclick="setOrderHubTab('invoices')"><span class="hq-mini-icon">${ameaIcon("invoice")}</span><div><small>Invoices due</small><strong>${invoiceDue}</strong></div></button>
     </section>
 
     <button class="hq-manage-orders" onclick="setOrderHubTab('orders')">
-      <span class="hq-manage-icon">◇</span>
+      <span class="hq-manage-icon">${ameaIcon("orders")}</span>
       <span><b>View & Manage Orders</b><small>Orders, Customers & Invoices</small></span>
       <i>›</i>
     </button>
@@ -1512,10 +1535,10 @@ function page(x){
     <section class="hq-quick-section">
       <div class="hq-panel-head"><div><span class="hq-section-kicker">QUICK ACTIONS</span><h3>Get it done</h3></div></div>
       <div class="hq-quick-grid">
-        <button onclick="newOrder()"><span>＋</span><b>New Order</b></button>
-        <button onclick="newCustomer()"><span>♡</span><b>New Customer</b></button>
-        <button onclick="setOrderHubTab('invoices')"><span>▧</span><b>Invoices</b></button>
-        <button onclick="newItem()"><span>✿</span><b>New Product</b></button>
+        <button onclick="newOrder()"><span>${ameaIcon("plus")}</span><b>New Order</b></button>
+        <button onclick="newCustomer()"><span>${ameaIcon("people")}</span><b>New Customer</b></button>
+        <button onclick="setOrderHubTab('invoices')"><span>${ameaIcon("invoice")}</span><b>Invoices</b></button>
+        <button onclick="newItem()"><span>${ameaIcon("product")}</span><b>New Product</b></button>
       </div>
     </section>
 
@@ -1555,7 +1578,7 @@ else if(cur=="invoices"){
     <div class="tool-summary-grid two"><div><span>Balance due</span><strong>${M(dueTotal)}</strong></div><div><span>Open invoices</span><strong>${due.length}</strong></div></div>
     <div class="tool-list-card">
       ${orders.length?orders.map(o=>{const bal=Math.max(0,(+o.price||0)-(+o.paid||0));return `<button class="invoice-modern-row" onclick="openInvoice('${o.id}')">
-        <span class="invoice-icon">▧</span><span class="invoice-main"><b>${esc("INV-"+o.no)}</b><small>${esc(o.customer||"")} · ${esc(orderSummaryProduct(orderItemsFor(o)))}</small></span>
+        <span class="invoice-icon">${ameaIcon("invoice")}</span><span class="invoice-main"><b>${esc("INV-"+o.no)}</b><small>${esc(o.customer||"")} · ${esc(orderSummaryProduct(orderItemsFor(o)))}</small></span>
         <span class="invoice-value"><b>${bal>0?M(bal):"Paid"}</b><small>${bal>0?"balance":"complete"}</small></span><i>›</i>
       </button>`}).join(""):'<div class=empty>No invoices yet. Create an order first.</div>'}
     </div>
@@ -1575,7 +1598,7 @@ else if(cur=="inventory"){
     <div class="tool-page-head"><div><span>STOCK & MONEY</span><h2>Inventory</h2><p>Materials and supplies you need to keep making.</p></div><button onclick=newInventory()>＋ Add</button></div>
     <div class="tool-summary-grid two"><div><span>Inventory items</span><strong>${stock.length}</strong></div><div class="${low.length?"alert":""}"><span>Low stock</span><strong>${low.length}</strong></div></div>
     <div class="tool-list-card">${stock.map(x=>`<button class="stock-modern-row" onclick="newInventory('${x.id}')">
-      <span class="stock-icon">${(+x.qty||0)<=(+x.low||0)?"!":"◇"}</span><span class="stock-main"><b>${esc(x.name)}</b><small>${esc(x.type||"Material")}</small></span>
+      <span class="stock-icon">${ameaIcon((+x.qty||0)<=(+x.low||0)?"warning":"inventory")}</span><span class="stock-main"><b>${esc(x.name)}</b><small>${esc(x.type||"Material")}</small></span>
       <span class="stock-count ${(+x.qty||0)<=(+x.low||0)?"low":""}"><b>${x.qty}</b><small>${esc(x.unit||"")}</small></span><i>›</i>
     </button>`).join("")||'<div class=empty>No inventory yet.</div>'}</div>
   </div>`;
@@ -1588,12 +1611,12 @@ else if(cur=="more"){
   v.innerHTML=`<div class="more-page clean-more-page">
     <div class="tool-page-head more-head"><div><span>AMÉA HQ</span><h2>More</h2><p>Secondary tools for everything else.</p></div></div>
     <section class="more-menu-list">
-      <button onclick="page('items')"><span class="more-line-icon">✿</span><span><b>Products</b><small>Manage your product catalogue</small></span><i>›</i></button>
-      <button onclick="page('inventory')"><span class="more-line-icon">◇</span><span><b>Inventory</b><small>Track materials and stock levels</small></span><i>›</i></button>
-      <button onclick="page('expenses')"><span class="more-line-icon">▤</span><span><b>Expenses</b><small>Log and manage business costs</small></span><i>›</i></button>
-      <button onclick="page('analytics')"><span class="more-line-icon">↗</span><span><b>Analytics</b><small>View detailed reports and insights</small></span><i>›</i></button>
-      <button onclick="syncNow()"><span class="more-line-icon">☁</span><span><b>Cloud Sync</b><small>${esc(cs)} · ${esc(when)}</small></span><i class="${state==="error"?"sync-error":""}">↻</i></button>
-      <button onclick="page('settings')"><span class="more-line-icon">⚙</span><span><b>Settings</b><small>Business info and app preferences</small></span><i>›</i></button>
+      <button onclick="page('items')"><span class="more-line-icon">${ameaIcon("product")}</span><span><b>Products</b><small>Manage your product catalogue</small></span><i>›</i></button>
+      <button onclick="page('inventory')"><span class="more-line-icon">${ameaIcon("inventory")}</span><span><b>Inventory</b><small>Track materials and stock levels</small></span><i>›</i></button>
+      <button onclick="page('expenses')"><span class="more-line-icon">${ameaIcon("expense")}</span><span><b>Expenses</b><small>Log and manage business costs</small></span><i>›</i></button>
+      <button onclick="page('analytics')"><span class="more-line-icon">${ameaIcon("chart")}</span><span><b>Analytics</b><small>View detailed reports and insights</small></span><i>›</i></button>
+      <button onclick="syncNow()"><span class="more-line-icon">${ameaIcon("cloud")}</span><span><b>Cloud Sync</b><small>${esc(cs)} · ${esc(when)}</small></span><i class="${state==="error"?"sync-error":""}">↻</i></button>
+      <button onclick="page('settings')"><span class="more-line-icon">${ameaIcon("settings")}</span><span><b>Settings</b><small>Business info and app preferences</small></span><i>›</i></button>
     </section>
   </div>`;
 }
@@ -1603,7 +1626,7 @@ else if(cur=="expenses"){
   v.innerHTML=`<div class="tool-page">
     <div class="tool-page-head"><div><span>STOCK & MONEY</span><h2>Expenses</h2><p>Keep track of what the business spends.</p></div><div class=top-actions><button onclick=manageSuppliers()>Suppliers</button><button class=tool-add-btn onclick=newExpense()>＋ Add</button></div></div>
     <div class="tool-summary-grid one"><div><span>Total recorded</span><strong>${M(total)}</strong></div></div>
-    <div class="tool-list-card">${expenses.map(x=>`<div class="expense-modern-row"><span class="expense-icon">↘</span><span class=expense-main><b>${esc(x.category||"Expense")}</b><small>${esc(x.date||"")}${x.supplier?" · "+esc(x.supplier):""}${x.note?" · "+esc(x.note):""}</small></span><strong>${M(x.amount)}</strong></div>`).join("")||'<div class=empty>No expenses yet.</div>'}</div>
+    <div class="tool-list-card">${expenses.map(x=>`<div class="expense-modern-row"><span class="expense-icon">${ameaIcon("expense")}</span><span class=expense-main><b>${esc(x.category||"Expense")}</b><small>${esc(x.date||"")}${x.supplier?" · "+esc(x.supplier):""}${x.note?" · "+esc(x.note):""}</small></span><strong>${M(x.amount)}</strong></div>`).join("")||'<div class=empty>No expenses yet.</div>'}</div>
   </div>`;
 }
 else if(cur=="analytics"){renderAnalytics("month")}
@@ -1717,7 +1740,7 @@ function renderInvoicesHubTab(){
       <div class="orders-search-wrap"><span>⌕</span><input placeholder="Search invoices…" oninput="filterOrderHubRows(this.value,'.invoice-modern-row')"></div>
       <div class="tool-list-card hub-tool-list">
         ${orders.length?orders.map(o=>{const bal=Math.max(0,(+o.price||0)-(+o.paid||0));const search=esc([o.no,o.customer,orderSummaryProduct(orderItemsFor(o))].filter(Boolean).join(" ").toLowerCase());return `<button class="invoice-modern-row" data-search="${search}" onclick="openInvoice('${o.id}')">
-          <span class="invoice-icon">▧</span><span class="invoice-main"><b>${esc("INV-"+o.no)}</b><small>${esc(o.customer||"")} · ${esc(orderSummaryProduct(orderItemsFor(o)))}</small></span>
+          <span class="invoice-icon">${ameaIcon("invoice")}</span><span class="invoice-main"><b>${esc("INV-"+o.no)}</b><small>${esc(o.customer||"")} · ${esc(orderSummaryProduct(orderItemsFor(o)))}</small></span>
           <span class="invoice-value"><b>${bal>0?M(bal):"Paid"}</b><small>${bal>0?"balance":"complete"}</small></span><i>›</i>
         </button>`}).join(""):'<div class=empty>No invoices yet. Create an order first.</div>'}
       </div>
