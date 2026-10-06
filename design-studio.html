@@ -9,37 +9,36 @@
 </head>
 <body>
 <div class="studio-shell left-collapsed right-collapsed" id="studioShell">
-  <header class="topbar">
-    <div class="brand-group">
-      <a class="top-icon" href="index.html" aria-label="Back to Améa HQ"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 8 12l7 7"/></svg></a>
-      <div class="brand-copy"><span class="eyebrow">AMÉA HQ</span><strong>Design Studio</strong></div>
+  <header class="topbar procreate-topbar">
+    <div class="top-left procreate-top-left">
+      <a class="top-icon" href="index.html" aria-label="Back to Améa HQ"><svg viewBox="0 0 24 24"><path d="M15 5 8 12l7 7"/></svg></a>
+      <button class="top-icon" id="undoBtn" aria-label="Undo"><svg viewBox="0 0 24 24"><path d="M9 7 4.5 11.5 9 16"/><path d="M5 11.5h8.5a5 5 0 0 1 5 5V18"/></svg></button>
+      <button class="top-icon" id="redoBtn" aria-label="Redo"><svg viewBox="0 0 24 24"><path d="m15 7 4.5 4.5L15 16"/><path d="M19 11.5h-8.5a5 5 0 0 0-5 5V18"/></svg></button>
+      <button class="top-icon studio-action-btn" id="studioTopBtn" aria-label="Studio actions"><svg viewBox="0 0 24 24"><path d="m14.7 6.3 3 3"/><path d="M5 19l3.2-.8L18.4 8a2.1 2.1 0 0 0-3-3L5.2 15.2 5 19Z"/><path d="M13 5 5 13"/></svg></button>
     </div>
 
     <input id="designName" class="design-name" value="Untitled Design" aria-label="Design name" />
 
-    <div class="top-right">
-      <div class="history-group">
-        <button class="top-icon round" id="undoBtn" aria-label="Undo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7 4.5 11.5 9 16"/><path d="M5 11.5h8.5a5 5 0 0 1 5 5V18"/></svg></button>
-        <button class="top-icon round" id="redoBtn" aria-label="Redo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 7 4.5 4.5L15 16"/><path d="M19 11.5h-8.5a5 5 0 0 0-5 5V18"/></svg></button>
-      </div>
-      <span id="zoomReadout" class="zoom-readout">100%</span>
-      <button class="export-btn" id="exportBtn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M8 8l4-4 4 4"/><path d="M5 13v6h14v-6"/></svg><span>Export</span></button>
+    <div class="top-right procreate-tool-row">
+      <button class="procreate-tool active" id="brushTopBtn" aria-label="Brushes" title="Brushes">
+        <svg viewBox="0 0 24 24"><path d="M14 4c2.8 1 4.8 3 5.8 5.7L10 19.5 4.5 20l.5-5.5L14 4Z"/><path d="m12.3 6 5.7 5.7"/></svg>
+      </button>
+      <button class="procreate-tool" id="smudgeTopBtn" aria-label="Smudge" title="Smudge">
+        <svg viewBox="0 0 24 24"><path d="M8.5 13.5V8.2a1.6 1.6 0 0 1 3.2 0v3.2"/><path d="M11.7 11.4V6.8a1.6 1.6 0 0 1 3.2 0v4.8"/><path d="M14.9 11.6V8.1a1.6 1.6 0 0 1 3.2 0v6.3c0 3.8-2.4 6.1-6.1 6.1-2.4 0-4.2-1.1-5.5-3L4 14.3a1.8 1.8 0 0 1 2.6-2.4l1.9 1.6Z"/></svg>
+      </button>
+      <button class="procreate-tool" id="eraserTopBtn" aria-label="Eraser" title="Eraser">
+        <svg viewBox="0 0 24 24"><path d="m7 17-3-3 8.5-8.5a2.1 2.1 0 0 1 3 0l3 3a2.1 2.1 0 0 1 0 3L13 17H7Z"/><path d="M12 17h7"/></svg>
+      </button>
+      <button class="procreate-tool" id="layersTopBtn" aria-label="Layers" title="Layers">
+        <svg viewBox="0 0 24 24"><path d="m12 4 8 4-8 4-8-4 8-4Z"/><path d="m4 12 8 4 8-4"/><path d="m4 16 8 4 8-4"/></svg>
+      </button>
+      <button class="procreate-colour-btn" id="colourTopBtn" aria-label="Colour" title="Colour"><i id="dockColourDot"></i></button>
+      <button class="export-btn" id="exportBtn" aria-label="Export"><svg viewBox="0 0 24 24"><path d="M12 15V4M8 8l4-4 4 4"/><path d="M5 13v6h14v-6"/></svg><span>Export</span></button>
     </div>
-  </header>
-
-  <aside class="panel left-panel">
+  </header>  <aside class="panel left-panel procreate-popover brush-popover">
     <div class="panel-top">
-      <div><span class="panel-kicker">CREATE</span><h2>Brushes</h2></div>
-      <button class="collapse-btn" id="toggleLeft" aria-label="Close brushes"><svg viewBox="0 0 24 24"><path d="m15 5-7 7 7 7"/></svg></button>
-    </div>
-
-    <div class="active-brush-card">
-      <div class="active-brush-preview"><canvas id="activeBrushPreview" width="300" height="90"></canvas></div>
-      <div class="active-brush-copy">
-        <span>ACTIVE BRUSH</span>
-        <strong id="activeBrushName">HB Pencil</strong>
-        <small id="activeBrushNote">Smooth everyday drawing pencil</small>
-      </div>
+      <div><span class="panel-kicker">BRUSH LIBRARY</span><h2>Brush Library</h2></div>
+      <button class="collapse-btn" id="toggleLeft" aria-label="Close brushes"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
     </div>
 
     <div class="brush-library-shell">
@@ -53,41 +52,19 @@
       <div class="brush-presets" id="brushPresets"></div>
     </div>
 
-    <div class="quick-tools">
-      <button class="quick-tool" data-tool="eraser"><svg viewBox="0 0 24 24"><path d="m7 17-3-3 8.5-8.5a2.1 2.1 0 0 1 3 0l3 3a2.1 2.1 0 0 1 0 3L13 17H7Z"/><path d="m9 9 6 6M12 17h7"/></svg><small>Eraser</small></button>
-      <button class="quick-tool" data-tool="eyedropper"><svg viewBox="0 0 24 24"><path d="m15.5 4.5 4 4L9 19H5v-4z"/><path d="m13 7 4 4"/></svg><small>Pick</small></button>
-      <button class="quick-tool" data-tool="select"><svg viewBox="0 0 24 24"><path d="M5 9V5h4M15 5h4v4M19 15v4h-4M9 19H5v-4"/></svg><small>Select</small></button>
-      <button class="quick-tool" data-tool="stamp"><svg viewBox="0 0 24 24"><path d="M8 14c0-2 1.1-3.2 2.2-4.2C11.2 8.8 11 7.9 11 7a3 3 0 0 1 6 0c0 1-.2 1.8.8 2.8C18.9 10.8 20 12 20 14"/><path d="M6 14h14v5H6z"/></svg><small>Stamp</small></button>
-      <button class="quick-tool" data-tool="scatter"><svg viewBox="0 0 24 24"><circle cx="7" cy="8" r="2"/><circle cx="16.5" cy="6.5" r="1.5"/><circle cx="14" cy="15" r="2.3"/><circle cx="6.5" cy="17" r="1.3"/></svg><small>Scatter</small></button>
-      <button class="quick-tool" data-tool="fillpattern"><svg viewBox="0 0 24 24"><path d="M5 5h14v14H5z"/><path d="M5 10h14M10 5v14M15 5v14M5 15h14"/></svg><small>Fill</small></button>
-    </div>
-
-    <div class="brush-control-grid">
+    <div class="brush-settings-strip">
       <div class="control-card">
-        <div class="control-row-head"><span>Size</span><output id="brushSizeValue">12</output></div>
-        <input id="brushSize" type="range" min="2" max="120" value="12" />
+        <div class="control-row-head"><span>Smoothing</span><output id="brushSmoothingValue">28%</output></div>
+        <input id="brushSmoothing" type="range" min="0" max="100" value="28" />
+        <label class="toggle-line"><input id="pressureToggle" type="checkbox" checked /><span>Apple Pencil pressure</span></label>
       </div>
       <div class="control-card">
-        <div class="control-row-head"><span>Opacity</span><output id="brushOpacityValue">100%</output></div>
-        <input id="brushOpacity" type="range" min="5" max="100" value="100" />
+        <div class="control-row-head"><span>Eraser size</span><output id="eraserSizeValue">48</output></div>
+        <input id="eraserSize" type="range" min="5" max="180" value="48" />
       </div>
+      <button class="secondary-wide" id="clearLayerBtn">Clear active layer</button>
     </div>
-
-    <div class="control-card">
-      <div class="control-row-head"><span>Smoothing</span><output id="brushSmoothingValue">28%</output></div>
-      <input id="brushSmoothing" type="range" min="0" max="100" value="28" />
-      <label class="toggle-line"><input id="pressureToggle" type="checkbox" checked /><span>Apple Pencil pressure</span></label>
-    </div>
-
-    <div class="control-card eraser-control">
-      <div class="control-row-head"><span>Eraser size</span><output id="eraserSizeValue">48</output></div>
-      <input id="eraserSize" type="range" min="5" max="180" value="48" />
-    </div>
-
-    <button class="secondary-wide" id="clearLayerBtn">Clear active layer</button>
   </aside>
-
-  <button class="edge-tab edge-tab-left" id="reopenLeft" aria-label="Open brushes"><svg viewBox="0 0 24 24"><path d="m14 5 5 5-8.5 8.5-5.5 1 1-5.5z"/></svg></button>
 
   <main class="workspace">
     <div class="canvas-viewport" id="canvasViewport">
@@ -96,21 +73,17 @@
       </div>
     </div>
 
-
-    <div class="canvas-tool-dock" aria-label="Drawing tools">
-      <button class="dock-btn panel-launch" id="openBrushesDock" aria-label="Open brushes">
-        <svg viewBox="0 0 24 24"><path d="m14 5 5 5-8.5 8.5-5.5 1 1-5.5z"/><path d="m12 7 5 5"/></svg><span>Brushes</span>
-      </button>
-      <button class="dock-btn quick-tool" data-tool="eraser" aria-label="Eraser">
-        <svg viewBox="0 0 24 24"><path d="m7 17-3-3 8.5-8.5a2.1 2.1 0 0 1 3 0l3 3a2.1 2.1 0 0 1 0 3L13 17H7Z"/><path d="M12 17h7"/></svg><span>Eraser</span>
-      </button>
-      <button class="dock-btn quick-tool" data-tool="eyedropper" aria-label="Colour picker">
-        <svg viewBox="0 0 24 24"><path d="m15.5 4.5 4 4L9 19H5v-4z"/><path d="m13 7 4 4"/></svg><span>Pick</span>
-      </button>
-      <button class="dock-colour" id="openColourDock" aria-label="Open colour panel"><i id="dockColourDot"></i><span>Colour</span></button>
-      <button class="dock-btn panel-launch" id="openStudioDock" aria-label="Open studio tools">
-        <svg viewBox="0 0 24 24"><path d="M5 5h14v14H5z"/><path d="M9 5v14M15 5v14M5 10h14M5 15h14"/></svg><span>Studio</span>
-      </button>
+    <div class="procreate-sliders" aria-label="Brush controls">
+      <label class="pro-slider pro-size-slider" title="Brush size">
+        <span class="slider-value" id="brushSizeValue">12</span>
+        <input id="brushSize" type="range" min="2" max="120" value="12" orient="vertical" />
+        <span class="slider-glyph">●</span>
+      </label>
+      <label class="pro-slider pro-opacity-slider" title="Brush opacity">
+        <span class="slider-value" id="brushOpacityValue">100%</span>
+        <input id="brushOpacity" type="range" min="5" max="100" value="100" orient="vertical" />
+        <span class="slider-glyph">◐</span>
+      </label>
     </div>
 
     <div class="canvas-hud">
@@ -118,7 +91,7 @@
       <span>Pinch to zoom · drag to pan</span>
     </div>
 
-    <div class="view-strip" id="viewStrip">
+    <div class="view-strip procreate-view-strip" id="viewStrip">
       <span class="view-label" id="activeBodyLabel">Classic</span>
       <button class="view-btn active" data-view="front">Front</button>
       <button class="view-btn" data-view="back">Back</button>
@@ -126,7 +99,7 @@
     </div>
   </main>
 
-  <aside class="panel right-panel">
+  <aside class="panel right-panel procreate-popover studio-popover">
     <div class="panel-top">
       <div><span class="panel-kicker">DETAILS</span><h2>Studio</h2></div>
       <button class="collapse-btn" id="toggleRight" aria-label="Close studio panel"><svg viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></svg></button>
@@ -241,8 +214,6 @@
       <button class="secondary-wide" id="removeReferenceBtn">Remove reference</button>
     </section>
   </aside>
-
-  <button class="edge-tab edge-tab-right" id="reopenRight" aria-label="Open studio"><svg viewBox="0 0 24 24"><path d="M5 5h14v14H5z"/><path d="M9 5v14M15 5v14"/></svg></button>
 </div>
 <div class="toast" id="toast"></div>
 <script src="design-studio.js"></script>
