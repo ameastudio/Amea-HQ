@@ -619,3 +619,124 @@ input[type="range"]{accent-color:#f22278}
 .layer-up:disabled,.layer-down:disabled{opacity:.28}
 .layer-delete{width:28px;height:28px;border-radius:8px;font-size:18px;color:#a35b78}
 .layer-item.active{background:#fff0f5;border-color:rgba(242,34,120,.33)}
+
+
+/* ===== Procreate-inspired brush library pass ===== */
+.active-brush-card{
+  display:grid;grid-template-columns:104px minmax(0,1fr);gap:10px;align-items:center;
+  padding:10px;margin-bottom:11px;border-radius:16px;background:linear-gradient(145deg,#fff,#fff0f5);
+  border:1px solid rgba(184,55,108,.15);box-shadow:0 7px 18px rgba(62,27,43,.045)
+}
+.active-brush-preview{
+  height:54px;border-radius:12px;background:#fff;display:grid;place-items:center;overflow:hidden;
+  border:1px solid rgba(160,79,111,.10)
+}
+#activeBrushPreview{width:100px;height:44px;display:block}
+.active-brush-copy{min-width:0;display:flex;flex-direction:column;gap:2px}
+.active-brush-copy>span{font-size:8px;font-weight:900;letter-spacing:.13em;color:#b80f55}
+.active-brush-copy strong{font-size:12px;color:#34202a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.active-brush-copy small{font-size:8px;line-height:1.35;color:#8e7380}
+
+.brush-library-shell{grid-template-columns:86px minmax(0,1fr);min-height:300px}
+.brush-categories{gap:5px}
+.category-chip{padding:10px 8px;border-radius:11px;font-size:9px}
+.category-chip.active{
+  background:linear-gradient(145deg,#ff4f96,#e91d70);color:#fff;
+  box-shadow:0 6px 14px rgba(215,28,102,.17)
+}
+.brush-presets{max-height:322px;gap:6px}
+.brush-preset{
+  position:relative;grid-template-columns:74px minmax(0,1fr) 30px;
+  min-height:62px;padding:7px;border-radius:13px;background:#fff
+}
+.brush-preset.active{
+  background:#fff0f5;border-color:rgba(242,34,120,.34);
+  box-shadow:0 6px 16px rgba(215,28,102,.07)
+}
+.brush-preview-canvas{width:70px;height:38px;border-radius:9px;background:#fffafd}
+.brush-preset-copy{min-width:0}
+.brush-preset strong{font-size:10px;color:#392630}
+.brush-preset small{font-size:7.5px;line-height:1.25;color:#8f7582}
+.fav-star{
+  width:28px;height:28px;border:0;background:transparent;border-radius:9px;
+  color:#d52269;font-size:16px;display:grid;place-items:center;padding:0
+}
+.fav-star:active{background:#ffe2ec}
+.brush-empty{
+  min-height:120px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;padding:15px;border:1px dashed rgba(189,74,120,.22);border-radius:14px;color:#846976
+}
+.brush-empty strong{font-size:10px;color:#573d49}
+.brush-empty small{font-size:8px;margin-top:4px;line-height:1.35}
+.brush-control-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:11px}
+.brush-control-grid .control-card{margin-top:0}
+.eraser-control{margin-top:9px}
+.quick-tools{margin-top:11px}
+.quick-tool{min-height:52px}
+
+
+/* ===== Locked texture brush reference layout ===== */
+@media(min-width:761px){
+  .left-panel{
+    width:min(1120px,calc(100vw - 36px));
+    display:grid;
+    grid-template-columns:minmax(620px,1fr) 300px;
+    grid-template-rows:auto auto auto auto minmax(0,1fr);
+    gap:11px 14px;
+    align-content:start;
+  }
+  .left-panel .panel-top{grid-column:1/-1;margin:0}
+  .left-panel .brush-library-shell{
+    grid-column:1;grid-row:2/7;
+    grid-template-columns:132px minmax(0,1fr);
+    min-height:0;height:calc(100vh - 116px);
+    padding-right:4px;border-right:1px solid rgba(188,56,109,.12)
+  }
+  .left-panel .brush-categories{padding:4px 7px 4px 0;gap:7px}
+  .left-panel .category-chip{font-size:12px;padding:13px 12px;border-radius:13px}
+  .left-panel .brush-presets{
+    max-height:none;height:100%;padding:4px 8px 12px 2px;
+    display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;align-content:start
+  }
+  .left-panel .brush-presets.texture-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .left-panel .brush-preset{
+    display:grid;grid-template-columns:1fr 26px;grid-template-rows:88px auto;
+    gap:5px 4px;min-height:134px;padding:8px;border-radius:15px
+  }
+  .left-panel .brush-preview-canvas{
+    grid-column:1/-1;width:100%;height:86px;border-radius:12px;background:#fff8fb
+  }
+  .left-panel .brush-preset-copy{grid-column:1;min-width:0}
+  .left-panel .brush-preset strong{font-size:11px}
+  .left-panel .brush-preset small{display:none}
+  .left-panel .fav-star{grid-column:2;grid-row:2;width:25px;height:25px;font-size:16px;align-self:center}
+  .left-panel .active-brush-card{
+    grid-column:2;grid-row:2;
+    grid-template-columns:1fr;gap:8px;padding:13px;border-radius:18px
+  }
+  .left-panel .active-brush-preview{height:150px}
+  .left-panel #activeBrushPreview{width:100%;height:140px}
+  .left-panel .active-brush-copy>span{font-size:9px}
+  .left-panel .active-brush-copy strong{font-size:17px}
+  .left-panel .active-brush-copy small{font-size:10px}
+  .left-panel .brush-control-grid{grid-column:2;grid-row:3;margin:0}
+  .left-panel>.control-card{grid-column:2;margin:0}
+  .left-panel>.control-card:not(.eraser-control){grid-row:4}
+  .left-panel>.eraser-control{grid-row:5}
+  .left-panel .quick-tools{grid-column:2;grid-row:6;margin:0;align-self:end}
+  .left-panel>.secondary-wide{grid-column:2;grid-row:7;margin:0}
+}
+@media(max-width:900px) and (min-width:761px){
+  .left-panel{width:min(96vw,860px);grid-template-columns:minmax(470px,1fr) 250px}
+  .left-panel .brush-presets.texture-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .left-panel .brush-library-shell{grid-template-columns:110px minmax(0,1fr)}
+}
+@media(max-width:760px){
+  .left-panel{display:block;width:min(94vw,420px)}
+  .left-panel .brush-presets.texture-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .left-panel .brush-presets.texture-grid .brush-preset{
+    grid-template-columns:1fr 22px;grid-template-rows:68px auto;min-height:112px
+  }
+  .left-panel .brush-presets.texture-grid .brush-preview-canvas{grid-column:1/-1;width:100%;height:66px}
+  .left-panel .brush-presets.texture-grid .brush-preset-copy small{display:none}
+}
