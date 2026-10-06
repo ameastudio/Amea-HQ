@@ -6,35 +6,35 @@ const artboard=$("#artboard"),ctx=artboard.getContext("2d",{willReadFrequently:t
 const shell=$("#studioShell"),viewport=$("#canvasViewport"),transform=$("#canvasTransform"),toast=$("#toast");
 
 const BRUSHES={
-  sketching:[
-    {name:"Studio Pencil",note:"Clean fashion sketch",size:12,opacity:1,smoothing:.28,pressure:true,multiplier:1,mode:"line",sample:3},
-    {name:"Technical Pencil",note:"Fine crisp line",size:7,opacity:1,smoothing:.12,pressure:true,multiplier:.8,mode:"line",sample:2},
-    {name:"6B Pencil",note:"Soft dark sketch",size:24,opacity:.82,smoothing:.34,pressure:true,multiplier:1.15,mode:"line",sample:6},
-    {name:"Soft Sketch",note:"Loose planning line",size:20,opacity:.42,smoothing:.5,pressure:true,multiplier:1.2,mode:"line",sample:5}
+  pencils:[
+    {id:"hb-pencil",name:"HB Pencil",note:"Smooth everyday drawing pencil",size:11,opacity:.96,smoothing:.34,pressure:true,multiplier:1,mode:"pencil",sample:3},
+    {id:"technical-pencil",name:"Technical Pencil",note:"Fine, precise construction lines",size:6,opacity:1,smoothing:.18,pressure:true,multiplier:.78,mode:"line",sample:2},
+    {id:"6b-pencil",name:"6B Pencil",note:"Soft, dark and sketchy",size:22,opacity:.78,smoothing:.28,pressure:true,multiplier:1.16,mode:"softpencil",sample:6},
+    {id:"rough-pencil",name:"Rough Pencil",note:"Loose textured sketch line",size:18,opacity:.68,smoothing:.18,pressure:true,multiplier:1.08,mode:"roughpencil",sample:5}
   ],
-  inking:[
-    {name:"Monoline",note:"Smooth clean outline",size:14,opacity:1,smoothing:.62,pressure:false,multiplier:1,mode:"line",sample:4},
-    {name:"Fine Liner",note:"Sharp detail work",size:6,opacity:1,smoothing:.5,pressure:false,multiplier:.75,mode:"line",sample:2},
-    {name:"Seam Pen",note:"Crisp construction lines",size:8,opacity:.95,smoothing:.45,pressure:false,multiplier:.8,mode:"line",sample:3}
+  pens:[
+    {id:"studio-pen",name:"Studio Pen",note:"Clean pressure-sensitive line",size:11,opacity:1,smoothing:.58,pressure:true,multiplier:1,mode:"line",sample:4},
+    {id:"fine-liner",name:"Fine Liner",note:"Sharp detail work",size:5,opacity:1,smoothing:.48,pressure:false,multiplier:.72,mode:"line",sample:2},
+    {id:"monoline",name:"Monoline",note:"Even-width smooth outline",size:14,opacity:1,smoothing:.68,pressure:false,multiplier:1,mode:"line",sample:4},
+    {id:"technical-pen",name:"Technical Pen",note:"Crisp seams and clean edges",size:8,opacity:.98,smoothing:.44,pressure:false,multiplier:.82,mode:"line",sample:3}
   ],
   markers:[
-    {name:"Alcohol Marker",note:"Soft fashion colour",size:42,opacity:.42,smoothing:.55,pressure:false,multiplier:1.8,mode:"line",sample:10},
-    {name:"Brush Marker",note:"Pressure-sensitive stroke",size:34,opacity:.92,smoothing:.45,pressure:true,multiplier:1.7,mode:"line",sample:9},
-    {name:"Chisel Marker",note:"Bold block colour",size:48,opacity:.72,smoothing:.3,pressure:false,multiplier:1.9,mode:"line",sample:12},
-    {name:"Highlighter",note:"Transparent colour wash",size:58,opacity:.22,smoothing:.58,pressure:false,multiplier:2.1,mode:"line",sample:13}
+    {id:"brush-marker",name:"Brush Marker",note:"Bold pressure-sensitive colour",size:34,opacity:.9,smoothing:.46,pressure:true,multiplier:1.7,mode:"line",sample:9},
+    {id:"alcohol-marker",name:"Alcohol Marker",note:"Soft transparent colour build-up",size:42,opacity:.4,smoothing:.55,pressure:false,multiplier:1.85,mode:"marker",sample:10},
+    {id:"chisel-marker",name:"Chisel Marker",note:"Wide block colour stroke",size:48,opacity:.72,smoothing:.30,pressure:false,multiplier:1.9,mode:"chisel",sample:12},
+    {id:"highlighter",name:"Highlighter",note:"Light transparent colour wash",size:58,opacity:.22,smoothing:.58,pressure:false,multiplier:2.1,mode:"marker",sample:13}
   ],
-  fashion:[
-    {name:"Stitch Line",note:"Even garment stitches",size:10,opacity:1,smoothing:.4,pressure:false,multiplier:1,mode:"stitch",sample:3},
-    {name:"Rhinestones",note:"Sparkle detail trail",size:20,opacity:1,smoothing:.25,pressure:false,multiplier:1,mode:"bead",sample:7},
-    {name:"Crochet Texture",note:"Looped crochet detail",size:22,opacity:.85,smoothing:.3,pressure:false,multiplier:1,mode:"crochet",sample:7},
-    {name:"Knit Rib",note:"Ribbed knit texture",size:18,opacity:.8,smoothing:.35,pressure:false,multiplier:1,mode:"knit",sample:6},
-    {name:"Fuzzy Yarn",note:"Soft yarn texture",size:24,opacity:.65,smoothing:.2,pressure:false,multiplier:1,mode:"fuzzy",sample:8}
-  ],
-  favorites:[]
+  textures:[
+    {id:"stitch-line",name:"Stitch Line",note:"Even garment stitch trail",size:10,opacity:1,smoothing:.4,pressure:false,multiplier:1,mode:"stitch",sample:3},
+    {id:"crochet-loop",name:"Crochet Loop",note:"Looped crochet texture",size:22,opacity:.86,smoothing:.3,pressure:false,multiplier:1,mode:"crochet",sample:7},
+    {id:"knit-rib",name:"Knit Rib",note:"Ribbed knit texture",size:18,opacity:.82,smoothing:.35,pressure:false,multiplier:1,mode:"knit",sample:6},
+    {id:"fuzzy-yarn",name:"Fuzzy Yarn",note:"Soft fluffy yarn texture",size:24,opacity:.66,smoothing:.2,pressure:false,multiplier:1,mode:"fuzzy",sample:8},
+    {id:"rhinestones",name:"Rhinestones",note:"Sparkle detail trail",size:20,opacity:1,smoothing:.25,pressure:false,multiplier:1,mode:"bead",sample:7}
+  ]
 };
 
 const state={
-  tool:"brush",brushCategory:"sketching",brush:null,colour:"#f22278",brushSize:12,opacity:1,smoothing:.28,
+  tool:"brush",brushCategory:"pencils",brush:null,colour:"#f22278",brushSize:12,opacity:1,smoothing:.28,
   pressureEnabled:true,brushMultiplier:1,eraserSize:48,drawing:false,last:null,lastSpecial:null,
   selection:null,selectionStart:null,croquisBody:"classic",croquisView:"front",croquisOpacity:1,croquisHidden:false,
   referenceImage:null,referenceOpacity:.4,motif:null,motifScale:1,motifSpacing:90,motifRotation:0,lastStamp:null,
@@ -60,44 +60,65 @@ function moveLayer(id,dir){
 }
 function showToast(m){toast.textContent=m;toast.classList.add("show");clearTimeout(showToast.t);showToast.t=setTimeout(()=>toast.classList.remove("show"),1400)}
 
+const BRUSH_FAV_KEY="amea_design_brush_favorites";
+let brushFavorites=new Set(JSON.parse(localStorage.getItem(BRUSH_FAV_KEY)||"[]"));
+function allBrushes(){return Object.values(BRUSHES).flat()}
+function brushIsFavorite(p){return brushFavorites.has(p.id)}
+function toggleBrushFavorite(p){
+  if(brushIsFavorite(p))brushFavorites.delete(p.id);else brushFavorites.add(p.id);
+  localStorage.setItem(BRUSH_FAV_KEY,JSON.stringify([...brushFavorites]));
+}
+function syncActiveBrushCard(){
+  const p=state.brush;if(!p)return;
+  const name=$("#activeBrushName"),note=$("#activeBrushNote"),preview=$("#activeBrushPreview");
+  if(name)name.textContent=p.name;
+  if(note)note.textContent=p.note;
+  if(preview)drawBrushPreview(preview,p);
+}
+
 function setColour(hex){state.colour=hex;$("#colourPicker").value=hex;$("#hexValue").textContent=hex.toUpperCase();const dot=$("#dockColourDot");if(dot)dot.style.background=hex;state.recentColours=[hex,...state.recentColours.filter(c=>c!==hex)].slice(0,8);renderRecentColours()}
 function renderRecentColours(){const root=$("#recentColours");root.innerHTML="";state.recentColours.forEach(c=>{const b=document.createElement("button");b.style.setProperty("--swatch",c);b.onclick=()=>setColour(c);root.appendChild(b)})}
 
 function drawBrushPreview(canvas,p){
   const c=canvas.getContext("2d"),w=canvas.width,h=canvas.height;
   c.clearRect(0,0,w,h);
-  c.save();c.lineCap="round";c.lineJoin="round";c.strokeStyle="#3c3036";c.fillStyle="#3c3036";
-  const curve=(offset,alpha,width)=>{
-    c.globalAlpha=alpha;c.lineWidth=width;c.beginPath();
-    c.moveTo(10,h*.63+offset);
-    c.bezierCurveTo(w*.25,h*.18+offset,w*.48,h*.86+offset,w*.7,h*.42+offset);
-    c.bezierCurveTo(w*.8,h*.25+offset,w*.88,h*.35+offset,w-10,h*.28+offset);
+  c.save();c.lineCap="round";c.lineJoin="round";c.strokeStyle="#33242c";c.fillStyle="#33242c";
+  const curve=(offset,alpha,width,cap="round")=>{
+    c.globalAlpha=alpha;c.lineWidth=width;c.lineCap=cap;c.beginPath();
+    c.moveTo(9,h*.64+offset);
+    c.bezierCurveTo(w*.22,h*.22+offset,w*.43,h*.86+offset,w*.67,h*.42+offset);
+    c.bezierCurveTo(w*.79,h*.20+offset,w*.88,h*.38+offset,w-9,h*.28+offset);
     c.stroke();
   };
   if(p.mode==="stitch"){
-    c.lineWidth=3;for(let x=12;x<w-12;x+=15){c.beginPath();c.moveTo(x,h*.62);c.lineTo(x+8,h*.48);c.stroke()}
+    c.lineWidth=2.7;for(let x=12;x<w-12;x+=14){const y=h*.56+Math.sin(x*.09)*3;c.beginPath();c.moveTo(x-4,y+3);c.lineTo(x+5,y-3);c.stroke()}
   }else if(p.mode==="bead"){
-    for(let x=13;x<w-9;x+=16){const y=h*.52+Math.sin(x*.16)*5;c.beginPath();c.arc(x,y,5,0,Math.PI*2);c.fill();c.fillStyle="#fff";c.globalAlpha=.65;c.beginPath();c.arc(x-1.5,y-1.5,1.4,0,Math.PI*2);c.fill();c.fillStyle="#3c3036";c.globalAlpha=1}
+    for(let x=14;x<w-10;x+=17){const y=h*.53+Math.sin(x*.14)*5;c.beginPath();c.arc(x,y,5,0,Math.PI*2);c.fill();c.fillStyle="#fff";c.globalAlpha=.6;c.beginPath();c.arc(x-1.4,y-1.5,1.4,0,Math.PI*2);c.fill();c.fillStyle="#33242c";c.globalAlpha=1}
   }else if(p.mode==="crochet"){
-    c.lineWidth=2.4;for(let x=12;x<w-12;x+=12){const y=h*.54+Math.sin(x*.12)*4;c.beginPath();c.arc(x,y,6,0,Math.PI*2);c.stroke();c.beginPath();c.arc(x+5,y,6,0,Math.PI*2);c.stroke()}
+    c.lineWidth=2.1;for(let x=12;x<w-14;x+=12){const y=h*.54+Math.sin(x*.12)*3;c.beginPath();c.arc(x,y,5.4,0,Math.PI*2);c.stroke();c.beginPath();c.arc(x+5,y,5.4,0,Math.PI*2);c.stroke()}
   }else if(p.mode==="knit"){
-    c.lineWidth=2.2;for(let x=12;x<w-10;x+=10){c.beginPath();c.moveTo(x,h*.72);c.quadraticCurveTo(x+5,h*.25,x+10,h*.72);c.stroke()}
+    c.lineWidth=2;for(let x=12;x<w-11;x+=10){c.beginPath();c.moveTo(x,h*.72);c.quadraticCurveTo(x+5,h*.26,x+10,h*.72);c.stroke()}
   }else if(p.mode==="fuzzy"){
-    curve(0,.5,7);c.globalAlpha=.42;c.lineWidth=1.4;
-    for(let x=12;x<w-12;x+=5){const y=h*.52+Math.sin(x*.1)*7;for(let k=0;k<3;k++){const a=(x+k*19)*.61,r=5+k*2;c.beginPath();c.moveTo(x,y);c.lineTo(x+Math.cos(a)*r,y+Math.sin(a)*r);c.stroke()}}
-  }else if(/Marker|Highlighter/.test(p.name)){
-    curve(0,p.opacity,Math.max(10,p.sample*1.3));
-    if(p.name==="Chisel Marker"){c.globalAlpha=.42;c.lineCap="butt";c.lineWidth=17;c.beginPath();c.moveTo(12,h*.68);c.lineTo(w-12,h*.28);c.stroke()}
-  }else if(p.name==="6B Pencil"){
-    curve(-1,.46,7);curve(1,.45,5);curve(0,.35,2);
-  }else if(p.name==="Soft Sketch"){
-    curve(-2,.25,5);curve(2,.2,4);curve(0,.26,2);
-  }else if(p.name==="Technical Pencil"||p.name==="Fine Liner"){
-    curve(0,.95,2);
+    curve(0,.5,6);c.globalAlpha=.4;c.lineWidth=1.2;
+    for(let x=12;x<w-12;x+=5){const y=h*.52+Math.sin(x*.1)*6;for(let k=0;k<3;k++){const a=(x+k*17)*.57,r=4+k*2;c.beginPath();c.moveTo(x,y);c.lineTo(x+Math.cos(a)*r,y+Math.sin(a)*r);c.stroke()}}
+  }else if(p.mode==="softpencil"){
+    curve(-1,.40,6);curve(1,.34,4);curve(0,.28,2);
+  }else if(p.mode==="roughpencil"){
+    curve(-2,.33,4);curve(2,.24,3);curve(0,.27,2);
+    c.globalAlpha=.18;c.lineWidth=1;
+    for(let i=0;i<18;i++){const x=12+i*(w-24)/18,y=h*.54+Math.sin(i*.8)*9;c.beginPath();c.moveTo(x,y-3);c.lineTo(x+5,y+3);c.stroke()}
+  }else if(p.mode==="pencil"){
+    curve(-.8,.62,3);curve(.9,.26,1.4);
+  }else if(p.mode==="chisel"){
+    curve(0,p.opacity,Math.max(10,p.sample*1.25),"butt");
+  }else if(p.mode==="marker"){
+    curve(0,p.opacity,Math.max(10,p.sample*1.2));
+  }else if(p.name==="Fine Liner"||p.name==="Technical Pencil"){
+    curve(0,.98,2);
   }else if(p.name==="Monoline"){
     curve(0,1,5);
   }else{
-    curve(-1,.55,3);curve(1,.38,2);
+    curve(0,.95,Math.max(2,p.sample));
   }
   c.restore();
 }
@@ -105,20 +126,21 @@ function drawBrushPreview(canvas,p){
 function renderBrushes(category=state.brushCategory){
   state.brushCategory=category;
   $$(".category-chip").forEach(b=>b.classList.toggle("active",b.dataset.brushCategory===category));
-  const list=category==="favorites"?Object.values(BRUSHES).flat().filter(x=>x.favorite):BRUSHES[category];
+  const list=category==="favorites"?allBrushes().filter(brushIsFavorite):(BRUSHES[category]||[]);
   const root=$("#brushPresets");root.innerHTML="";
-  (list||[]).forEach(p=>{
+  list.forEach(p=>{
     const b=document.createElement("button");
-    b.className="brush-preset"+(state.brush?.name===p.name?" active":"");
-    b.innerHTML='<canvas class="brush-preview-canvas" width="156" height="76"></canvas><span><strong>'+p.name+'</strong><small>'+p.note+'</small></span><span class="fav-star">'+(p.favorite?"♥":"♡")+'</span>';
+    b.className="brush-preset"+(state.brush?.id===p.id?" active":"");
+    b.innerHTML='<canvas class="brush-preview-canvas" width="156" height="76"></canvas><span class="brush-preset-copy"><strong>'+p.name+'</strong><small>'+p.note+'</small></span><button class="fav-star" type="button" aria-label="'+(brushIsFavorite(p)?"Remove from favorites":"Add to favorites")+'">'+(brushIsFavorite(p)?"♥":"♡")+'</button>';
     b.onclick=e=>{
-      if(e.target.classList.contains("fav-star")){e.stopPropagation();p.favorite=!p.favorite;renderBrushes(category);return}
+      const fav=e.target.closest(".fav-star");
+      if(fav){e.preventDefault();e.stopPropagation();toggleBrushFavorite(p);renderBrushes(category);return}
       applyBrush(p);
     };
     root.appendChild(b);
     drawBrushPreview($(".brush-preview-canvas",b),p);
   });
-  if(!list?.length)root.innerHTML='<div class="helper">Favorite brushes will appear here.</div>';
+  if(!list.length)root.innerHTML='<div class="brush-empty"><strong>No favorites yet</strong><small>Tap ♡ on any brush to keep it here.</small></div>';
 }
 function applyBrush(p){
   state.tool="brush";state.brush=p;state.brushSize=p.size;state.opacity=p.opacity;state.smoothing=p.smoothing;state.pressureEnabled=p.pressure;state.brushMultiplier=p.multiplier;
@@ -126,7 +148,8 @@ function applyBrush(p){
   $("#brushOpacity").value=Math.round(p.opacity*100);$("#brushOpacityValue").textContent=Math.round(p.opacity*100)+"%";
   $("#brushSmoothing").value=Math.round(p.smoothing*100);$("#brushSmoothingValue").textContent=Math.round(p.smoothing*100)+"%";
   $("#pressureToggle").checked=p.pressure;
-  $$(".quick-tool").forEach(b=>b.classList.remove("active"));renderBrushes(state.brushCategory);showToast(p.name);
+  $$(".quick-tool").forEach(b=>b.classList.remove("active"));
+  syncActiveBrushCard();renderBrushes(state.brushCategory);showToast(p.name);
 }
 function setTool(t){state.tool=t;$$(".quick-tool").forEach(b=>b.classList.toggle("active",b.dataset.tool===t));if(t==="brush")renderBrushes();if(["stamp","scatter","fillpattern"].includes(t)&&!state.motif)showToast("Create a motif first ✿")}
 
@@ -352,10 +375,22 @@ function strokeTo(p){
   const layer=activeLayer();if(!layer)return;const l=layer.canvas.getContext("2d"),prev=state.last||p;
   if(state.tool==="eraser"){l.save();l.globalCompositeOperation="destination-out";l.strokeStyle="#000";l.lineCap="round";l.lineJoin="round";l.lineWidth=state.eraserSize;l.beginPath();l.moveTo(prev.x,prev.y);l.lineTo(p.x,p.y);l.stroke();l.restore();state.last=p;render();return}
   const b=state.brush||BRUSHES.sketching[0];
-  if(b.mode!=="line"){drawSpecial(l,p);state.last=p;render();return}
+  if(["stitch","bead","crochet","knit","fuzzy"].includes(b.mode)){drawSpecial(l,p);state.last=p;render();return}
   l.save();l.globalCompositeOperation="source-over";l.strokeStyle=state.colour;l.globalAlpha=state.opacity;l.lineCap="round";l.lineJoin="round";
   const pressure=state.pressureEnabled?(.58+p.pressure*.92):1,smooth=Math.min(.8,state.smoothing*.8),tx=prev.x+(p.x-prev.x)*(1-smooth),ty=prev.y+(p.y-prev.y)*(1-smooth);
-  l.lineWidth=state.brushSize*state.brushMultiplier*pressure;l.beginPath();l.moveTo(prev.x,prev.y);l.lineTo(tx,ty);l.stroke();l.restore();state.last={x:tx,y:ty,pressure:p.pressure};render();
+  let width=state.brushSize*state.brushMultiplier*pressure;
+  if(b.mode==="pencil")l.globalAlpha*=.82;
+  if(b.mode==="softpencil")l.globalAlpha*=.72;
+  if(b.mode==="roughpencil")l.globalAlpha*=.64;
+  if(b.mode==="marker"||b.mode==="chisel")l.globalAlpha*=.94;
+  l.lineWidth=width;
+  if(b.mode==="chisel")l.lineCap="butt";
+  l.beginPath();l.moveTo(prev.x,prev.y);l.lineTo(tx,ty);l.stroke();
+  if(b.mode==="softpencil"||b.mode==="roughpencil"){
+    l.globalAlpha*=.32;l.lineWidth=Math.max(1,width*.38);
+    l.beginPath();l.moveTo(prev.x+2,prev.y-1);l.lineTo(tx+2,ty-1);l.stroke();
+  }
+  l.restore();state.last={x:tx,y:ty,pressure:p.pressure};render();
 }
 function pickColour(p){render();const px=ctx.getImageData(Math.max(0,Math.min(W-1,Math.round(p.x))),Math.max(0,Math.min(H-1,Math.round(p.y))),1,1).data;setColour("#"+[px[0],px[1],px[2]].map(v=>v.toString(16).padStart(2,"0")).join(""));state.tool="brush";showToast("Colour picked")}
 function rect(a,b){return{x:Math.min(a.x,b.x),y:Math.min(a.y,b.y),w:Math.abs(a.x-b.x),h:Math.abs(a.y-b.y)}}
@@ -477,5 +512,5 @@ window.addEventListener("keydown",e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCa
 
 addLayer("");
 state.history=[];state.historyIndex=-1;
-state.brush=BRUSHES.sketching[0];renderBrushes("sketching");applyBrush(state.brush);setColour(state.colour);renderBodyTypePreviews();syncCroquisUI();renderLayerList();render();snapshot();requestAnimationFrame(fitCanvas);
+state.brush=BRUSHES.pencils[0];renderBrushes("pencils");applyBrush(state.brush);setColour(state.colour);renderBodyTypePreviews();syncCroquisUI();renderLayerList();render();snapshot();requestAnimationFrame(fitCanvas);
 })();
