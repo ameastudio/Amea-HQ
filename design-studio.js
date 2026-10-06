@@ -25,11 +25,27 @@ const BRUSHES={
     {id:"highlighter",name:"Highlighter",note:"Light transparent colour wash",size:58,opacity:.22,smoothing:.58,pressure:false,multiplier:2.1,mode:"marker",sample:13}
   ],
   textures:[
-    {id:"stitch-line",name:"Stitch Line",note:"Even garment stitch trail",size:10,opacity:1,smoothing:.4,pressure:false,multiplier:1,mode:"stitch",sample:3},
-    {id:"crochet-loop",name:"Crochet Loop",note:"Looped crochet texture",size:22,opacity:.86,smoothing:.3,pressure:false,multiplier:1,mode:"crochet",sample:7},
-    {id:"knit-rib",name:"Knit Rib",note:"Ribbed knit texture",size:18,opacity:.82,smoothing:.35,pressure:false,multiplier:1,mode:"knit",sample:6},
-    {id:"fuzzy-yarn",name:"Fuzzy Yarn",note:"Soft fluffy yarn texture",size:24,opacity:.66,smoothing:.2,pressure:false,multiplier:1,mode:"fuzzy",sample:8},
-    {id:"rhinestones",name:"Rhinestones",note:"Sparkle detail trail",size:20,opacity:1,smoothing:.25,pressure:false,multiplier:1,mode:"bead",sample:7}
+    {id:"crochet-loop",name:"Crochet Loop",note:"Chunky interlocking crochet loops",size:24,opacity:1,smoothing:.60,pressure:false,multiplier:1,mode:"crochet",sample:9},
+    {id:"knit-rib",name:"Knit Rib",note:"Vertical knitted rib texture",size:22,opacity:.92,smoothing:.52,pressure:false,multiplier:1,mode:"knit",sample:8},
+    {id:"fuzzy-yarn",name:"Fuzzy Yarn",note:"Soft fluffy yarn fibres",size:26,opacity:.72,smoothing:.28,pressure:false,multiplier:1,mode:"fuzzy",sample:9},
+    {id:"stitch-line",name:"Stitch Line",note:"Even dashed sewing stitches",size:12,opacity:1,smoothing:.48,pressure:false,multiplier:1,mode:"stitch",sample:4},
+    {id:"cross-stitch",name:"Cross Stitch",note:"Repeating embroidered X stitches",size:18,opacity:.96,smoothing:.30,pressure:false,multiplier:1,mode:"crossstitch",sample:6},
+    {id:"embroidered",name:"Embroidered",note:"Raised twisted embroidery thread",size:18,opacity:.95,smoothing:.50,pressure:false,multiplier:1,mode:"embroidered",sample:7},
+    {id:"fabric-weave",name:"Fabric Weave",note:"Fine woven fabric grid",size:18,opacity:.62,smoothing:.35,pressure:false,multiplier:1,mode:"weave",sample:7},
+    {id:"denim-texture",name:"Denim Texture",note:"Dense diagonal denim fibres",size:22,opacity:.66,smoothing:.30,pressure:false,multiplier:1,mode:"denim",sample:8},
+    {id:"boucle",name:"Bouclé",note:"Nubby looped bouclé texture",size:26,opacity:.72,smoothing:.24,pressure:false,multiplier:1,mode:"boucle",sample:9},
+    {id:"fur",name:"Fur",note:"Soft directional fur fibres",size:30,opacity:.68,smoothing:.22,pressure:false,multiplier:1,mode:"fur",sample:10},
+    {id:"sequins",name:"Sequins",note:"Overlapping reflective sequins",size:20,opacity:.95,smoothing:.25,pressure:false,multiplier:1,mode:"sequin",sample:7},
+    {id:"rhinestones",name:"Rhinestones",note:"Sparkling gemstone trail",size:20,opacity:1,smoothing:.25,pressure:false,multiplier:1,mode:"rhinestone",sample:7},
+    {id:"glitter",name:"Glitter",note:"Fine scattered glitter sparkle",size:24,opacity:.78,smoothing:.18,pressure:false,multiplier:1,mode:"glitter",sample:9},
+    {id:"chalk-texture",name:"Chalk Texture",note:"Powdery textured chalk stroke",size:32,opacity:.64,smoothing:.34,pressure:true,multiplier:1.25,mode:"chalk",sample:10},
+    {id:"watercolour-texture",name:"Watercolour Texture",note:"Soft translucent watercolour wash",size:48,opacity:.34,smoothing:.66,pressure:true,multiplier:1.7,mode:"watercolour",sample:13},
+    {id:"velvet",name:"Velvet",note:"Dense soft velvet shading",size:38,opacity:.72,smoothing:.58,pressure:true,multiplier:1.5,mode:"velvet",sample:11},
+    {id:"satin-shine",name:"Satin Shine",note:"Smooth satin stroke with highlight",size:36,opacity:.70,smoothing:.64,pressure:true,multiplier:1.45,mode:"satin",sample:11},
+    {id:"leather-grain",name:"Leather Grain",note:"Fine pebbled leather texture",size:34,opacity:.74,smoothing:.40,pressure:false,multiplier:1.35,mode:"leather",sample:10},
+    {id:"mesh",name:"Mesh",note:"Open criss-cross mesh pattern",size:20,opacity:.78,smoothing:.35,pressure:false,multiplier:1,mode:"mesh",sample:7},
+    {id:"lace-detail",name:"Lace Detail",note:"Delicate looping lace edge",size:24,opacity:.88,smoothing:.48,pressure:false,multiplier:1,mode:"lace",sample:9},
+    {id:"bead-chain",name:"Bead Chain",note:"Connected round bead strand",size:18,opacity:.96,smoothing:.36,pressure:false,multiplier:1,mode:"beadchain",sample:7}
   ]
 };
 
@@ -81,45 +97,55 @@ function renderRecentColours(){const root=$("#recentColours");root.innerHTML="";
 
 function drawBrushPreview(canvas,p){
   const c=canvas.getContext("2d"),w=canvas.width,h=canvas.height;
-  c.clearRect(0,0,w,h);
-  c.save();c.lineCap="round";c.lineJoin="round";c.strokeStyle="#33242c";c.fillStyle="#33242c";
-  const curve=(offset,alpha,width,cap="round")=>{
-    c.globalAlpha=alpha;c.lineWidth=width;c.lineCap=cap;c.beginPath();
-    c.moveTo(9,h*.64+offset);
-    c.bezierCurveTo(w*.22,h*.22+offset,w*.43,h*.86+offset,w*.67,h*.42+offset);
-    c.bezierCurveTo(w*.79,h*.20+offset,w*.88,h*.38+offset,w-9,h*.28+offset);
-    c.stroke();
-  };
-  if(p.mode==="stitch"){
-    c.lineWidth=2.7;for(let x=12;x<w-12;x+=14){const y=h*.56+Math.sin(x*.09)*3;c.beginPath();c.moveTo(x-4,y+3);c.lineTo(x+5,y-3);c.stroke()}
-  }else if(p.mode==="bead"){
-    for(let x=14;x<w-10;x+=17){const y=h*.53+Math.sin(x*.14)*5;c.beginPath();c.arc(x,y,5,0,Math.PI*2);c.fill();c.fillStyle="#fff";c.globalAlpha=.6;c.beginPath();c.arc(x-1.4,y-1.5,1.4,0,Math.PI*2);c.fill();c.fillStyle="#33242c";c.globalAlpha=1}
-  }else if(p.mode==="crochet"){
-    c.lineWidth=2.1;for(let x=12;x<w-14;x+=12){const y=h*.54+Math.sin(x*.12)*3;c.beginPath();c.arc(x,y,5.4,0,Math.PI*2);c.stroke();c.beginPath();c.arc(x+5,y,5.4,0,Math.PI*2);c.stroke()}
+  c.clearRect(0,0,w,h);c.save();
+  c.lineCap="round";c.lineJoin="round";c.strokeStyle="#c73573";c.fillStyle="#d64a82";
+  const curve=(offset,alpha,width,cap="round")=>{c.globalAlpha=alpha;c.lineWidth=width;c.lineCap=cap;c.beginPath();c.moveTo(8,h*.62+offset);c.bezierCurveTo(w*.22,h*.20+offset,w*.43,h*.84+offset,w*.67,h*.42+offset);c.bezierCurveTo(w*.79,h*.20+offset,w*.88,h*.37+offset,w-8,h*.29+offset);c.stroke()};
+  const waveY=x=>h*.54+Math.sin(x*.11)*4;
+  if(p.mode==="crochet"){
+    c.lineWidth=4;for(let x=13;x<w-12;x+=10){const y=waveY(x);c.beginPath();c.arc(x,y,7,-.35,Math.PI*1.65);c.stroke();c.beginPath();c.arc(x+5,y+1,7,Math.PI*.65,Math.PI*2.65);c.stroke()}
   }else if(p.mode==="knit"){
-    c.lineWidth=2;for(let x=12;x<w-11;x+=10){c.beginPath();c.moveTo(x,h*.72);c.quadraticCurveTo(x+5,h*.26,x+10,h*.72);c.stroke()}
-  }else if(p.mode==="fuzzy"){
-    curve(0,.5,6);c.globalAlpha=.4;c.lineWidth=1.2;
-    for(let x=12;x<w-12;x+=5){const y=h*.52+Math.sin(x*.1)*6;for(let k=0;k<3;k++){const a=(x+k*17)*.57,r=4+k*2;c.beginPath();c.moveTo(x,y);c.lineTo(x+Math.cos(a)*r,y+Math.sin(a)*r);c.stroke()}}
-  }else if(p.mode==="softpencil"){
-    curve(-1,.40,6);curve(1,.34,4);curve(0,.28,2);
-  }else if(p.mode==="roughpencil"){
-    curve(-2,.33,4);curve(2,.24,3);curve(0,.27,2);
-    c.globalAlpha=.18;c.lineWidth=1;
-    for(let i=0;i<18;i++){const x=12+i*(w-24)/18,y=h*.54+Math.sin(i*.8)*9;c.beginPath();c.moveTo(x,y-3);c.lineTo(x+5,y+3);c.stroke()}
-  }else if(p.mode==="pencil"){
-    curve(-.8,.62,3);curve(.9,.26,1.4);
-  }else if(p.mode==="chisel"){
-    curve(0,p.opacity,Math.max(10,p.sample*1.25),"butt");
-  }else if(p.mode==="marker"){
-    curve(0,p.opacity,Math.max(10,p.sample*1.2));
-  }else if(p.name==="Fine Liner"||p.name==="Technical Pencil"){
-    curve(0,.98,2);
-  }else if(p.name==="Monoline"){
-    curve(0,1,5);
-  }else{
-    curve(0,.95,Math.max(2,p.sample));
-  }
+    c.lineWidth=3;for(let x=10;x<w-10;x+=8){c.beginPath();c.moveTo(x,h*.75);c.bezierCurveTo(x+2,h*.34,x+6,h*.34,x+8,h*.75);c.stroke()}
+  }else if(p.mode==="fuzzy"||p.mode==="fur"){
+    curve(0,.24,p.mode==="fur"?10:8);c.globalAlpha=.44;c.lineWidth=1.2;for(let x=10;x<w-10;x+=4){const y=waveY(x);for(let k=0;k<3;k++){const a=(x*.37+k*.9)+(p.mode==="fur"?-.4:0),r=(p.mode==="fur"?10:7)+k*2;c.beginPath();c.moveTo(x,y);c.lineTo(x+Math.cos(a)*r,y+Math.sin(a)*r);c.stroke()}}
+  }else if(p.mode==="stitch"){
+    c.lineWidth=3;for(let x=10;x<w-10;x+=15){const y=waveY(x);c.beginPath();c.moveTo(x-5,y+2);c.lineTo(x+5,y-2);c.stroke()}
+  }else if(p.mode==="crossstitch"){
+    c.lineWidth=2.7;for(let x=12;x<w-10;x+=14){const y=waveY(x),r=5;c.beginPath();c.moveTo(x-r,y-r);c.lineTo(x+r,y+r);c.moveTo(x+r,y-r);c.lineTo(x-r,y+r);c.stroke()}
+  }else if(p.mode==="embroidered"){
+    c.lineWidth=5;for(let x=10;x<w-10;x+=8){const y=waveY(x);c.beginPath();c.moveTo(x-5,y+3);c.quadraticCurveTo(x,y-5,x+6,y+2);c.stroke()}
+  }else if(p.mode==="weave"||p.mode==="mesh"){
+    c.globalAlpha=.7;c.lineWidth=1.5;const gap=p.mode==="mesh"?10:6;
+    for(let x=-h;x<w+h;x+=gap){c.beginPath();c.moveTo(x,8);c.lineTo(x+h,h-8);c.stroke();c.beginPath();c.moveTo(x,h-8);c.lineTo(x+h,8);c.stroke()}
+  }else if(p.mode==="denim"){
+    c.globalAlpha=.5;c.lineWidth=1.4;for(let x=-20;x<w+20;x+=5){c.beginPath();c.moveTo(x,h*.74);c.lineTo(x+24,h*.28);c.stroke()}
+  }else if(p.mode==="boucle"){
+    c.lineWidth=2.2;for(let x=10;x<w-10;x+=7){const y=waveY(x);c.beginPath();c.arc(x,y,4+(x%3),0,Math.PI*2);c.stroke()}
+  }else if(p.mode==="sequin"||p.mode==="rhinestone"){
+    for(let x=12;x<w-10;x+=14){const y=waveY(x),r=p.mode==="sequin"?5.5:4.5;c.globalAlpha=.92;c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.fill();c.fillStyle="#fff";c.globalAlpha=.72;c.beginPath();c.arc(x-1.5,y-1.5,1.3,0,Math.PI*2);c.fill();c.fillStyle="#d64a82"}
+  }else if(p.mode==="glitter"){
+    c.globalAlpha=.75;for(let i=0;i<90;i++){const x=8+(i*37%(w-16)),y=h*.30+((i*19)%Math.max(8,Math.floor(h*.45)));const r=1+(i%3)*.5;c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.fill()}
+  }else if(p.mode==="chalk"){
+    curve(0,.32,15);for(let i=0;i<28;i++){c.globalAlpha=.17;c.lineWidth=1;c.beginPath();c.moveTo(9+i*5,h*.47+(i%4)*3);c.lineTo(18+i*5,h*.52+(i%5)*2);c.stroke()}
+  }else if(p.mode==="watercolour"){
+    curve(-2,.13,20);curve(2,.10,24);curve(0,.12,16)
+  }else if(p.mode==="velvet"){
+    curve(0,.60,18);curve(-2,.18,22);curve(2,.16,20)
+  }else if(p.mode==="satin"){
+    curve(0,.52,17);c.strokeStyle="#f7a9c8";curve(-2,.72,4);c.strokeStyle="#c73573";curve(3,.22,8)
+  }else if(p.mode==="leather"){
+    curve(0,.40,17);c.globalAlpha=.22;for(let i=0;i<45;i++){const x=8+(i*31%(w-16)),y=h*.34+((i*17)%Math.floor(h*.32));c.beginPath();c.arc(x,y,1.2+(i%3)*.4,0,Math.PI*2);c.stroke()}
+  }else if(p.mode==="lace"){
+    c.lineWidth=2.1;for(let x=11;x<w-10;x+=12){const y=waveY(x);c.beginPath();c.arc(x,y,6,Math.PI,0);c.stroke();c.beginPath();c.arc(x+6,y+4,4,0,Math.PI);c.stroke()}
+  }else if(p.mode==="beadchain"){
+    c.lineWidth=2;c.beginPath();c.moveTo(8,w?waveY(8):h/2);for(let x=10;x<w-8;x+=11)c.lineTo(x,waveY(x));c.stroke();for(let x=11;x<w-10;x+=12){const y=waveY(x);c.beginPath();c.arc(x,y,4,0,Math.PI*2);c.fill()}
+  }else if(p.mode==="softpencil"){curve(-1,.40,6);curve(1,.34,4);curve(0,.28,2)
+  }else if(p.mode==="roughpencil"){curve(-2,.33,4);curve(2,.24,3);curve(0,.27,2)
+  }else if(p.mode==="pencil"){curve(-.8,.62,3);curve(.9,.26,1.4)
+  }else if(p.mode==="chisel"){curve(0,p.opacity,Math.max(10,p.sample*1.25),"butt")
+  }else if(p.mode==="marker"){curve(0,p.opacity,Math.max(10,p.sample*1.2))
+  }else if(p.name==="Fine Liner"||p.name==="Technical Pencil"){curve(0,.98,2)
+  }else if(p.name==="Monoline"){curve(0,1,5)
+  }else{curve(0,.95,Math.max(2,p.sample))}
   c.restore();
 }
 
@@ -127,7 +153,7 @@ function renderBrushes(category=state.brushCategory){
   state.brushCategory=category;
   $$(".category-chip").forEach(b=>b.classList.toggle("active",b.dataset.brushCategory===category));
   const list=category==="favorites"?allBrushes().filter(brushIsFavorite):(BRUSHES[category]||[]);
-  const root=$("#brushPresets");root.innerHTML="";
+  const root=$("#brushPresets");root.innerHTML="";root.classList.toggle("texture-grid",category==="textures");
   list.forEach(p=>{
     const b=document.createElement("button");
     b.className="brush-preset"+(state.brush?.id===p.id?" active":"");
@@ -356,17 +382,31 @@ function render(){
 }
 
 function drawSpecial(l,p){
-  const b=state.brush||BRUSHES.pencils[0],last=state.lastSpecial||p,dist=Math.hypot(p.x-last.x,p.y-last.y),spacing=Math.max(14,state.brushSize*1.5);
+  const b=state.brush||BRUSHES.pencils[0],last=state.lastSpecial||p,dist=Math.hypot(p.x-last.x,p.y-last.y);
+  const spacing=Math.max(8,state.brushSize*(["glitter","chalk","watercolour","velvet","satin","leather"].includes(b.mode)?.42:1.05));
   if(dist<spacing)return;
-  const dx=(p.x-last.x)/dist,dy=(p.y-last.y)/dist;
+  const dx=(p.x-last.x)/dist,dy=(p.y-last.y)/dist,px=-dy,py=dx;
   for(let d=spacing;d<=dist;d+=spacing){
-    const x=last.x+dx*d,y=last.y+dy*d;
-    l.save();l.strokeStyle=state.colour;l.fillStyle=state.colour;l.globalAlpha=state.opacity;l.lineWidth=Math.max(3,state.brushSize*.18);l.lineCap="round";
-    if(b.mode==="stitch"){l.beginPath();l.moveTo(x-dx*state.brushSize*.45,y-dy*state.brushSize*.45);l.lineTo(x+dx*state.brushSize*.45,y+dy*state.brushSize*.45);l.stroke()}
-    if(b.mode==="bead"){l.beginPath();l.arc(x,y,state.brushSize*.34,0,Math.PI*2);l.fill();l.strokeStyle="rgba(255,255,255,.7)";l.lineWidth=2;l.beginPath();l.arc(x-state.brushSize*.1,y-state.brushSize*.1,state.brushSize*.1,0,Math.PI*2);l.stroke()}
-    if(b.mode==="crochet"){l.beginPath();l.arc(x,y,state.brushSize*.38,0,Math.PI*2);l.stroke();l.beginPath();l.arc(x+state.brushSize*.25,y,state.brushSize*.38,0,Math.PI*2);l.stroke()}
-    if(b.mode==="knit"){l.beginPath();l.moveTo(x-state.brushSize*.25,y-state.brushSize*.5);l.quadraticCurveTo(x,y,x+state.brushSize*.25,y-state.brushSize*.5);l.stroke()}
-    if(b.mode==="fuzzy"){for(let k=0;k<6;k++){const a=Math.random()*Math.PI*2,r=Math.random()*state.brushSize*.7;l.beginPath();l.moveTo(x,y);l.lineTo(x+Math.cos(a)*r,y+Math.sin(a)*r);l.stroke()}}
+    const x=last.x+dx*d,y=last.y+dy*d,s=state.brushSize;
+    l.save();l.strokeStyle=state.colour;l.fillStyle=state.colour;l.globalAlpha=state.opacity;l.lineWidth=Math.max(2,s*.15);l.lineCap="round";l.lineJoin="round";
+    if(b.mode==="stitch"){l.beginPath();l.moveTo(x-dx*s*.42,y-dy*s*.42);l.lineTo(x+dx*s*.42,y+dy*s*.42);l.stroke()}
+    else if(b.mode==="crossstitch"){const r=s*.35;l.beginPath();l.moveTo(x-r,y-r);l.lineTo(x+r,y+r);l.moveTo(x+r,y-r);l.lineTo(x-r,y+r);l.stroke()}
+    else if(b.mode==="embroidered"){l.lineWidth=Math.max(3,s*.24);l.beginPath();l.moveTo(x-dx*s*.45,y-dy*s*.45);l.quadraticCurveTo(x+px*s*.22,y+py*s*.22,x+dx*s*.45,y+dy*s*.45);l.stroke()}
+    else if(b.mode==="rhinestone"||b.mode==="sequin"){const r=s*(b.mode==="sequin"?.36:.30);l.beginPath();l.arc(x,y,r,0,Math.PI*2);l.fill();l.strokeStyle="rgba(255,255,255,.72)";l.lineWidth=Math.max(1,s*.06);l.beginPath();l.arc(x-r*.32,y-r*.32,r*.22,0,Math.PI*2);l.stroke()}
+    else if(b.mode==="crochet"){l.lineWidth=Math.max(2,s*.15);l.beginPath();l.arc(x-px*s*.10,y-py*s*.10,s*.34,-.4,Math.PI*1.65);l.stroke();l.beginPath();l.arc(x+px*s*.18,y+py*s*.18,s*.34,Math.PI*.6,Math.PI*2.65);l.stroke()}
+    else if(b.mode==="knit"){l.lineWidth=Math.max(2,s*.13);l.beginPath();l.moveTo(x-px*s*.28,y-py*s*.28);l.bezierCurveTo(x-px*s*.05-dx*s*.22,y-py*s*.05-dy*s*.22,x+px*s*.05-dx*s*.22,y+py*s*.05-dy*s*.22,x+px*s*.28,y+py*s*.28);l.stroke()}
+    else if(b.mode==="fuzzy"||b.mode==="fur"){for(let k=0;k<(b.mode==="fur"?10:7);k++){const along=(Math.random()-.5)*s*.45,spread=(Math.random()-.5)*s*.65,len=s*(b.mode==="fur"?.8:.55)*(0.45+Math.random()*.75);const sx=x+dx*along+px*spread,sy=y+dy*along+py*spread,ang=Math.atan2(dy,dx)+(b.mode==="fur"?(Math.random()-.5)*.45:Math.random()*Math.PI*2);l.lineWidth=Math.max(1,s*.045);l.globalAlpha=state.opacity*(.25+Math.random()*.45);l.beginPath();l.moveTo(sx,sy);l.lineTo(sx+Math.cos(ang)*len,sy+Math.sin(ang)*len);l.stroke()}}
+    else if(b.mode==="weave"||b.mode==="mesh"){const r=s*.48,g=b.mode==="mesh"?s*.28:s*.17;l.lineWidth=Math.max(1,s*.045);for(let o=-r;o<=r;o+=g){l.beginPath();l.moveTo(x+px*o-dx*r,y+py*o-dy*r);l.lineTo(x+px*o+dx*r,y+py*o+dy*r);l.stroke();l.beginPath();l.moveTo(x+dx*o-px*r,y+dy*o-py*r);l.lineTo(x+dx*o+px*r,y+dy*o+py*r);l.stroke()}}
+    else if(b.mode==="denim"){l.lineWidth=Math.max(1,s*.055);for(let k=-3;k<=3;k++){const o=k*s*.10;l.globalAlpha=state.opacity*.45;l.beginPath();l.moveTo(x-px*s*.45+dx*o,y-py*s*.45+dy*o);l.lineTo(x+px*s*.45+dx*(o+s*.25),y+py*s*.45+dy*(o+s*.25));l.stroke()}}
+    else if(b.mode==="boucle"){for(let k=0;k<4;k++){const ox=(Math.random()-.5)*s*.7,oy=(Math.random()-.5)*s*.7,r=s*(.10+Math.random()*.16);l.lineWidth=Math.max(1.3,s*.055);l.globalAlpha=state.opacity*.65;l.beginPath();l.arc(x+ox,y+oy,r,0,Math.PI*2);l.stroke()}}
+    else if(b.mode==="glitter"){for(let k=0;k<9;k++){const ox=(Math.random()-.5)*s*1.2,oy=(Math.random()-.5)*s*.9,r=s*(.025+Math.random()*.05);l.globalAlpha=state.opacity*(.35+Math.random()*.65);l.beginPath();l.arc(x+ox,y+oy,r,0,Math.PI*2);l.fill()}}
+    else if(b.mode==="chalk"){l.globalAlpha=state.opacity*.22;l.lineWidth=s*.7;l.beginPath();l.moveTo(x-dx*s*.35,y-dy*s*.35);l.lineTo(x+dx*s*.35,y+dy*s*.35);l.stroke();for(let k=0;k<5;k++){l.globalAlpha=state.opacity*.16;l.lineWidth=Math.max(1,s*.04);const o=(Math.random()-.5)*s*.7;l.beginPath();l.moveTo(x+px*o-dx*s*.3,y+py*o-dy*s*.3);l.lineTo(x+px*o+dx*s*.3,y+py*o+dy*s*.3);l.stroke()}}
+    else if(b.mode==="watercolour"){for(let k=0;k<3;k++){l.globalAlpha=state.opacity*.13;l.lineWidth=s*(.9+k*.18);l.beginPath();l.moveTo(x-dx*s*.45+px*(k-1)*s*.08,y-dy*s*.45+py*(k-1)*s*.08);l.lineTo(x+dx*s*.45+px*(k-1)*s*.08,y+dy*s*.45+py*(k-1)*s*.08);l.stroke()}}
+    else if(b.mode==="velvet"){l.globalAlpha=state.opacity*.45;l.lineWidth=s*.72;l.beginPath();l.moveTo(x-dx*s*.4,y-dy*s*.4);l.lineTo(x+dx*s*.4,y+dy*s*.4);l.stroke();for(let k=0;k<5;k++){l.globalAlpha=state.opacity*.12;l.lineWidth=1;const o=(Math.random()-.5)*s*.6;l.beginPath();l.moveTo(x+px*o-dx*s*.3,y+py*o-dy*s*.3);l.lineTo(x+px*o+dx*s*.3,y+py*o+dy*s*.3);l.stroke()}}
+    else if(b.mode==="satin"){l.globalAlpha=state.opacity*.46;l.lineWidth=s*.68;l.beginPath();l.moveTo(x-dx*s*.4,y-dy*s*.4);l.lineTo(x+dx*s*.4,y+dy*s*.4);l.stroke();l.strokeStyle="rgba(255,255,255,.5)";l.globalAlpha=state.opacity*.62;l.lineWidth=Math.max(2,s*.12);l.beginPath();l.moveTo(x-dx*s*.35+px*s*.08,y-dy*s*.35+py*s*.08);l.lineTo(x+dx*s*.35+px*s*.08,y+dy*s*.35+py*s*.08);l.stroke()}
+    else if(b.mode==="leather"){l.globalAlpha=state.opacity*.34;l.lineWidth=s*.64;l.beginPath();l.moveTo(x-dx*s*.4,y-dy*s*.4);l.lineTo(x+dx*s*.4,y+dy*s*.4);l.stroke();l.globalAlpha=state.opacity*.22;l.lineWidth=1;for(let k=0;k<7;k++){const ox=(Math.random()-.5)*s*.8,oy=(Math.random()-.5)*s*.65,r=s*(.025+Math.random()*.035);l.beginPath();l.arc(x+ox,y+oy,r,0,Math.PI*2);l.stroke()}}
+    else if(b.mode==="lace"){l.lineWidth=Math.max(1.5,s*.08);const r=s*.3;l.beginPath();l.arc(x-px*r*.35,y-py*r*.35,r,Math.PI,0);l.stroke();l.beginPath();l.arc(x+px*r*.5,y+py*r*.5,r*.68,0,Math.PI);l.stroke()}
+    else if(b.mode==="beadchain"){const r=s*.28;l.lineWidth=Math.max(1.5,s*.08);l.beginPath();l.arc(x,y,r,0,Math.PI*2);l.fill();l.strokeStyle="rgba(255,255,255,.58)";l.lineWidth=Math.max(1,s*.05);l.beginPath();l.arc(x-r*.28,y-r*.28,r*.18,0,Math.PI*2);l.stroke();l.strokeStyle=state.colour;l.globalAlpha=state.opacity*.7;l.beginPath();l.moveTo(x-dx*s*.55,y-dy*s*.55);l.lineTo(x+dx*s*.55,y+dy*s*.55);l.stroke()}
     l.restore();
   }
   state.lastSpecial=p;
@@ -375,7 +415,7 @@ function strokeTo(p){
   const layer=activeLayer();if(!layer)return;const l=layer.canvas.getContext("2d"),prev=state.last||p;
   if(state.tool==="eraser"){l.save();l.globalCompositeOperation="destination-out";l.strokeStyle="#000";l.lineCap="round";l.lineJoin="round";l.lineWidth=state.eraserSize;l.beginPath();l.moveTo(prev.x,prev.y);l.lineTo(p.x,p.y);l.stroke();l.restore();state.last=p;render();return}
   const b=state.brush||BRUSHES.pencils[0];
-  if(["stitch","bead","crochet","knit","fuzzy"].includes(b.mode)){drawSpecial(l,p);state.last=p;render();return}
+  if(["stitch","crossstitch","embroidered","crochet","knit","fuzzy","fur","weave","mesh","denim","boucle","sequin","rhinestone","glitter","chalk","watercolour","velvet","satin","leather","lace","beadchain"].includes(b.mode)){drawSpecial(l,p);state.last=p;render();return}
   l.save();l.globalCompositeOperation="source-over";l.strokeStyle=state.colour;l.globalAlpha=state.opacity;l.lineCap="round";l.lineJoin="round";
   const pressure=state.pressureEnabled?(.58+p.pressure*.92):1,smooth=Math.min(.8,state.smoothing*.8),tx=prev.x+(p.x-prev.x)*(1-smooth),ty=prev.y+(p.y-prev.y)*(1-smooth);
   let width=state.brushSize*state.brushMultiplier*pressure;
