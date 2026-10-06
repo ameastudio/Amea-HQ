@@ -518,11 +518,11 @@ $$("#swatches button").forEach(b=>b.onclick=()=>setColour(b.dataset.colour));
 $$(".tab-btn").forEach(btn=>btn.onclick=()=>{$$(".tab-btn").forEach(b=>b.classList.remove("active"));$$(".tab-panel").forEach(p=>p.classList.remove("active"));btn.classList.add("active");$('[data-panel="'+btn.dataset.tab+'"]').classList.add("active")});
 function chooseBody(type){state.croquisBody=type;syncCroquisUI();render();snapshot()}
 function chooseView(view){state.croquisView=view;syncCroquisUI();render();snapshot()}
-$("[data-body-type]").forEach(b=>b.onclick=()=>chooseBody(b.dataset.bodyType));
-$("[data-view]").forEach(b=>b.onclick=()=>chooseView(b.dataset.view));
+$$("[data-body-type]").forEach(b=>b.onclick=()=>chooseBody(b.dataset.bodyType));
+$$("[data-view]").forEach(b=>b.onclick=()=>chooseView(b.dataset.view));
 function syncCroquisUI(){
-  $("[data-body-type]").forEach(b=>b.classList.toggle("active",b.dataset.bodyType===state.croquisBody));
-  $("[data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===state.croquisView));
+  $$("[data-body-type]").forEach(b=>b.classList.toggle("active",b.dataset.bodyType===state.croquisBody));
+  $$("[data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===state.croquisView));
   $("#activeBodyLabel").textContent=state.croquisBody==="curvy"?"Curvy":"Classic";
   $("#croquisOpacity").value=Math.round(state.croquisOpacity*100);
   $("#croquisOpacityValue").textContent=Math.round(state.croquisOpacity*100)+"%";
