@@ -595,3 +595,27 @@ input[type="range"]{accent-color:#f22278}
 /* checked = hidden, so switch visually turns off */
 .croquis-visibility-row input:checked + .croquis-switch{background:#d8ced3}
 .croquis-visibility-row input:checked + .croquis-switch:after{right:20px}
+
+
+/* ===== Freeform user-named layers ===== */
+.layer-item{
+  grid-template-columns:32px minmax(0,1fr) auto 30px;
+  gap:7px;padding:8px 7px;border-radius:13px
+}
+.layer-eye,.layer-delete,.layer-up,.layer-down,.layer-name{
+  border:0;background:transparent;color:#6d5260
+}
+.layer-eye{width:30px;height:30px;display:grid;place-items:center;padding:0}
+.layer-eye svg{width:18px;height:18px}
+.layer-name{
+  min-width:0;text-align:left;font-size:11px;font-weight:800;padding:7px 4px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#3f2934
+}
+.layer-name span{font-weight:650;color:#a08491}
+.layer-order{display:flex;gap:2px}
+.layer-up,.layer-down{
+  width:26px;height:28px;border-radius:8px;background:#f6eef2;font-size:11px;font-weight:900
+}
+.layer-up:disabled,.layer-down:disabled{opacity:.28}
+.layer-delete{width:28px;height:28px;border-radius:8px;font-size:18px;color:#a35b78}
+.layer-item.active{background:#fff0f5;border-color:rgba(242,34,120,.33)}
