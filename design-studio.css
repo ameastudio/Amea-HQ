@@ -673,3 +673,70 @@ input[type="range"]{accent-color:#f22278}
 .eraser-control{margin-top:9px}
 .quick-tools{margin-top:11px}
 .quick-tool{min-height:52px}
+
+
+/* ===== Locked texture brush reference layout ===== */
+@media(min-width:761px){
+  .left-panel{
+    width:min(1120px,calc(100vw - 36px));
+    display:grid;
+    grid-template-columns:minmax(620px,1fr) 300px;
+    grid-template-rows:auto auto auto auto minmax(0,1fr);
+    gap:11px 14px;
+    align-content:start;
+  }
+  .left-panel .panel-top{grid-column:1/-1;margin:0}
+  .left-panel .brush-library-shell{
+    grid-column:1;grid-row:2/7;
+    grid-template-columns:132px minmax(0,1fr);
+    min-height:0;height:calc(100vh - 116px);
+    padding-right:4px;border-right:1px solid rgba(188,56,109,.12)
+  }
+  .left-panel .brush-categories{padding:4px 7px 4px 0;gap:7px}
+  .left-panel .category-chip{font-size:12px;padding:13px 12px;border-radius:13px}
+  .left-panel .brush-presets{
+    max-height:none;height:100%;padding:4px 8px 12px 2px;
+    display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;align-content:start
+  }
+  .left-panel .brush-presets.texture-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .left-panel .brush-preset{
+    display:grid;grid-template-columns:1fr 26px;grid-template-rows:88px auto;
+    gap:5px 4px;min-height:134px;padding:8px;border-radius:15px
+  }
+  .left-panel .brush-preview-canvas{
+    grid-column:1/-1;width:100%;height:86px;border-radius:12px;background:#fff8fb
+  }
+  .left-panel .brush-preset-copy{grid-column:1;min-width:0}
+  .left-panel .brush-preset strong{font-size:11px}
+  .left-panel .brush-preset small{display:none}
+  .left-panel .fav-star{grid-column:2;grid-row:2;width:25px;height:25px;font-size:16px;align-self:center}
+  .left-panel .active-brush-card{
+    grid-column:2;grid-row:2;
+    grid-template-columns:1fr;gap:8px;padding:13px;border-radius:18px
+  }
+  .left-panel .active-brush-preview{height:150px}
+  .left-panel #activeBrushPreview{width:100%;height:140px}
+  .left-panel .active-brush-copy>span{font-size:9px}
+  .left-panel .active-brush-copy strong{font-size:17px}
+  .left-panel .active-brush-copy small{font-size:10px}
+  .left-panel .brush-control-grid{grid-column:2;grid-row:3;margin:0}
+  .left-panel>.control-card{grid-column:2;margin:0}
+  .left-panel>.control-card:not(.eraser-control){grid-row:4}
+  .left-panel>.eraser-control{grid-row:5}
+  .left-panel .quick-tools{grid-column:2;grid-row:6;margin:0;align-self:end}
+  .left-panel>.secondary-wide{grid-column:2;grid-row:7;margin:0}
+}
+@media(max-width:900px) and (min-width:761px){
+  .left-panel{width:min(96vw,860px);grid-template-columns:minmax(470px,1fr) 250px}
+  .left-panel .brush-presets.texture-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .left-panel .brush-library-shell{grid-template-columns:110px minmax(0,1fr)}
+}
+@media(max-width:760px){
+  .left-panel{display:block;width:min(94vw,420px)}
+  .left-panel .brush-presets.texture-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .left-panel .brush-presets.texture-grid .brush-preset{
+    grid-template-columns:1fr 22px;grid-template-rows:68px auto;min-height:112px
+  }
+  .left-panel .brush-presets.texture-grid .brush-preview-canvas{grid-column:1/-1;width:100%;height:66px}
+  .left-panel .brush-presets.texture-grid .brush-preset-copy small{display:none}
+}
