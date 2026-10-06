@@ -44,7 +44,20 @@ const state={
 
 function newCanvas(){const c=document.createElement("canvas");c.width=W;c.height=H;return c}
 function activeLayer(){return state.layers.find(l=>l.id===state.activeLayerId)||state.layers[0]}
-function addLayer(name="Sketch"){const l={id:crypto.randomUUID?.()||String(Date.now()+Math.random()),name,visible:true,canvas:newCanvas()};state.layers.unshift(l);state.activeLayerId=l.id;renderLayerList();render();snapshot();return l}
+function addLayer(name=""){const l={id:crypto.randomUUID?.()||String(Date.now()+Math.random()),name:String(name||"").trim(),visible:true,canvas:newCanvas()};state.layers.unshift(l);state.activeLayerId=l.id;renderLayerList();render();snapshot();return l}
+function renameLayer(id){
+  const layer=state.layers.find(l=>l.id===id);if(!layer)return;
+  const next=prompt("Name this layer",layer.name||"");
+  if(next===null)return;
+  layer.name=String(next).trim();
+  renderLayerList();snapshot();
+}
+function moveLayer(id,dir){
+  const i=state.layers.findIndex(l=>l.id===id);if(i<0)return;
+  const ni=i+dir;if(ni<0||ni>=state.layers.length)return;
+  [state.layers[i],state.layers[ni]]=[state.layers[ni],state.layers[i]];
+  renderLayerList();render();snapshot();
+}
 function showToast(m){toast.textContent=m;toast.classList.add("show");clearTimeout(showToast.t);showToast.t=setTimeout(()=>toast.classList.remove("show"),1400)}
 
 function setColour(hex){state.colour=hex;$("#colourPicker").value=hex;$("#hexValue").textContent=hex.toUpperCase();const dot=$("#dockColourDot");if(dot)dot.style.background=hex;state.recentColours=[hex,...state.recentColours.filter(c=>c!==hex)].slice(0,8);renderRecentColours()}
@@ -350,7 +363,38 @@ function stampMotif(p,random=false){if(!state.motif){showToast("Create a motif f
 function createMotif(){if(!state.selection||state.selection.w<8||state.selection.h<8){showToast("Select your motif first");return}const s=state.selection,m=document.createElement("canvas");m.width=Math.round(s.w);m.height=Math.round(s.h);const mc=m.getContext("2d");[...state.layers].reverse().forEach(l=>{if(l.visible)mc.drawImage(l.canvas,s.x,s.y,s.w,s.h,0,0,m.width,m.height)});state.motif=m;const p=$("#motifPreview"),pc=p.getContext("2d");pc.clearRect(0,0,p.width,p.height);const sc=Math.min((p.width-18)/m.width,(p.height-18)/m.height);pc.drawImage(m,(p.width-m.width*sc)/2,(p.height-m.height*sc)/2,m.width*sc,m.height*sc);$("#motifStatus").textContent="Motif saved ✓";showToast("Motif saved")}
 function patternFill(){if(!state.selection||!state.motif){showToast("Select an area and create a motif first");return}const s=state.selection,g=Math.max(20,state.motifSpacing),old=state.selection;state.selection=null;for(let y=s.y+g/2;y<s.y+s.h;y+=g)for(let x=s.x+g/2;x<s.x+s.w;x+=g)stampMotif({x,y},false);state.selection=old;render();snapshot()}
 
-function renderLayerList(){const root=$("#layerList");root.innerHTML="";state.layers.forEach(layer=>{const row=document.createElement("div");row.className="layer-item"+(layer.id===state.activeLayerId?" active":"");row.innerHTML='<button class="layer-eye">'+(layer.visible?"◉":"○")+'</button><div class="layer-name">'+escapeHtml(layer.name)+'</div><button class="layer-delete">×</button>';row.onclick=e=>{if(e.target.classList.contains("layer-eye"))layer.visible=!layer.visible;else if(e.target.classList.contains("layer-delete")){if(state.layers.length===1)return;state.layers=state.layers.filter(l=>l.id!==layer.id);if(state.activeLayerId===layer.id)state.activeLayerId=state.layers[0].id;snapshot()}else state.activeLayerId=layer.id;renderLayerList();render()};root.appendChild(row)})}
+function renderLayerList(){
+  const root=$("#layerList");root.innerHTML="";
+  state.layers.forEach((layer,index)=>{
+    const row=document.createElement("div");
+    row.className="layer-item"+(layer.id===state.activeLayerId?" active":"");
+    row.innerHTML=
+      '<button class="layer-eye" aria-label="'+(layer.visible?'Hide':'Show')+' layer">'+
+        (layer.visible?'<svg viewBox="0 0 24 24"><path d="M2.8 12s3.4-5 9.2-5 9.2 5 9.2 5-3.4 5-9.2 5-9.2-5-9.2-5Z"/><circle cx="12" cy="12" r="2.4"/></svg>':'<svg viewBox="0 0 24 24"><path d="M4 4l16 16M9.5 7.3A9.8 9.8 0 0 1 12 7c5.8 0 9.2 5 9.2 5a15.7 15.7 0 0 1-2.1 2.5M14.4 16.7A9.7 9.7 0 0 1 12 17c-5.8 0-9.2-5-9.2-5a15.9 15.9 0 0 1 2.1-2.6"/></svg>')+
+      '</button>'+
+      '<button class="layer-name" aria-label="Rename layer">'+(layer.name?escapeHtml(layer.name):'<span>Tap to name</span>')+'</button>'+
+      '<span class="layer-order">'+
+        '<button class="layer-up" aria-label="Move layer up" '+(index===0?'disabled':'')+'>↑</button>'+
+        '<button class="layer-down" aria-label="Move layer down" '+(index===state.layers.length-1?'disabled':'')+'>↓</button>'+
+      '</span>'+
+      '<button class="layer-delete" aria-label="Delete layer">×</button>';
+    row.onclick=e=>{
+      const btn=e.target.closest("button");
+      if(btn?.classList.contains("layer-eye"))layer.visible=!layer.visible;
+      else if(btn?.classList.contains("layer-name")){renameLayer(layer.id);return}
+      else if(btn?.classList.contains("layer-up")){moveLayer(layer.id,-1);return}
+      else if(btn?.classList.contains("layer-down")){moveLayer(layer.id,1);return}
+      else if(btn?.classList.contains("layer-delete")){
+        if(state.layers.length===1){showToast("Keep at least one layer");return}
+        state.layers=state.layers.filter(l=>l.id!==layer.id);
+        if(state.activeLayerId===layer.id)state.activeLayerId=state.layers[0]?.id||null;
+        snapshot();
+      }else state.activeLayerId=layer.id;
+      renderLayerList();render();
+    };
+    root.appendChild(row);
+  });
+}
 function escapeHtml(v){return v.replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[ch]))}
 function serializeLayers(){return state.layers.map(l=>({id:l.id,name:l.name,visible:l.visible,data:l.canvas.toDataURL("image/png")}))}
 function snapshot(){const s={layers:serializeLayers(),activeLayerId:state.activeLayerId,croquisBody:state.croquisBody,croquisView:state.croquisView,croquisOpacity:state.croquisOpacity,croquisHidden:state.croquisHidden};state.history=state.history.slice(0,state.historyIndex+1);state.history.push(s);if(state.history.length>20)state.history.shift();state.historyIndex=state.history.length-1}
@@ -417,7 +461,7 @@ $("#motifSpacing").oninput=e=>{state.motifSpacing=+e.target.value;$("#motifSpaci
 $("#motifRotation").oninput=e=>{state.motifRotation=+e.target.value;$("#motifRotationValue").textContent=e.target.value+"°"};
 $("#createMotifBtn").onclick=createMotif;$("#clearMotifBtn").onclick=()=>{state.motif=null;$("#motifPreview").getContext("2d").clearRect(0,0,220,160);$("#motifStatus").textContent="No motif saved"};
 
-$("#addLayerBtn").onclick=()=>addLayer("Layer "+(state.layers.length+1));
+$("#addLayerBtn").onclick=()=>{const l=addLayer("");const name=prompt("Name this layer","");if(name!==null){l.name=String(name).trim();renderLayerList();snapshot()}};
 $("#clearLayerBtn").onclick=()=>{const l=activeLayer();if(!l)return;if(confirm("Clear active layer?")){l.canvas.getContext("2d").clearRect(0,0,W,H);render();snapshot()}};
 
 $("#referenceUpload").onchange=e=>{const f=e.target.files?.[0];if(!f)return;const r=new FileReader();r.onload=()=>{const i=new Image();i.onload=()=>{state.referenceImage=i;render();showToast("Reference added")};i.src=r.result};r.readAsDataURL(f)};
@@ -431,7 +475,7 @@ $("#undoBtn").onclick=undo;$("#redoBtn").onclick=redo;$("#exportBtn").onclick=ex
 window.addEventListener("resize",()=>requestAnimationFrame(fitCanvas));
 window.addEventListener("keydown",e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==="z"){e.preventDefault();e.shiftKey?redo():undo()}});
 
-addLayer("Details");addLayer("Colour");addLayer("Sketch");
+addLayer("");
 state.history=[];state.historyIndex=-1;
 state.brush=BRUSHES.sketching[0];renderBrushes("sketching");applyBrush(state.brush);setColour(state.colour);renderBodyTypePreviews();syncCroquisUI();renderLayerList();render();snapshot();requestAnimationFrame(fitCanvas);
 })();
