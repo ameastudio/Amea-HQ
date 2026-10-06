@@ -174,10 +174,23 @@ function applyBrush(p){
   $("#brushOpacity").value=Math.round(p.opacity*100);$("#brushOpacityValue").textContent=Math.round(p.opacity*100)+"%";
   $("#brushSmoothing").value=Math.round(p.smoothing*100);$("#brushSmoothingValue").textContent=Math.round(p.smoothing*100)+"%";
   $("#pressureToggle").checked=p.pressure;
-  $$(".quick-tool").forEach(b=>b.classList.remove("active"));
-  syncActiveBrushCard();renderBrushes(state.brushCategory);showToast(p.name);
+  $(".quick-tool").forEach(b=>b.classList.remove("active"));
+  syncTopTools();syncActiveBrushCard();renderBrushes(state.brushCategory);showToast(p.name);
 }
-function setTool(t){state.tool=t;$$(".quick-tool").forEach(b=>b.classList.toggle("active",b.dataset.tool===t));if(t==="brush")renderBrushes();if(["stamp","scatter","fillpattern"].includes(t)&&!state.motif)showToast("Create a motif first ✿")}
+function syncTopTools(){
+  const map={brush:"brushTopBtn",smudge:"smudgeTopBtn",eraser:"eraserTopBtn"};
+  $(".procreate-tool").forEach(b=>b.classList.remove("active"));
+  const id=map[state.tool];if(id)$("#"+id)?.classList.add("active");
+}
+function setTool(t){
+  state.tool=t;
+  $(".quick-tool").forEach(b=>b.classList.toggle("active",b.dataset.tool===t));
+  syncTopTools();
+  if(t==="brush")renderBrushes();
+  if(t==="eraser"){$("#brushSize").value=state.eraserSize;$("#brushSizeValue").textContent=state.eraserSize}
+  else if(t==="brush"||t==="smudge"){$("#brushSize").value=state.brushSize;$("#brushSizeValue").textContent=state.brushSize}
+  if(["stamp","scatter","fillpattern"].includes(t)&&!state.motif)showToast("Create a motif first ✿");
+}
 
 function fitCanvas(){
   const r=viewport.getBoundingClientRect(),margin=shell.classList.contains("left-collapsed")&&shell.classList.contains("right-collapsed")?0:30;
@@ -414,6 +427,14 @@ function drawSpecial(l,p){
 function strokeTo(p){
   const layer=activeLayer();if(!layer)return;const l=layer.canvas.getContext("2d"),prev=state.last||p;
   if(state.tool==="eraser"){l.save();l.globalCompositeOperation="destination-out";l.strokeStyle="#000";l.lineCap="round";l.lineJoin="round";l.lineWidth=state.eraserSize;l.beginPath();l.moveTo(prev.x,prev.y);l.lineTo(p.x,p.y);l.stroke();l.restore();state.last=p;render();return}
+  if(state.tool==="smudge"){
+    const r=Math.max(10,state.brushSize*.7),sx=Math.max(0,Math.min(W-r*2,prev.x-r)),sy=Math.max(0,Math.min(H-r*2,prev.y-r)),size=Math.max(2,Math.round(r*2));
+    try{
+      const patch=l.getImageData(Math.round(sx),Math.round(sy),size,size);
+      l.save();l.globalAlpha=Math.max(.08,state.opacity*.18);l.putImageData(patch,Math.round(p.x-r),Math.round(p.y-r));l.restore();
+    }catch(_){}
+    state.last=p;render();return;
+  }
   const b=state.brush||BRUSHES.pencils[0];
   if(["stitch","crossstitch","embroidered","crochet","knit","fuzzy","fur","weave","mesh","denim","boucle","sequin","rhinestone","glitter","chalk","watercolour","velvet","satin","leather","lace","beadchain"].includes(b.mode)){drawSpecial(l,p);state.last=p;render();return}
   l.save();l.globalCompositeOperation="source-over";l.strokeStyle=state.colour;l.globalAlpha=state.opacity;l.lineCap="round";l.lineJoin="round";
@@ -479,6 +500,7 @@ async function redo(){if(state.historyIndex>=state.history.length-1)return;state
 function exportPNG(){const c=newCanvas(),x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,W,H);drawCroquis(x);[...state.layers].reverse().forEach(l=>{if(l.visible)x.drawImage(l.canvas,0,0)});const a=document.createElement("a"),safe=($("#designName").value||"amea-design").trim().replace(/[^a-z0-9-_]+/gi,"-");a.download=(safe||"amea-design")+".png";a.href=c.toDataURL("image/png");a.click();showToast("Exported ✓")}
 
 viewport.addEventListener("pointerdown",e=>{
+  shell.classList.add("left-collapsed","right-collapsed");
   if(e.pointerType==="touch"){e.preventDefault();state.touches.set(e.pointerId,{x:e.clientX,y:e.clientY});viewport.setPointerCapture?.(e.pointerId);startTouchGesture();return}
   if(e.pointerType==="mouse"&&e.button!==0)return;
   const p=pagePoint(e);artboard.setPointerCapture?.(e.pointerId);
@@ -507,7 +529,7 @@ viewport.addEventListener("pointerup",endPointer);viewport.addEventListener("poi
 
 $$(".category-chip").forEach(b=>b.onclick=()=>renderBrushes(b.dataset.brushCategory));
 $$(".quick-tool").forEach(b=>b.onclick=()=>setTool(b.dataset.tool));
-$("#brushSize").oninput=e=>{state.brushSize=+e.target.value;$("#brushSizeValue").textContent=e.target.value};
+$("#brushSize").oninput=e=>{const v=+e.target.value;if(state.tool==="eraser"){state.eraserSize=v;$("#eraserSize").value=v;$("#eraserSizeValue").textContent=v}else state.brushSize=v;$("#brushSizeValue").textContent=v};
 $("#brushOpacity").oninput=e=>{state.opacity=+e.target.value/100;$("#brushOpacityValue").textContent=e.target.value+"%"};
 $("#eraserSize").oninput=e=>{state.eraserSize=+e.target.value;$("#eraserSizeValue").textContent=e.target.value};
 $("#brushSmoothing").oninput=e=>{state.smoothing=+e.target.value/100;$("#brushSmoothingValue").textContent=e.target.value+"%"};
@@ -543,8 +565,24 @@ $("#referenceUpload").onchange=e=>{const f=e.target.files?.[0];if(!f)return;cons
 $("#referenceOpacity").oninput=e=>{state.referenceOpacity=+e.target.value/100;$("#referenceOpacityValue").textContent=e.target.value+"%";render()};
 $("#removeReferenceBtn").onclick=()=>{state.referenceImage=null;$("#referenceUpload").value="";render()};
 
-function togglePanel(side,open){const cls=side+"-collapsed";open?shell.classList.remove(cls):shell.classList.add(cls);requestAnimationFrame(()=>requestAnimationFrame(fitCanvas))}
-$("#toggleLeft").onclick=()=>togglePanel("left",false);$("#toggleRight").onclick=()=>togglePanel("right",false);$("#reopenLeft").onclick=()=>togglePanel("left",true);$("#reopenRight").onclick=()=>togglePanel("right",true);$("#openBrushesDock").onclick=()=>togglePanel("left",true);$("#openStudioDock").onclick=()=>togglePanel("right",true);$("#openColourDock").onclick=()=>{togglePanel("right",true);const tab=$('.tab-btn[data-tab="colour"]');if(tab)tab.click()};
+function togglePanel(side,open){
+  const cls=side+"-collapsed";
+  if(side==="left"&&open)shell.classList.add("right-collapsed");
+  if(side==="right"&&open)shell.classList.add("left-collapsed");
+  open?shell.classList.remove(cls):shell.classList.add(cls);
+}
+function openStudioTab(tab){
+  togglePanel("right",true);
+  const btn=$('.tab-btn[data-tab="'+tab+'"]');if(btn)btn.click();
+}
+$("#toggleLeft").onclick=()=>togglePanel("left",false);
+$("#toggleRight").onclick=()=>togglePanel("right",false);
+$("#brushTopBtn").onclick=()=>{setTool("brush");togglePanel("left",true)};
+$("#smudgeTopBtn").onclick=()=>{setTool("smudge");togglePanel("left",false);togglePanel("right",false)};
+$("#eraserTopBtn").onclick=()=>{setTool("eraser");togglePanel("left",false);togglePanel("right",false)};
+$("#layersTopBtn").onclick=()=>openStudioTab("layers");
+$("#colourTopBtn").onclick=()=>openStudioTab("colour");
+$("#studioTopBtn").onclick=()=>openStudioTab("croquis");
 
 $("#undoBtn").onclick=undo;$("#redoBtn").onclick=redo;$("#exportBtn").onclick=exportPNG;
 window.addEventListener("resize",()=>requestAnimationFrame(fitCanvas));
@@ -552,5 +590,5 @@ window.addEventListener("keydown",e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCa
 
 addLayer("");
 state.history=[];state.historyIndex=-1;
-state.brush=BRUSHES.pencils[0];renderBrushes("pencils");applyBrush(state.brush);setColour(state.colour);renderBodyTypePreviews();syncCroquisUI();renderLayerList();render();snapshot();requestAnimationFrame(fitCanvas);
+state.brush=BRUSHES.pencils[0];renderBrushes("pencils");applyBrush(state.brush);syncTopTools();setColour(state.colour);renderBodyTypePreviews();syncCroquisUI();renderLayerList();render();snapshot();requestAnimationFrame(fitCanvas);
 })();
