@@ -1575,3 +1575,178 @@ nav button>span:last-child{font-size:8.5px!important;margin:0!important}
   .crochet-card-grid{gap:7px!important}
   .crochet-v1-card .studio-pattern-copy{padding:8px!important}
 }
+
+
+/* ===== Améa HQ vibrant Apple-ish visual pass ===== */
+:root{
+  --amea-hot:#f22278;
+  --amea-pink:#ff4b91;
+  --amea-deep:#b80f55;
+  --amea-blush:#ffd4e3;
+  --amea-soft:#ffe9f1;
+  --amea-cream:#fff8fb;
+  --amea-ink:#2b1320;
+  --amea-muted:#856273;
+  --amea-gold:#c99545;
+}
+html,body{background:#fff4f8}
+body{color:var(--amea-ink)}
+#app{background:
+  radial-gradient(circle at 100% 0,rgba(255,93,155,.14),transparent 23%),
+  linear-gradient(180deg,#fff8fb 0%,#fff1f6 42%,#fff6f9 100%)}
+
+.amea-icon{width:21px;height:21px;display:block;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.hq-mini-icon .amea-icon,.hq-manage-icon .amea-icon,.more-line-icon .amea-icon,.invoice-icon .amea-icon,.expense-icon .amea-icon,.stock-icon .amea-icon{width:20px;height:20px}
+.hq-quick-grid .amea-icon{width:18px;height:18px}
+.studio-feature-art>.amea-icon{width:34px;height:34px;stroke-width:1.65}
+
+/* Bottom nav: cleaner, more iOS-like */
+nav{
+  background:rgba(255,250,252,.92)!important;
+  border-top:1px solid rgba(214,93,139,.15)!important;
+  box-shadow:0 -9px 26px rgba(89,19,51,.08)!important;
+  backdrop-filter:blur(24px)!important;
+  -webkit-backdrop-filter:blur(24px)!important;
+}
+nav button{color:#8d7180!important;gap:3px!important}
+nav button.active{
+  background:linear-gradient(145deg,#ff4f96,#ef2778)!important;
+  color:#fff!important;
+  box-shadow:0 7px 16px rgba(231,38,117,.22)!important;
+}
+.nav-icon{width:25px!important;height:25px!important}
+.nav-icon svg{width:22px!important;height:22px!important;stroke-width:1.85!important}
+
+/* Global card contrast */
+.hq-overall-grid,.hq-tracking-grid button,.hq-panel,.hq-quick-section,.orders-library,.orders-priority,
+.tool-list-card,.more-menu-list>button,.settings-modern-card,.crochet-library-v1,.crochet-sub-card,
+.studio-detail-section,.studio-work-piece,.calendar-agenda{
+  border-color:rgba(212,92,139,.18)!important;
+  box-shadow:0 10px 26px rgba(90,22,53,.07)!important;
+}
+.hq-overall-grid,.hq-panel,.hq-quick-section,.tool-list-card,.settings-modern-card,.crochet-library-v1,.crochet-sub-card{
+  background:rgba(255,255,255,.96)!important;
+}
+
+/* Home has more energy */
+.hq-welcome{
+  background:linear-gradient(145deg,#ff4f96 0%,#e91d70 100%)!important;
+  border:0!important;
+  border-radius:26px!important;
+  padding:18px 17px!important;
+  box-shadow:0 16px 32px rgba(213,27,104,.20)!important;
+}
+.hq-welcome .hq-kicker{color:#ffe5b4!important}
+.hq-welcome h2,.hq-welcome p{color:#fff!important}
+.hq-overall-grid{overflow:hidden}
+.hq-overall-grid strong{color:var(--amea-deep)!important}
+.hq-tracking-grid button{background:linear-gradient(145deg,#fff,#fff3f7)!important}
+.hq-mini-icon{
+  width:38px!important;height:38px!important;border-radius:13px!important;
+  background:linear-gradient(145deg,#ff5b9d,#ef2679)!important;color:#fff!important;
+  box-shadow:0 7px 16px rgba(227,38,117,.18)!important;
+}
+.hq-manage-orders{
+  background:linear-gradient(135deg,#ff679f 0%,#f12779 55%,#d91663 100%)!important;
+  border:0!important;color:#fff!important;
+  box-shadow:0 15px 30px rgba(211,22,97,.22)!important;
+}
+.hq-manage-orders b,.hq-manage-orders small,.hq-manage-orders i{color:#fff!important}
+.hq-manage-orders small{opacity:.82}
+.hq-manage-icon{background:rgba(255,255,255,.18)!important;color:#fff!important;border:1px solid rgba(255,255,255,.18)!important}
+.hq-quick-grid button{
+  background:linear-gradient(155deg,#fff1f6,#ffe2ec)!important;
+  border:1px solid rgba(229,62,124,.13)!important;
+}
+.hq-quick-grid span{
+  background:linear-gradient(145deg,#ff5599,#ee2377)!important;
+  color:#fff!important;
+  box-shadow:0 5px 13px rgba(225,34,113,.16)!important;
+}
+
+/* Order hub tabs */
+.order-hub-tabs,.crochet-section-nav{
+  background:#ffdbe8!important;
+  border-color:rgba(227,51,119,.14)!important;
+}
+.order-hub-tabs button.active,.crochet-section-nav button.active{
+  color:#d81863!important;
+  box-shadow:0 5px 13px rgba(137,27,72,.10)!important;
+}
+
+/* More menu: real icon tiles, less beige */
+.more-menu-list>button{
+  background:rgba(255,255,255,.97)!important;
+  border-color:rgba(219,73,130,.16)!important;
+  padding:12px 13px!important;
+}
+.more-line-icon{
+  width:42px!important;height:42px!important;border-radius:14px!important;
+  background:linear-gradient(145deg,#ff5599,#ed2878)!important;
+  color:#fff!important;
+  box-shadow:0 7px 15px rgba(221,35,108,.16)!important;
+}
+.more-menu-list i{color:#dd256f!important}
+
+/* Studio cards */
+.studio-feature-card{
+  border-color:rgba(216,70,126,.16)!important;
+  box-shadow:0 14px 30px rgba(91,23,55,.08)!important;
+}
+.studio-feature-card.crochet{
+  background:linear-gradient(145deg,#ffedf4 0%,#ffcddd 100%)!important;
+}
+.studio-feature-card.design{
+  background:linear-gradient(145deg,#fff 0%,#ffe4ee 100%)!important;
+}
+.studio-feature-art{
+  width:62px!important;height:62px!important;border-radius:20px!important;
+  background:linear-gradient(145deg,#ff4f96,#e91f70)!important;
+  color:#fff!important;border:0!important;
+  box-shadow:0 11px 22px rgba(219,29,104,.20)!important;
+}
+.studio-feature-art i{display:none!important}
+.studio-feature-arrow{color:#dc216c!important}
+.studio-feature-stats strong{color:#d81863!important}
+
+/* Crochet Studio */
+.crochet-v1-head h2,.crochet-library-head h3{color:#2b1320!important}
+.crochet-new-pattern{
+  background:linear-gradient(145deg,#ff5599,#e91d70)!important;
+  box-shadow:0 8px 18px rgba(220,31,105,.22)!important;
+}
+.crochet-work-banner{
+  background:linear-gradient(135deg,#ff589c,#e91d70 58%,#c9165b)!important;
+  box-shadow:0 15px 30px rgba(211,22,97,.22)!important;
+}
+.crochet-v1-stats>div{background:linear-gradient(155deg,#fff,#fff0f5)!important}
+.crochet-v1-stats strong{color:#db1f69!important}
+.crochet-v1-card{box-shadow:0 10px 22px rgba(94,25,57,.08)!important}
+.crochet-placeholder{background:linear-gradient(145deg,#fff3f7,#ffdce8)!important}
+.crochet-status-chip{color:#c91b61!important}
+
+/* Lists/icons in secondary screens */
+.invoice-icon,.expense-icon,.stock-icon{
+  width:40px!important;height:40px!important;border-radius:13px!important;
+  background:linear-gradient(145deg,#ff5b9d,#ed2878)!important;
+  color:#fff!important;
+  box-shadow:0 6px 14px rgba(220,36,108,.15)!important;
+}
+.customer-avatar{background:linear-gradient(145deg,#ff5b9d,#ed2878)!important;color:#fff!important}
+
+/* Buttons/inputs */
+.primary,.tool-add-btn{
+  background:linear-gradient(145deg,#ff4f96,#df1f6d)!important;
+  box-shadow:0 9px 20px rgba(211,28,101,.18)!important;
+}
+input:focus,select:focus,textarea:focus{border-color:#f04d8d!important;box-shadow:0 0 0 3px rgba(241,52,126,.11)!important}
+
+/* Keep gold sparse and modern */
+.hq-kicker,.hq-section-kicker,.studio-hub-eyebrow,.crochet-library-head>div>span,.tool-page-head>div>span{
+  color:#b98432!important;
+}
+
+@media(max-width:390px){
+  .hq-welcome{padding:16px 15px!important}
+  .more-line-icon{width:39px!important;height:39px!important}
+}
