@@ -145,85 +145,153 @@ function pagePoint(e){const r=artboard.getBoundingClientRect();return{x:(e.clien
 
 function drawHumanCroquis(t,bodyType,view,cx,top,scale=1){
   const curvy=bodyType==="curvy";
-  const shoulder=curvy?182:166,bust=curvy?154:132,waist=curvy?88:76,hip=curvy?190:142,thigh=curvy?126:102;
+  const three=view==="threequarter";
+  const back=view==="back";
+  const shoulder=curvy?165:152;
+  const bust=curvy?145:128;
+  const waist=curvy?82:72;
+  const hip=curvy?178:145;
+  const thigh=curvy?112:92;
+  const calf=curvy?58:50;
+  const tilt=three?20:0;
+
   t.save();
-  t.translate(cx,top);
+  t.translate(cx+tilt,top);
   t.scale(scale,scale);
-  if(view==="threequarter")t.transform(1,0,-.055,1,18,0);
-  t.fillStyle="#f0d8cf";
-  t.strokeStyle="#bd9f95";
-  t.lineWidth=4;
-  t.lineJoin="round";
+  if(three)t.transform(.94,0,-.055,1,10,0);
+
+  t.strokeStyle="rgba(178,132,151,.72)";
+  t.lineWidth=3/scale;
   t.lineCap="round";
+  t.lineJoin="round";
+  t.fillStyle="transparent";
 
+  // head + simple face/hair guides
   t.beginPath();
-  t.ellipse(view==="threequarter"?15:0,108,70,96,view==="threequarter"?-.06:0,0,Math.PI*2);
-  t.fill();t.stroke();
+  t.ellipse(three?7:0,90,58,80,three?-.08:0,0,Math.PI*2);
+  t.stroke();
 
-  t.beginPath();
-  t.moveTo(-36,192);t.lineTo(-42,260);t.quadraticCurveTo(0,278,42,260);t.lineTo(36,192);
-  t.closePath();t.fill();t.stroke();
-
-  t.beginPath();
-  t.moveTo(-42,258);
-  t.bezierCurveTo(-86,274,-shoulder,290,-shoulder,335);
-  t.bezierCurveTo(-shoulder-5,400,-bust-8,455,-bust,520);
-  t.bezierCurveTo(-bust+8,590,-waist-9,625,-waist,690);
-  t.bezierCurveTo(-waist+2,760,-hip,790,-hip,865);
-  t.bezierCurveTo(-hip+10,915,-82,955,-35,970);
-  t.quadraticCurveTo(0,990,35,970);
-  t.bezierCurveTo(82,955,hip-10,915,hip,865);
-  t.bezierCurveTo(hip,790,waist-2,760,waist,690);
-  t.bezierCurveTo(waist+9,625,bust-8,590,bust,520);
-  t.bezierCurveTo(bust+8,455,shoulder+5,400,shoulder,335);
-  t.bezierCurveTo(shoulder,290,86,274,42,258);
-  t.quadraticCurveTo(0,282,-42,258);
-  t.closePath();t.fill();t.stroke();
-
-  const arm=(side)=>{
-    const s=side,shift=view==="threequarter"?32:0;
-    const sx=s*(shoulder-4)+shift,ex=s*(228+(curvy?10:0))+shift,wx=s*(220+(curvy?12:0))+shift;
+  if(!back){
+    t.save();
+    t.globalAlpha=.45;
+    t.lineWidth=1.8/scale;
     t.beginPath();
-    t.moveTo(sx,332);
-    t.bezierCurveTo(s*(shoulder+38)+shift,455,ex,595,ex,725);
-    t.bezierCurveTo(ex,830,wx,960,wx,1080);
-    t.bezierCurveTo(wx-s*17,1110,wx-s*45,1108,wx-s*50,1070);
-    t.bezierCurveTo(wx-s*58,950,ex-s*42,825,ex-s*40,720);
-    t.bezierCurveTo(ex-s*35,590,s*(shoulder-5)+shift,455,sx-s*16,360);
-    t.closePath();t.fill();t.stroke();
-    t.beginPath();t.ellipse(wx-s*25,1115,24,38,s>0?.12:-.12,0,Math.PI*2);t.fill();t.stroke();
-  };
-  arm(-1);arm(1);
+    if(three){
+      t.moveTo(13,60);t.quadraticCurveTo(29,90,16,121);
+      t.moveTo(-5,88);t.lineTo(27,85);
+    }else{
+      t.moveTo(0,57);t.lineTo(0,122);
+      t.moveTo(-26,88);t.quadraticCurveTo(0,95,26,88);
+    }
+    t.stroke();
+    t.restore();
+  }
 
-  const leg=(side)=>{
-    const s=side,outer=s*(hip*.72),inner=s*25;
+  // neck and shoulder line
+  t.beginPath();
+  t.moveTo(-29,166);t.lineTo(-35,230);
+  t.moveTo(29,166);t.lineTo(35,230);
+  t.moveTo(-35,230);
+  t.bezierCurveTo(-72,244,-shoulder,255,-shoulder,303);
+  t.stroke();
+  t.beginPath();
+  t.moveTo(35,230);
+  t.bezierCurveTo(72,244,shoulder,255,shoulder,303);
+  t.stroke();
+
+  // torso outline - clean fashion mannequin line only
+  t.beginPath();
+  t.moveTo(-shoulder,303);
+  t.bezierCurveTo(-shoulder+4,360,-bust-10,430,-bust,500);
+  t.bezierCurveTo(-bust+8,565,-waist-7,610,-waist,675);
+  t.bezierCurveTo(-waist+3,730,-hip,774,-hip,845);
+  t.bezierCurveTo(-hip+6,900,-112,935,-55,958);
+  t.stroke();
+
+  t.beginPath();
+  t.moveTo(shoulder,303);
+  t.bezierCurveTo(shoulder-4,360,bust+10,430,bust,500);
+  t.bezierCurveTo(bust-8,565,waist+7,610,waist,675);
+  t.bezierCurveTo(waist-3,730,hip,774,hip,845);
+  t.bezierCurveTo(hip-6,900,112,935,55,958);
+  t.stroke();
+
+  // arms: simple outer + inner contour, easy to sketch over
+  const drawArm=(side)=>{
+    const q=side;
+    const upper=q*(shoulder+12), elbow=q*(205+(curvy?8:0)), wrist=q*(194+(curvy?7:0));
     t.beginPath();
-    t.moveTo(outer,905);
-    t.bezierCurveTo(s*(thigh+24),1080,s*(thigh-12),1225,s*86,1370);
-    t.bezierCurveTo(s*68,1500,s*54,1650,s*46,1770);
-    t.lineTo(s*21,1770);
-    t.bezierCurveTo(s*26,1600,s*36,1490,s*45,1375);
-    t.bezierCurveTo(s*54,1220,s*55,1080,inner,970);
-    t.closePath();t.fill();t.stroke();
-    t.beginPath();t.ellipse(s*55,1793,45,17,s>0?-.1:.1,0,Math.PI*2);t.fill();t.stroke();
+    t.moveTo(q*shoulder,300);
+    t.bezierCurveTo(q*(shoulder+32),410,elbow,560,elbow,700);
+    t.bezierCurveTo(elbow,830,wrist,945,wrist,1040);
+    t.quadraticCurveTo(wrist-q*7,1080,wrist-q*26,1090);
+    t.stroke();
+    t.beginPath();
+    t.moveTo(q*(shoulder-15),325);
+    t.bezierCurveTo(q*(shoulder+1),455,q*(168+(curvy?5:0)),575,q*(166+(curvy?5:0)),700);
+    t.bezierCurveTo(q*(165+(curvy?5:0)),825,wrist-q*30,940,wrist-q*34,1032);
+    t.stroke();
+    t.beginPath();
+    t.moveTo(wrist-q*26,1090);
+    t.quadraticCurveTo(wrist-q*9,1112,wrist+q*10,1082);
+    t.stroke();
   };
-  leg(-1);leg(1);
+  drawArm(-1);drawArm(1);
 
+  // pelvis connection
+  t.beginPath();
+  t.moveTo(-55,958);
+  t.quadraticCurveTo(0,986,55,958);
+  t.stroke();
+
+  // legs
+  const drawLeg=(side)=>{
+    const q=side;
+    const outerHip=q*(hip*.74), innerHip=q*28;
+    const outerKnee=q*thigh, innerKnee=q*38;
+    const outerAnkle=q*calf, innerAnkle=q*24;
+    t.beginPath();
+    t.moveTo(outerHip,915);
+    t.bezierCurveTo(q*(thigh+22),1090,outerKnee,1235,q*(86+(curvy?6:0)),1375);
+    t.bezierCurveTo(q*(70+(curvy?4:0)),1515,outerAnkle,1660,outerAnkle,1772);
+    t.stroke();
+    t.beginPath();
+    t.moveTo(innerHip,970);
+    t.bezierCurveTo(q*54,1110,innerKnee,1240,q*48,1378);
+    t.bezierCurveTo(q*38,1510,innerAnkle,1645,innerAnkle,1772);
+    t.stroke();
+
+    // foot
+    t.beginPath();
+    t.moveTo(outerAnkle,1772);
+    t.quadraticCurveTo(q*(72+(curvy?4:0)),1797,q*(82+(curvy?5:0)),1811);
+    t.quadraticCurveTo(q*46,1822,innerAnkle,1772);
+    t.stroke();
+  };
+  drawLeg(-1);drawLeg(1);
+
+  // only a few subtle construction cues
   t.save();
-  t.strokeStyle="rgba(151,118,108,.58)";
-  t.lineWidth=2.5;
-  if(view==="back"){
-    t.beginPath();t.moveTo(0,290);t.bezierCurveTo(-5,480,5,690,0,925);t.stroke();
-    t.beginPath();t.moveTo(-112,355);t.quadraticCurveTo(-65,420,-28,470);t.moveTo(112,355);t.quadraticCurveTo(65,420,28,470);t.stroke();
-    t.beginPath();t.moveTo(-80,860);t.quadraticCurveTo(0,910,80,860);t.stroke();
-  }else if(view==="front"){
-    t.beginPath();t.moveTo(-95,520);t.quadraticCurveTo(0,565,95,520);t.stroke();
-    t.beginPath();t.moveTo(0,692);t.lineTo(0,845);t.stroke();
+  t.globalAlpha=.35;
+  t.lineWidth=1.7/scale;
+  if(back){
+    t.beginPath();
+    t.moveTo(0,238);t.bezierCurveTo(-3,440,3,650,0,892);t.stroke();
+    t.beginPath();
+    t.moveTo(-70,836);t.quadraticCurveTo(0,875,70,836);t.stroke();
+  }else if(three){
+    t.beginPath();
+    t.moveTo(15,245);t.bezierCurveTo(5,440,18,640,12,885);t.stroke();
+    t.beginPath();
+    t.moveTo(-60,520);t.quadraticCurveTo(18,548,90,512);t.stroke();
   }else{
-    t.beginPath();t.moveTo(-55,520);t.quadraticCurveTo(22,557,102,515);t.stroke();
-    t.beginPath();t.moveTo(18,690);t.lineTo(22,842);t.stroke();
+    t.beginPath();
+    t.moveTo(-84,515);t.quadraticCurveTo(0,548,84,515);t.stroke();
+    t.beginPath();
+    t.moveTo(0,675);t.lineTo(0,890);t.stroke();
   }
   t.restore();
+
   t.restore();
 }
 
