@@ -131,7 +131,7 @@ function renderBrushes(category=state.brushCategory){
   list.forEach(p=>{
     const b=document.createElement("button");
     b.className="brush-preset"+(state.brush?.id===p.id?" active":"");
-    b.innerHTML='<canvas class="brush-preview-canvas" width="156" height="76"></canvas><span class="brush-preset-copy"><strong>'+p.name+'</strong><small>'+p.note+'</small></span><button class="fav-star" type="button" aria-label="'+(brushIsFavorite(p)?"Remove from favorites":"Add to favorites")+'">'+(brushIsFavorite(p)?"♥":"♡")+'</button>';
+    b.innerHTML='<canvas class="brush-preview-canvas" width="156" height="76"></canvas><span class="brush-preset-copy"><strong>'+p.name+'</strong><small>'+p.note+'</small></span><span class="fav-star" role="button" aria-label="'+(brushIsFavorite(p)?"Remove from favorites":"Add to favorites")+'">'+(brushIsFavorite(p)?"♥":"♡")+'</span>';
     b.onclick=e=>{
       const fav=e.target.closest(".fav-star");
       if(fav){e.preventDefault();e.stopPropagation();toggleBrushFavorite(p);renderBrushes(category);return}
@@ -356,7 +356,7 @@ function render(){
 }
 
 function drawSpecial(l,p){
-  const b=state.brush||BRUSHES.sketching[0],last=state.lastSpecial||p,dist=Math.hypot(p.x-last.x,p.y-last.y),spacing=Math.max(14,state.brushSize*1.5);
+  const b=state.brush||BRUSHES.pencils[0],last=state.lastSpecial||p,dist=Math.hypot(p.x-last.x,p.y-last.y),spacing=Math.max(14,state.brushSize*1.5);
   if(dist<spacing)return;
   const dx=(p.x-last.x)/dist,dy=(p.y-last.y)/dist;
   for(let d=spacing;d<=dist;d+=spacing){
@@ -374,7 +374,7 @@ function drawSpecial(l,p){
 function strokeTo(p){
   const layer=activeLayer();if(!layer)return;const l=layer.canvas.getContext("2d"),prev=state.last||p;
   if(state.tool==="eraser"){l.save();l.globalCompositeOperation="destination-out";l.strokeStyle="#000";l.lineCap="round";l.lineJoin="round";l.lineWidth=state.eraserSize;l.beginPath();l.moveTo(prev.x,prev.y);l.lineTo(p.x,p.y);l.stroke();l.restore();state.last=p;render();return}
-  const b=state.brush||BRUSHES.sketching[0];
+  const b=state.brush||BRUSHES.pencils[0];
   if(["stitch","bead","crochet","knit","fuzzy"].includes(b.mode)){drawSpecial(l,p);state.last=p;render();return}
   l.save();l.globalCompositeOperation="source-over";l.strokeStyle=state.colour;l.globalAlpha=state.opacity;l.lineCap="round";l.lineJoin="round";
   const pressure=state.pressureEnabled?(.58+p.pressure*.92):1,smooth=Math.min(.8,state.smoothing*.8),tx=prev.x+(p.x-prev.x)*(1-smooth),ty=prev.y+(p.y-prev.y)*(1-smooth);
