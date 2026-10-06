@@ -964,3 +964,14 @@ input[type="range"]{accent-color:#f22278}
   .canvas-hud{display:none!important}
   .procreate-view-strip{bottom:10px!important}
 }
+
+@media(max-width:560px){
+  .procreate-topbar{grid-template-columns:auto 1fr auto!important}
+  .design-name{display:none!important}
+  .procreate-top-left .top-icon{width:31px;height:31px}
+  .procreate-tool{width:31px;height:31px}
+  .procreate-tool svg{width:17px;height:17px}
+  .procreate-colour-btn{width:31px;height:31px}
+  .procreate-colour-btn i{width:20px;height:20px}
+  .procreate-tool-row .export-btn{width:31px;height:31px}
+}
