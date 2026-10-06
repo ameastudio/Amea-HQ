@@ -528,7 +528,7 @@ function endPointer(e){
 viewport.addEventListener("pointerup",endPointer);viewport.addEventListener("pointercancel",endPointer);
 
 $$(".category-chip").forEach(b=>b.onclick=()=>renderBrushes(b.dataset.brushCategory));
-$$$(".quick-tool").forEach(b=>b.onclick=()=>setTool(b.dataset.tool));
+$(".quick-tool").forEach(b=>b.onclick=()=>setTool(b.dataset.tool));
 $("#brushSize").oninput=e=>{const v=+e.target.value;if(state.tool==="eraser"){state.eraserSize=v;$("#eraserSize").value=v;$("#eraserSizeValue").textContent=v}else state.brushSize=v;$("#brushSizeValue").textContent=v};
 $("#brushOpacity").oninput=e=>{state.opacity=+e.target.value/100;$("#brushOpacityValue").textContent=e.target.value+"%"};
 $("#eraserSize").oninput=e=>{state.eraserSize=+e.target.value;$("#eraserSizeValue").textContent=e.target.value};
@@ -537,7 +537,7 @@ $("#pressureToggle").onchange=e=>state.pressureEnabled=e.target.checked;
 $("#colourPicker").oninput=e=>setColour(e.target.value);
 $$("#swatches button").forEach(b=>b.onclick=()=>setColour(b.dataset.colour));
 
-$$$(".tab-btn").forEach(btn=>btn.onclick=()=>{$$$(".tab-btn").forEach(b=>b.classList.remove("active"));$$$(".tab-panel").forEach(p=>p.classList.remove("active"));btn.classList.add("active");$('[data-panel="'+btn.dataset.tab+'"]').classList.add("active")});
+$(".tab-btn").forEach(btn=>btn.onclick=()=>{$(".tab-btn").forEach(b=>b.classList.remove("active"));$(".tab-panel").forEach(p=>p.classList.remove("active"));btn.classList.add("active");$('[data-panel="'+btn.dataset.tab+'"]').classList.add("active")});
 function chooseBody(type){state.croquisBody=type;syncCroquisUI();render();snapshot()}
 function chooseView(view){state.croquisView=view;syncCroquisUI();render();snapshot()}
 $$("[data-body-type]").forEach(b=>b.onclick=()=>chooseBody(b.dataset.bodyType));
