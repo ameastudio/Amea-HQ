@@ -34,7 +34,7 @@ const BRUSHES={
 };
 
 const state={
-  tool:"brush",brushCategory:"sketching",brush:null,colour:"#e24892",brushSize:12,opacity:1,smoothing:.28,
+  tool:"brush",brushCategory:"sketching",brush:null,colour:"#f22278",brushSize:12,opacity:1,smoothing:.28,
   pressureEnabled:true,brushMultiplier:1,eraserSize:48,drawing:false,last:null,lastSpecial:null,
   selection:null,selectionStart:null,croquisBody:"classic",croquisView:"front",croquisOpacity:1,croquisHidden:false,
   referenceImage:null,referenceOpacity:.4,motif:null,motifScale:1,motifSpacing:90,motifRotation:0,lastStamp:null,
@@ -47,7 +47,7 @@ function activeLayer(){return state.layers.find(l=>l.id===state.activeLayerId)||
 function addLayer(name="Sketch"){const l={id:crypto.randomUUID?.()||String(Date.now()+Math.random()),name,visible:true,canvas:newCanvas()};state.layers.unshift(l);state.activeLayerId=l.id;renderLayerList();render();snapshot();return l}
 function showToast(m){toast.textContent=m;toast.classList.add("show");clearTimeout(showToast.t);showToast.t=setTimeout(()=>toast.classList.remove("show"),1400)}
 
-function setColour(hex){state.colour=hex;$("#colourPicker").value=hex;$("#hexValue").textContent=hex.toUpperCase();state.recentColours=[hex,...state.recentColours.filter(c=>c!==hex)].slice(0,8);renderRecentColours()}
+function setColour(hex){state.colour=hex;$("#colourPicker").value=hex;$("#hexValue").textContent=hex.toUpperCase();const dot=$("#dockColourDot");if(dot)dot.style.background=hex;state.recentColours=[hex,...state.recentColours.filter(c=>c!==hex)].slice(0,8);renderRecentColours()}
 function renderRecentColours(){const root=$("#recentColours");root.innerHTML="";state.recentColours.forEach(c=>{const b=document.createElement("button");b.style.setProperty("--swatch",c);b.onclick=()=>setColour(c);root.appendChild(b)})}
 
 function drawBrushPreview(canvas,p){
@@ -248,7 +248,7 @@ function render(){
   if(state.referenceImage){ctx.save();ctx.globalAlpha=state.referenceOpacity;const i=state.referenceImage,s=Math.min((W*.82)/i.width,(H*.82)/i.height),iw=i.width*s,ih=i.height*s;ctx.drawImage(i,(W-iw)/2,(H-ih)/2,iw,ih);ctx.restore()}
   drawCroquis(ctx);
   [...state.layers].reverse().forEach(l=>{if(l.visible)ctx.drawImage(l.canvas,0,0)});
-  if(state.selection){ctx.save();ctx.strokeStyle="#e24892";ctx.lineWidth=5;ctx.setLineDash([18,14]);ctx.strokeRect(state.selection.x,state.selection.y,state.selection.w,state.selection.h);ctx.restore()}
+  if(state.selection){ctx.save();ctx.strokeStyle="#f22278";ctx.lineWidth=5;ctx.setLineDash([18,14]);ctx.strokeRect(state.selection.x,state.selection.y,state.selection.w,state.selection.h);ctx.restore()}
 }
 
 function drawSpecial(l,p){
@@ -357,7 +357,7 @@ $("#referenceOpacity").oninput=e=>{state.referenceOpacity=+e.target.value/100;$(
 $("#removeReferenceBtn").onclick=()=>{state.referenceImage=null;$("#referenceUpload").value="";render()};
 
 function togglePanel(side,open){const cls=side+"-collapsed";open?shell.classList.remove(cls):shell.classList.add(cls);requestAnimationFrame(()=>requestAnimationFrame(fitCanvas))}
-$("#toggleLeft").onclick=()=>togglePanel("left",false);$("#toggleRight").onclick=()=>togglePanel("right",false);$("#reopenLeft").onclick=()=>togglePanel("left",true);$("#reopenRight").onclick=()=>togglePanel("right",true);
+$("#toggleLeft").onclick=()=>togglePanel("left",false);$("#toggleRight").onclick=()=>togglePanel("right",false);$("#reopenLeft").onclick=()=>togglePanel("left",true);$("#reopenRight").onclick=()=>togglePanel("right",true);$("#openBrushesDock").onclick=()=>togglePanel("left",true);$("#openStudioDock").onclick=()=>togglePanel("right",true);$("#openColourDock").onclick=()=>{togglePanel("right",true);const tab=$('.tab-btn[data-tab="colour"]');if(tab)tab.click()};
 
 $("#undoBtn").onclick=undo;$("#redoBtn").onclick=redo;$("#exportBtn").onclick=exportPNG;
 window.addEventListener("resize",()=>requestAnimationFrame(fitCanvas));
