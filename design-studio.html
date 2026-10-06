@@ -34,13 +34,22 @@
       <button class="collapse-btn" id="toggleLeft" aria-label="Close brushes"><svg viewBox="0 0 24 24"><path d="m15 5-7 7 7 7"/></svg></button>
     </div>
 
+    <div class="active-brush-card">
+      <div class="active-brush-preview"><canvas id="activeBrushPreview" width="300" height="90"></canvas></div>
+      <div class="active-brush-copy">
+        <span>ACTIVE BRUSH</span>
+        <strong id="activeBrushName">HB Pencil</strong>
+        <small id="activeBrushNote">Smooth everyday drawing pencil</small>
+      </div>
+    </div>
+
     <div class="brush-library-shell">
       <div class="brush-categories" id="brushCategories">
-        <button class="category-chip active" data-brush-category="sketching">Sketching</button>
-        <button class="category-chip" data-brush-category="inking">Inking</button>
+        <button class="category-chip active" data-brush-category="pencils">Pencils</button>
+        <button class="category-chip" data-brush-category="pens">Pens</button>
         <button class="category-chip" data-brush-category="markers">Markers</button>
-        <button class="category-chip" data-brush-category="fashion">Fashion</button>
-        <button class="category-chip" data-brush-category="favorites">♡ Favorites</button>
+        <button class="category-chip" data-brush-category="textures">Textures</button>
+        <button class="category-chip" data-brush-category="favorites">Favorites</button>
       </div>
       <div class="brush-presets" id="brushPresets"></div>
     </div>
@@ -54,25 +63,26 @@
       <button class="quick-tool" data-tool="fillpattern"><svg viewBox="0 0 24 24"><path d="M5 5h14v14H5z"/><path d="M5 10h14M10 5v14M15 5v14M5 15h14"/></svg><small>Fill</small></button>
     </div>
 
-    <div class="control-card">
-      <div class="control-row-head"><span>Brush size</span><output id="brushSizeValue">12</output></div>
-      <input id="brushSize" type="range" min="2" max="120" value="12" />
-    </div>
-
-    <div class="control-card">
-      <div class="control-row-head"><span>Brush opacity</span><output id="brushOpacityValue">100%</output></div>
-      <input id="brushOpacity" type="range" min="5" max="100" value="100" />
-    </div>
-
-    <div class="control-card">
-      <div class="control-row-head"><span>Eraser size</span><output id="eraserSizeValue">48</output></div>
-      <input id="eraserSize" type="range" min="5" max="180" value="48" />
+    <div class="brush-control-grid">
+      <div class="control-card">
+        <div class="control-row-head"><span>Size</span><output id="brushSizeValue">12</output></div>
+        <input id="brushSize" type="range" min="2" max="120" value="12" />
+      </div>
+      <div class="control-card">
+        <div class="control-row-head"><span>Opacity</span><output id="brushOpacityValue">100%</output></div>
+        <input id="brushOpacity" type="range" min="5" max="100" value="100" />
+      </div>
     </div>
 
     <div class="control-card">
       <div class="control-row-head"><span>Smoothing</span><output id="brushSmoothingValue">28%</output></div>
       <input id="brushSmoothing" type="range" min="0" max="100" value="28" />
       <label class="toggle-line"><input id="pressureToggle" type="checkbox" checked /><span>Apple Pencil pressure</span></label>
+    </div>
+
+    <div class="control-card eraser-control">
+      <div class="control-row-head"><span>Eraser size</span><output id="eraserSizeValue">48</output></div>
+      <input id="eraserSize" type="range" min="5" max="180" value="48" />
     </div>
 
     <button class="secondary-wide" id="clearLayerBtn">Clear active layer</button>
