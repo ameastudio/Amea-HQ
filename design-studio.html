@@ -3,219 +3,182 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#fff8fb" />
-  <title>Améa HQ — Design Studio</title>
+  <meta name="theme-color" content="#f4f4f6" />
+  <title>Design Studio</title>
   <link rel="stylesheet" href="design-studio.css" />
 </head>
 <body>
-<div class="studio-shell left-collapsed right-collapsed" id="studioShell">
-  <header class="topbar procreate-topbar">
-    <div class="top-left procreate-top-left">
-      <a class="top-icon" href="index.html" aria-label="Back to Améa HQ"><svg viewBox="0 0 24 24"><path d="M15 5 8 12l7 7"/></svg></a>
-      <button class="top-icon" id="undoBtn" aria-label="Undo"><svg viewBox="0 0 24 24"><path d="M9 7 4.5 11.5 9 16"/><path d="M5 11.5h8.5a5 5 0 0 1 5 5V18"/></svg></button>
-      <button class="top-icon" id="redoBtn" aria-label="Redo"><svg viewBox="0 0 24 24"><path d="m15 7 4.5 4.5L15 16"/><path d="M19 11.5h-8.5a5 5 0 0 0-5 5V18"/></svg></button>
-      <button class="top-icon studio-action-btn" id="studioTopBtn" aria-label="Studio actions"><svg viewBox="0 0 24 24"><path d="m14.7 6.3 3 3"/><path d="M5 19l3.2-.8L18.4 8a2.1 2.1 0 0 0-3-3L5.2 15.2 5 19Z"/><path d="M13 5 5 13"/></svg></button>
-    </div>
-
-    <input id="designName" class="design-name" value="Untitled Design" aria-label="Design name" />
-
-    <div class="top-right procreate-tool-row">
-      <button class="procreate-tool active" id="brushTopBtn" aria-label="Brushes" title="Brushes">
-        <svg viewBox="0 0 24 24"><path d="M14 4c2.8 1 4.8 3 5.8 5.7L10 19.5 4.5 20l.5-5.5L14 4Z"/><path d="m12.3 6 5.7 5.7"/></svg>
-      </button>
-      <button class="procreate-tool" id="smudgeTopBtn" aria-label="Smudge" title="Smudge">
-        <svg viewBox="0 0 24 24"><path d="M8.5 13.5V8.2a1.6 1.6 0 0 1 3.2 0v3.2"/><path d="M11.7 11.4V6.8a1.6 1.6 0 0 1 3.2 0v4.8"/><path d="M14.9 11.6V8.1a1.6 1.6 0 0 1 3.2 0v6.3c0 3.8-2.4 6.1-6.1 6.1-2.4 0-4.2-1.1-5.5-3L4 14.3a1.8 1.8 0 0 1 2.6-2.4l1.9 1.6Z"/></svg>
-      </button>
-      <button class="procreate-tool" id="eraserTopBtn" aria-label="Eraser" title="Eraser">
-        <svg viewBox="0 0 24 24"><path d="m7 17-3-3 8.5-8.5a2.1 2.1 0 0 1 3 0l3 3a2.1 2.1 0 0 1 0 3L13 17H7Z"/><path d="M12 17h7"/></svg>
-      </button>
-      <button class="procreate-tool" id="layersTopBtn" aria-label="Layers" title="Layers">
-        <svg viewBox="0 0 24 24"><path d="m12 4 8 4-8 4-8-4 8-4Z"/><path d="m4 12 8 4 8-4"/><path d="m4 16 8 4 8-4"/></svg>
-      </button>
-      <button class="procreate-colour-btn" id="colourTopBtn" aria-label="Colour" title="Colour"><i id="dockColourDot"></i></button>
-      <button class="export-btn" id="exportBtn" aria-label="Export"><svg viewBox="0 0 24 24"><path d="M12 15V4M8 8l4-4 4 4"/><path d="M5 13v6h14v-6"/></svg><span>Export</span></button>
-    </div>
-  </header>  <aside class="panel left-panel procreate-popover brush-popover">
-    <div class="panel-top">
-      <div><span class="panel-kicker">BRUSH LIBRARY</span><h2>Brush Library</h2></div>
-      <button class="collapse-btn" id="toggleLeft" aria-label="Close brushes"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
-    </div>
-
-    <div class="brush-library-shell">
-      <div class="brush-categories" id="brushCategories">
-        <button class="category-chip active" data-brush-category="pencils">Pencils</button>
-        <button class="category-chip" data-brush-category="pens">Pens</button>
-        <button class="category-chip" data-brush-category="markers">Markers</button>
-        <button class="category-chip" data-brush-category="textures">Textures</button>
-        <button class="category-chip" data-brush-category="favorites">Favorites</button>
+  <main id="galleryScreen" class="screen gallery-screen">
+    <header class="gallery-header">
+      <a href="index.html" class="gallery-back" aria-label="Back">‹</a>
+      <h1>Gallery</h1>
+      <div class="gallery-actions">
+        <button id="selectGalleryBtn" class="text-button">Select</button>
+        <button id="newDesignBtn" class="plus-button" aria-label="Create new design">＋</button>
       </div>
-      <div class="brush-presets" id="brushPresets"></div>
-    </div>
+    </header>
 
-    <div class="brush-settings-strip">
-      <div class="control-card">
-        <div class="control-row-head"><span>Smoothing</span><output id="brushSmoothingValue">28%</output></div>
-        <input id="brushSmoothing" type="range" min="0" max="100" value="28" />
-        <label class="toggle-line"><input id="pressureToggle" type="checkbox" checked /><span>Apple Pencil pressure</span></label>
-      </div>
-      <div class="control-card">
-        <div class="control-row-head"><span>Eraser size</span><output id="eraserSizeValue">48</output></div>
-        <input id="eraserSize" type="range" min="5" max="180" value="48" />
-      </div>
-      <button class="secondary-wide" id="clearLayerBtn">Clear active layer</button>
-    </div>
-  </aside>
+    <section id="galleryGrid" class="gallery-grid" aria-live="polite"></section>
 
-  <main class="workspace">
-    <div class="canvas-viewport" id="canvasViewport">
-      <div class="canvas-transform" id="canvasTransform">
-        <canvas id="artboard" width="1800" height="2200"></canvas>
-      </div>
-    </div>
-
-    <div class="procreate-sliders" aria-label="Brush controls">
-      <label class="pro-slider pro-size-slider" title="Brush size">
-        <span class="slider-value" id="brushSizeValue">12</span>
-        <input id="brushSize" type="range" min="2" max="120" value="12" orient="vertical" />
-        <span class="slider-glyph">●</span>
-      </label>
-      <label class="pro-slider pro-opacity-slider" title="Brush opacity">
-        <span class="slider-value" id="brushOpacityValue">100%</span>
-        <input id="brushOpacity" type="range" min="5" max="100" value="100" orient="vertical" />
-        <span class="slider-glyph">◐</span>
-      </label>
-    </div>
-
-    <div class="canvas-hud">
-      <button id="fitCanvasBtn">Fit</button>
-      <span>Pinch to zoom · drag to pan</span>
-    </div>
-
-    <div class="view-strip procreate-view-strip" id="viewStrip">
-      <span class="view-label" id="activeBodyLabel">Classic</span>
-      <button class="view-btn active" data-view="front">Front</button>
-      <button class="view-btn" data-view="back">Back</button>
-      <button class="view-btn" data-view="threequarter">3/4</button>
-    </div>
+    <section id="emptyGallery" class="empty-gallery">
+      <div class="empty-sheet"></div>
+      <h2>Your designs live here</h2>
+      <p>Create your first fashion sketch.</p>
+      <button id="emptyCreateBtn" class="primary-button">Create New</button>
+    </section>
   </main>
 
-  <aside class="panel right-panel procreate-popover studio-popover">
-    <div class="panel-top">
-      <div><span class="panel-kicker">TOOLS</span><h2 id="toolPanelTitle">Actions</h2></div>
-      <button class="collapse-btn" id="toggleRight" aria-label="Close studio panel"><svg viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></svg></button>
-    </div>
-
-    <div class="tabs">
-      <button class="tab-btn active" data-tab="colour">Colour</button>
-      <button class="tab-btn" data-tab="croquis">Croquis</button>
-      <button class="tab-btn" data-tab="motifs">Motifs</button>
-      <button class="tab-btn" data-tab="layers">Layers</button>
-      <button class="tab-btn" data-tab="reference">Reference</button>
-    </div>
-
-    <section class="tab-panel active" data-panel="colour">
-      <div class="colour-card">
-        <input id="colourPicker" type="color" value="#f22278" />
-        <div><span class="mini-kicker">CURRENT COLOUR</span><strong id="hexValue">#F22278</strong></div>
-      </div>
-      <div class="section-block">
-        <span class="field-title">Améa palette</span>
-        <div class="swatches" id="swatches">
-          <button data-colour="#F22278" style="--swatch:#F22278"></button>
-          <button data-colour="#FF5B9D" style="--swatch:#FF5B9D"></button>
-          <button data-colour="#FFCFE0" style="--swatch:#FFCFE0"></button>
-          <button data-colour="#FFF8FB" style="--swatch:#FFF8FB"></button>
-          <button data-colour="#B80F55" style="--swatch:#B80F55"></button>
-          <button data-colour="#1E1A1C" style="--swatch:#1E1A1C"></button>
-        </div>
-      </div>
-      <div class="section-block">
-        <span class="field-title">Recent colours</span>
-        <div class="swatches" id="recentColours"></div>
-      </div>
-    </section>
-
-    <section class="tab-panel croquis-panel" data-panel="croquis">
-      <div class="croquis-section-head">
-        <span class="mini-kicker">CROQUIS</span>
-        <strong>Choose your drawing base</strong>
-        <small>Minimal line • made to draw over</small>
-      </div>
-
-      <div class="body-type-switch">
-        <button class="body-type-btn active" data-body-type="classic">
-          <span class="body-type-preview"><canvas width="96" height="150" data-body-preview="classic"></canvas></span>
-          <span><strong>Classic</strong><small>Long, natural fashion proportions</small></span>
+  <main id="editorScreen" class="screen editor-screen hidden">
+    <header class="editor-toolbar">
+      <div class="toolbar-side toolbar-left">
+        <button id="backToGalleryBtn" class="icon-button" aria-label="Gallery">
+          <svg viewBox="0 0 24 24"><path d="M15 5 8 12l7 7"/></svg>
         </button>
-        <button class="body-type-btn" data-body-type="curvy">
-          <span class="body-type-preview"><canvas width="96" height="150" data-body-preview="curvy"></canvas></span>
-          <span><strong>Curvy</strong><small>Defined waist, fuller hips & thighs</small></span>
+        <button id="actionsBtn" class="icon-button" aria-label="Actions">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2.8"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg>
+        </button>
+        <button id="undoBtn" class="icon-button" aria-label="Undo">
+          <svg viewBox="0 0 24 24"><path d="M9 7 4.5 11.5 9 16"/><path d="M5 11.5h8.5a5 5 0 0 1 5 5V18"/></svg>
+        </button>
+        <button id="redoBtn" class="icon-button" aria-label="Redo">
+          <svg viewBox="0 0 24 24"><path d="m15 7 4.5 4.5L15 16"/><path d="M19 11.5h-8.5a5 5 0 0 0-5 5V18"/></svg>
         </button>
       </div>
 
-      <div class="croquis-control-card">
-        <div class="croquis-control-title"><span>VIEW</span><small>Same base, different angle</small></div>
-        <div class="view-choice-grid">
-          <button class="view-choice active" data-view="front">Front</button>
-          <button class="view-choice" data-view="back">Back</button>
-          <button class="view-choice" data-view="threequarter">¾</button>
-        </div>
+      <input id="designNameInput" class="design-name-input" value="Untitled Artwork" aria-label="Design name" />
+
+      <div class="toolbar-side toolbar-right">
+        <button id="brushBtn" class="icon-button active" aria-label="Brush">
+          <svg viewBox="0 0 24 24"><path d="M15 4c2.3 1 4 2.6 5 5L10 19l-5 1 1-5L15 4Z"/><path d="m12.5 6.5 5 5"/></svg>
+        </button>
+        <button id="smudgeBtn" class="icon-button" aria-label="Smudge">
+          <svg viewBox="0 0 24 24"><path d="M8 14V9a1.7 1.7 0 0 1 3.4 0v3"/><path d="M11.4 12V7.5a1.7 1.7 0 0 1 3.4 0V12"/><path d="M14.8 12V9.2a1.7 1.7 0 0 1 3.4 0v5.2c0 4-2.4 6.4-6.2 6.4-2.4 0-4.4-1.2-5.7-3.2L4.3 15a1.7 1.7 0 1 1 2.5-2.2L8 14Z"/></svg>
+        </button>
+        <button id="eraserBtn" class="icon-button" aria-label="Eraser">
+          <svg viewBox="0 0 24 24"><path d="m7 17-3-3 8.5-8.5a2.1 2.1 0 0 1 3 0l3 3a2.1 2.1 0 0 1 0 3L13 17H7Z"/><path d="M12 17h7"/></svg>
+        </button>
+        <button id="layersBtn" class="icon-button" aria-label="Layers">
+          <svg viewBox="0 0 24 24"><path d="m12 4 8 4-8 4-8-4 8-4Z"/><path d="m4 12 8 4 8-4"/><path d="m4 16 8 4 8-4"/></svg>
+        </button>
+        <button id="colourBtn" class="colour-button" aria-label="Colour"><span id="colourDot"></span></button>
+      </div>
+    </header>
+
+    <section id="canvasViewport" class="canvas-viewport">
+      <div id="canvasStage" class="canvas-stage">
+        <canvas id="displayCanvas" width="900" height="1100"></canvas>
       </div>
 
-      <div class="croquis-control-card">
-        <div class="control-row-head"><span>Line opacity</span><output id="croquisOpacityValue">100%</output></div>
-        <input id="croquisOpacity" type="range" min="0" max="100" value="100" />
-        <small class="croquis-tip">Lower it while sketching so your outfit stands out.</small>
+      <div class="edge-controls">
+        <label class="vertical-slider">
+          <output id="sizeOutput">18%</output>
+          <input id="sizeSlider" type="range" min="2" max="120" value="22" aria-label="Brush size" />
+          <span class="size-dot">●</span>
+        </label>
+        <label class="vertical-slider">
+          <output id="opacityOutput">100%</output>
+          <input id="opacitySlider" type="range" min="5" max="100" value="100" aria-label="Opacity" />
+          <span class="opacity-dot">◐</span>
+        </label>
       </div>
-
-      <label class="croquis-visibility-row">
-        <span><strong>Show croquis</strong><small>Turn the base on or off anytime</small></span>
-        <input id="hideCroquis" type="checkbox" />
-        <i class="croquis-switch" aria-hidden="true"></i>
-      </label>
     </section>
 
-    <section class="tab-panel" data-panel="motifs">
-      <p class="helper">Draw once, select it, then reuse it across your design.</p>
-      <button class="primary-wide" id="createMotifBtn">Create motif from selection</button>
-      <div class="motif-card">
-        <canvas id="motifPreview" width="220" height="160"></canvas>
-        <div><strong id="motifStatus">No motif saved</strong><small>Stamp, scatter or pattern-fill it.</small></div>
+    <aside id="brushPanel" class="floating-panel brush-panel hidden" aria-label="Brush Library">
+      <div class="panel-titlebar">
+        <strong>Brush Library</strong>
+        <button class="close-panel" data-close-panel>×</button>
       </div>
-      <div class="control-card">
-        <div class="control-row-head"><span>Motif size</span><output id="motifSizeValue">100%</output></div>
-        <input id="motifSize" type="range" min="20" max="250" value="100" />
+      <div class="brush-library">
+        <nav id="brushCategories" class="brush-categories"></nav>
+        <div id="brushList" class="brush-list"></div>
       </div>
-      <div class="control-card">
-        <div class="control-row-head"><span>Spacing</span><output id="motifSpacingValue">90</output></div>
-        <input id="motifSpacing" type="range" min="10" max="250" value="90" />
-      </div>
-      <div class="control-card">
-        <div class="control-row-head"><span>Rotation</span><output id="motifRotationValue">0°</output></div>
-        <input id="motifRotation" type="range" min="-180" max="180" value="0" />
-      </div>
-      <button class="secondary-wide" id="clearMotifBtn">Clear saved motif</button>
-    </section>
+    </aside>
 
-    <section class="tab-panel" data-panel="layers">
-      <div class="subhead-row"><strong>Layers</strong><button class="mini-btn" id="addLayerBtn">＋ New layer</button></div>
-      <div id="layerList" class="layer-list"></div>
-    </section>
-
-    <section class="tab-panel" data-panel="reference">
-      <label class="upload-card">
-        <input id="referenceUpload" type="file" accept="image/*" />
-        <span>＋</span><strong>Add inspiration photo</strong><small>PNG, JPG, HEIC*</small>
-      </label>
-      <div class="control-card">
-        <div class="control-row-head"><span>Reference opacity</span><output id="referenceOpacityValue">40%</output></div>
-        <input id="referenceOpacity" type="range" min="0" max="100" value="40" />
+    <aside id="layersPanel" class="floating-panel layers-panel hidden" aria-label="Layers">
+      <div class="panel-titlebar">
+        <strong>Layers</strong>
+        <button id="addLayerBtn" class="panel-plus" aria-label="Add layer">＋</button>
       </div>
-      <button class="secondary-wide" id="removeReferenceBtn">Remove reference</button>
-    </section>
-  </aside>
-</div>
-<div class="toast" id="toast"></div>
-<script src="design-studio.js"></script>
+      <div id="layersList" class="layers-list"></div>
+    </aside>
+
+    <aside id="colourPanel" class="floating-panel colour-panel hidden" aria-label="Colours">
+      <div class="panel-titlebar">
+        <strong>Colours</strong>
+        <button class="close-panel" data-close-panel>×</button>
+      </div>
+      <div class="colour-picker-wrap">
+        <input id="colourPicker" type="color" value="#111111" />
+      </div>
+      <div class="colour-row">
+        <label>Hex</label>
+        <input id="hexInput" value="#111111" maxlength="7" />
+      </div>
+      <div class="section-label">Recent</div>
+      <div id="recentColours" class="recent-colours"></div>
+      <div class="section-label">Palette</div>
+      <div id="defaultPalette" class="default-palette"></div>
+    </aside>
+
+    <aside id="actionsPanel" class="floating-panel actions-panel hidden" aria-label="Actions">
+      <div class="panel-titlebar">
+        <strong>Actions</strong>
+        <button class="close-panel" data-close-panel>×</button>
+      </div>
+      <button class="action-row" id="croquisAction">Croquis <span>›</span></button>
+      <label class="action-row file-row">Add reference image <span>›</span><input id="referenceInput" type="file" accept="image/*" /></label>
+      <button class="action-row" id="fitCanvasAction">Fit canvas <span>⌗</span></button>
+      <button class="action-row" id="exportAction">Export PNG <span>↥</span></button>
+      <button class="action-row danger" id="clearLayerAction">Clear active layer <span>×</span></button>
+    </aside>
+
+    <aside id="croquisPanel" class="floating-panel croquis-panel hidden" aria-label="Croquis">
+      <div class="panel-titlebar">
+        <strong>Croquis</strong>
+        <button class="close-panel" data-close-panel>×</button>
+      </div>
+      <button class="croquis-choice" data-croquis="front">Front</button>
+      <button class="croquis-choice" data-croquis="back">Back</button>
+      <button class="croquis-choice" data-croquis="blank">Blank</button>
+      <div class="croquis-opacity-row">
+        <span>Opacity</span><output id="croquisOpacityOutput">35%</output>
+        <input id="croquisOpacitySlider" type="range" min="0" max="100" value="35" />
+      </div>
+    </aside>
+  </main>
+
+  <div id="createModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="createTitle">
+    <div class="modal-card">
+      <div class="modal-titlebar">
+        <button id="cancelCreateBtn" class="text-button">Cancel</button>
+        <h2 id="createTitle">New canvas</h2>
+        <span></span>
+      </div>
+      <div class="new-canvas-options">
+        <button class="new-canvas-card" data-new-croquis="front">
+          <canvas class="new-preview" data-preview="front" width="180" height="220"></canvas>
+          <strong>Front</strong>
+        </button>
+        <button class="new-canvas-card" data-new-croquis="back">
+          <canvas class="new-preview" data-preview="back" width="180" height="220"></canvas>
+          <strong>Back</strong>
+        </button>
+        <button class="new-canvas-card" data-new-croquis="blank">
+          <div class="blank-preview"></div>
+          <strong>Blank</strong>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="galleryMenu" class="context-menu hidden">
+    <button data-gallery-action="rename">Rename</button>
+    <button data-gallery-action="duplicate">Duplicate</button>
+    <button data-gallery-action="export">Export</button>
+    <button data-gallery-action="delete" class="danger">Delete</button>
+  </div>
+
+  <div id="toast" class="toast"></div>
+  <script src="design-studio.js"></script>
 </body>
 </html>
