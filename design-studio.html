@@ -8,30 +8,30 @@
   <link rel="stylesheet" href="design-studio.css" />
 </head>
 <body>
-<div class="studio-shell" id="studioShell">
+<div class="studio-shell left-collapsed right-collapsed" id="studioShell">
   <header class="topbar">
     <div class="brand-group">
-      <a class="top-icon" href="index.html" aria-label="Back to Améa HQ">←</a>
+      <a class="top-icon" href="index.html" aria-label="Back to Améa HQ"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 8 12l7 7"/></svg></a>
       <div class="brand-copy"><span class="eyebrow">AMÉA HQ</span><strong>Design Studio</strong></div>
     </div>
 
     <div class="history-group">
-      <button class="top-icon round" id="undoBtn" aria-label="Undo">↶</button>
-      <button class="top-icon round" id="redoBtn" aria-label="Redo">↷</button>
+      <button class="top-icon round" id="undoBtn" aria-label="Undo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7 4.5 11.5 9 16"/><path d="M5 11.5h8.5a5 5 0 0 1 5 5V18"/></svg></button>
+      <button class="top-icon round" id="redoBtn" aria-label="Redo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 7 4.5 4.5L15 16"/><path d="M19 11.5h-8.5a5 5 0 0 0-5 5V18"/></svg></button>
     </div>
 
     <input id="designName" class="design-name" value="Untitled Design" aria-label="Design name" />
 
     <div class="top-right">
       <span id="zoomReadout" class="zoom-readout">100%</span>
-      <button class="export-btn" id="exportBtn">↥ <span>Export</span></button>
+      <button class="export-btn" id="exportBtn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M8 8l4-4 4 4"/><path d="M5 13v6h14v-6"/></svg><span>Export</span></button>
     </div>
   </header>
 
   <aside class="panel left-panel">
     <div class="panel-top">
       <div><span class="panel-kicker">CREATE</span><h2>Brushes</h2></div>
-      <button class="collapse-btn" id="toggleLeft">‹</button>
+      <button class="collapse-btn" id="toggleLeft" aria-label="Close brushes"><svg viewBox="0 0 24 24"><path d="m15 5-7 7 7 7"/></svg></button>
     </div>
 
     <div class="brush-library-shell">
@@ -46,12 +46,12 @@
     </div>
 
     <div class="quick-tools">
-      <button class="quick-tool" data-tool="eraser">⌫<small>Eraser</small></button>
-      <button class="quick-tool" data-tool="eyedropper">◉<small>Pick</small></button>
-      <button class="quick-tool" data-tool="select">⬚<small>Select</small></button>
-      <button class="quick-tool" data-tool="stamp">✿<small>Stamp</small></button>
-      <button class="quick-tool" data-tool="scatter">❀<small>Scatter</small></button>
-      <button class="quick-tool" data-tool="fillpattern">▦<small>Fill</small></button>
+      <button class="quick-tool" data-tool="eraser"><svg viewBox="0 0 24 24"><path d="m7 17-3-3 8.5-8.5a2.1 2.1 0 0 1 3 0l3 3a2.1 2.1 0 0 1 0 3L13 17H7Z"/><path d="m9 9 6 6M12 17h7"/></svg><small>Eraser</small></button>
+      <button class="quick-tool" data-tool="eyedropper"><svg viewBox="0 0 24 24"><path d="m15.5 4.5 4 4L9 19H5v-4z"/><path d="m13 7 4 4"/></svg><small>Pick</small></button>
+      <button class="quick-tool" data-tool="select"><svg viewBox="0 0 24 24"><path d="M5 9V5h4M15 5h4v4M19 15v4h-4M9 19H5v-4"/></svg><small>Select</small></button>
+      <button class="quick-tool" data-tool="stamp"><svg viewBox="0 0 24 24"><path d="M8 14c0-2 1.1-3.2 2.2-4.2C11.2 8.8 11 7.9 11 7a3 3 0 0 1 6 0c0 1-.2 1.8.8 2.8C18.9 10.8 20 12 20 14"/><path d="M6 14h14v5H6z"/></svg><small>Stamp</small></button>
+      <button class="quick-tool" data-tool="scatter"><svg viewBox="0 0 24 24"><circle cx="7" cy="8" r="2"/><circle cx="16.5" cy="6.5" r="1.5"/><circle cx="14" cy="15" r="2.3"/><circle cx="6.5" cy="17" r="1.3"/></svg><small>Scatter</small></button>
+      <button class="quick-tool" data-tool="fillpattern"><svg viewBox="0 0 24 24"><path d="M5 5h14v14H5z"/><path d="M5 10h14M10 5v14M15 5v14M5 15h14"/></svg><small>Fill</small></button>
     </div>
 
     <div class="control-card">
@@ -78,13 +78,30 @@
     <button class="secondary-wide" id="clearLayerBtn">Clear active layer</button>
   </aside>
 
-  <button class="edge-tab edge-tab-left" id="reopenLeft"><span>BRUSHES</span><b>›</b></button>
+  <button class="edge-tab edge-tab-left" id="reopenLeft" aria-label="Open brushes"><svg viewBox="0 0 24 24"><path d="m14 5 5 5-8.5 8.5-5.5 1 1-5.5z"/></svg></button>
 
   <main class="workspace">
     <div class="canvas-viewport" id="canvasViewport">
       <div class="canvas-transform" id="canvasTransform">
         <canvas id="artboard" width="1800" height="2200"></canvas>
       </div>
+    </div>
+
+
+    <div class="canvas-tool-dock" aria-label="Drawing tools">
+      <button class="dock-btn panel-launch" id="openBrushesDock" aria-label="Open brushes">
+        <svg viewBox="0 0 24 24"><path d="m14 5 5 5-8.5 8.5-5.5 1 1-5.5z"/><path d="m12 7 5 5"/></svg><span>Brushes</span>
+      </button>
+      <button class="dock-btn quick-tool" data-tool="eraser" aria-label="Eraser">
+        <svg viewBox="0 0 24 24"><path d="m7 17-3-3 8.5-8.5a2.1 2.1 0 0 1 3 0l3 3a2.1 2.1 0 0 1 0 3L13 17H7Z"/><path d="M12 17h7"/></svg><span>Eraser</span>
+      </button>
+      <button class="dock-btn quick-tool" data-tool="eyedropper" aria-label="Colour picker">
+        <svg viewBox="0 0 24 24"><path d="m15.5 4.5 4 4L9 19H5v-4z"/><path d="m13 7 4 4"/></svg><span>Pick</span>
+      </button>
+      <button class="dock-colour" id="openColourDock" aria-label="Open colour panel"><i id="dockColourDot"></i><span>Colour</span></button>
+      <button class="dock-btn panel-launch" id="openStudioDock" aria-label="Open studio tools">
+        <svg viewBox="0 0 24 24"><path d="M5 5h14v14H5z"/><path d="M9 5v14M15 5v14M5 10h14M5 15h14"/></svg><span>Studio</span>
+      </button>
     </div>
 
     <div class="canvas-hud">
@@ -103,7 +120,7 @@
   <aside class="panel right-panel">
     <div class="panel-top">
       <div><span class="panel-kicker">DETAILS</span><h2>Studio</h2></div>
-      <button class="collapse-btn" id="toggleRight">›</button>
+      <button class="collapse-btn" id="toggleRight" aria-label="Close studio panel"><svg viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></svg></button>
     </div>
 
     <div class="tabs">
@@ -116,17 +133,17 @@
 
     <section class="tab-panel active" data-panel="colour">
       <div class="colour-card">
-        <input id="colourPicker" type="color" value="#e24892" />
-        <div><span class="mini-kicker">CURRENT COLOUR</span><strong id="hexValue">#E24892</strong></div>
+        <input id="colourPicker" type="color" value="#f22278" />
+        <div><span class="mini-kicker">CURRENT COLOUR</span><strong id="hexValue">#F22278</strong></div>
       </div>
       <div class="section-block">
         <span class="field-title">Améa palette</span>
         <div class="swatches" id="swatches">
-          <button data-colour="#E24892" style="--swatch:#E24892"></button>
-          <button data-colour="#FF8FC5" style="--swatch:#FF8FC5"></button>
-          <button data-colour="#F7D6E7" style="--swatch:#F7D6E7"></button>
+          <button data-colour="#F22278" style="--swatch:#F22278"></button>
+          <button data-colour="#FF5B9D" style="--swatch:#FF5B9D"></button>
+          <button data-colour="#FFCFE0" style="--swatch:#FFCFE0"></button>
           <button data-colour="#FFF8FB" style="--swatch:#FFF8FB"></button>
-          <button data-colour="#8D4368" style="--swatch:#8D4368"></button>
+          <button data-colour="#B80F55" style="--swatch:#B80F55"></button>
           <button data-colour="#1E1A1C" style="--swatch:#1E1A1C"></button>
         </div>
       </div>
@@ -136,37 +153,44 @@
       </div>
     </section>
 
-    <section class="tab-panel" data-panel="croquis">
+    <section class="tab-panel croquis-panel" data-panel="croquis">
       <div class="croquis-section-head">
-        <span class="mini-kicker">BODY TYPE</span>
-        <strong>Choose your base</strong>
+        <span class="mini-kicker">CROQUIS</span>
+        <strong>Choose your drawing base</strong>
+        <small>Minimal line • made to draw over</small>
       </div>
 
       <div class="body-type-switch">
         <button class="body-type-btn active" data-body-type="classic">
           <span class="body-type-preview"><canvas width="96" height="150" data-body-preview="classic"></canvas></span>
-          <span><strong>Classic</strong><small>Long fashion proportions</small></span>
+          <span><strong>Classic</strong><small>Long, natural fashion proportions</small></span>
         </button>
         <button class="body-type-btn" data-body-type="curvy">
           <span class="body-type-preview"><canvas width="96" height="150" data-body-preview="curvy"></canvas></span>
-          <span><strong>Curvy</strong><small>Fuller waist & hips</small></span>
+          <span><strong>Curvy</strong><small>Defined waist, fuller hips & thighs</small></span>
         </button>
       </div>
 
-      <div class="section-block">
-        <span class="field-title">View</span>
+      <div class="croquis-control-card">
+        <div class="croquis-control-title"><span>VIEW</span><small>Same base, different angle</small></div>
         <div class="view-choice-grid">
           <button class="view-choice active" data-view="front">Front</button>
           <button class="view-choice" data-view="back">Back</button>
-          <button class="view-choice" data-view="threequarter">3/4</button>
+          <button class="view-choice" data-view="threequarter">¾</button>
         </div>
       </div>
 
-      <div class="control-card">
-        <div class="control-row-head"><span>Croquis opacity</span><output id="croquisOpacityValue">100%</output></div>
+      <div class="croquis-control-card">
+        <div class="control-row-head"><span>Line opacity</span><output id="croquisOpacityValue">100%</output></div>
         <input id="croquisOpacity" type="range" min="0" max="100" value="100" />
+        <small class="croquis-tip">Lower it while sketching so your outfit stands out.</small>
       </div>
-      <label class="toggle-line"><input id="hideCroquis" type="checkbox" /><span>Hide croquis</span></label>
+
+      <label class="croquis-visibility-row">
+        <span><strong>Show croquis</strong><small>Turn the base on or off anytime</small></span>
+        <input id="hideCroquis" type="checkbox" />
+        <i class="croquis-switch" aria-hidden="true"></i>
+      </label>
     </section>
 
     <section class="tab-panel" data-panel="motifs">
@@ -192,7 +216,7 @@
     </section>
 
     <section class="tab-panel" data-panel="layers">
-      <div class="subhead-row"><strong>Layers</strong><button class="mini-btn" id="addLayerBtn">+ Add</button></div>
+      <div class="subhead-row"><strong>Layers</strong><button class="mini-btn" id="addLayerBtn">＋ New layer</button></div>
       <div id="layerList" class="layer-list"></div>
     </section>
 
@@ -209,7 +233,7 @@
     </section>
   </aside>
 
-  <button class="edge-tab edge-tab-right" id="reopenRight"><b>‹</b><span>STUDIO</span></button>
+  <button class="edge-tab edge-tab-right" id="reopenRight" aria-label="Open studio"><svg viewBox="0 0 24 24"><path d="M5 5h14v14H5z"/><path d="M9 5v14M15 5v14"/></svg></button>
 </div>
 <div class="toast" id="toast"></div>
 <script src="design-studio.js"></script>
