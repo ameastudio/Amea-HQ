@@ -12,7 +12,16 @@
     <div id="auth-message" class="auth-message"></div>
   </div>
 </div>
-<div id="app" style="display:none"><header><h1>Améa <small>HQ</small></h1><button onclick="openAddMenu()">＋</button></header><main id="view"></main><nav>
+<div id="app" style="display:none"><header class="app-header">
+  <div class="hq-header-orb orb-one"></div><div class="hq-header-orb orb-two"></div>
+  <div class="hq-header-main">
+    <div class="hq-brand-lockup">
+      <div class="hq-logo-shell"><img src="amea-logo.png" alt="Améa"><span>HQ</span></div>
+      <div class="hq-header-copy"><strong id="hqHeaderGreeting">Welcome back, Bri ♡</strong><span id="hqHeaderDate"></span></div>
+    </div>
+    <button class="hq-add-button" onclick="openAddMenu()" aria-label="Add new">＋</button>
+  </div>
+</header><main id="view"></main><nav>
       <button onclick="page('home')" data-page="home"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10.5 12 4l8 6.5v8.2a1.4 1.4 0 0 1-1.4 1.4h-4.2v-5.7H9.6v5.7H5.4A1.4 1.4 0 0 1 4 18.7z"/></svg></span><span>HQ</span></button>
       <button onclick="page('orders')" data-page="orders"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7.2 12 4l7 3.2-7 3.5z"/><path d="M5 7.2v8.5l7 4.3 7-4.3V7.2M12 10.7V20"/></svg></span><span>Orders</span></button>
       <button onclick="page('studio')" data-page="studio"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.3"/><path d="M5.5 9.4c4.3-2 9.2-1.7 13 .6M5.6 14.5c4.1 1.4 9 1.1 12.8-1.1M8 5.2c2.7 3.1 4.9 7.1 6.3 12.7"/></svg></span><span>Studio</span></button>
