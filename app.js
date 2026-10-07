@@ -1449,11 +1449,13 @@ function renderCalendarPage(){
     else if(i>=startDay+daysInMonth){day=i-(startDay+daysInMonth)+1;cm=m+1;muted=true;if(cm>11){cm=0;cy++}}
     else day=i-startDay+1;
     const key=calendarDayKey(cy,cm,day),orders=byDue[key]||[];
-    const name=orders[0]?esc(orders[0].customer||"Order"):"";
-    const extra=orders.length>1?`<span class=calendar-more>+${orders.length-1}</span>`:"";
+    const names=orders.map(o=>{
+      const customer=esc(o.customer||"Order");
+      return `<span class=calendar-name title="${customer}">${customer}</span>`;
+    }).join("");
     cells.push(`<div class="calendar-cell ${muted?"muted":""} ${key===todayKey?"today":""} ${orders.length?"has-orders":""}">
       <div class=calendar-date>${day}</div>
-      ${orders.length?`<div class=calendar-due-list><span class=calendar-name title="${name}">${name}</span>${extra}</div>`:""}
+      ${orders.length?`<div class=calendar-due-list>${names}</div>`:""}
     </div>`);
   }
 

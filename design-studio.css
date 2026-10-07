@@ -321,3 +321,30 @@ svg{fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-l
 .eraser-mode small{display:block;margin-top:3px;font-size:8px;color:var(--muted);line-height:1.35}
 .eraser-mode b{opacity:0;color:var(--accent);font-size:13px}
 .eraser-mode.active b{opacity:1}
+
+/* Canvas images + text */
+.canvas-object-layer{position:absolute;inset:0;width:720px;height:880px;pointer-events:none;z-index:6}
+.canvas-object{position:absolute;left:0;top:0;transform-origin:center;pointer-events:auto;touch-action:none;cursor:move;user-select:none;-webkit-user-select:none}
+.canvas-object.selected{outline:2px solid var(--accent);outline-offset:4px}
+.canvas-object.selected:after{content:"";position:absolute;width:8px;height:8px;border-radius:50%;right:-8px;bottom:-8px;background:var(--accent);border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.14)}
+.canvas-object.image-object img{display:block;width:100%;height:100%;object-fit:contain;pointer-events:none;-webkit-user-drag:none}
+.canvas-object.text-object{max-width:560px;white-space:pre-wrap;line-height:1.12;text-align:center;padding:3px 6px}
+.object-panel{width:min(390px,calc(100vw - 70px));padding-bottom:10px}
+.object-controls{padding:11px 13px}
+.object-controls label{font-size:9px;font-weight:750;color:var(--muted)}
+.object-controls textarea,.object-controls select,.object-controls input[type="color"]{width:100%;margin-top:5px;border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px;color:var(--ink)}
+.object-controls textarea{resize:vertical;min-height:62px}
+.object-control-grid{display:grid;grid-template-columns:1fr 92px;gap:9px;margin-top:9px}
+.object-controls input[type="color"]{height:38px;padding:3px}
+.object-range{display:grid;grid-template-columns:1fr auto;gap:5px;align-items:center;margin-top:10px}
+.object-range input{grid-column:1/-1;width:100%;accent-color:var(--accent)}
+.object-range output{color:var(--accent);font-weight:800}
+.text-style-buttons{display:flex;gap:7px;margin-top:10px}
+.text-style-buttons button{width:42px;height:38px;border:1px solid var(--line);background:#fff;border-radius:10px;color:var(--ink)}
+.text-style-buttons button.active{background:var(--accent-soft);border-color:var(--accent-line);color:var(--accent)}
+.object-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.object-actions button{border:1px solid var(--line);background:#fff;border-radius:10px;padding:10px;font-size:10px;font-weight:750}
+.object-actions .danger{background:#fff1f4;color:#b73958}
+.object-layer-row{background:#fffafc}
+.object-thumb{width:48px;height:48px;border:1px solid #decfd6;border-radius:6px;background:#fff;display:grid;place-items:center;overflow:hidden;font-size:19px;font-weight:800;color:var(--accent)}
+.object-thumb img{width:100%;height:100%;object-fit:cover}

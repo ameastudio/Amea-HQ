@@ -1854,3 +1854,17 @@ input:focus,select:focus,textarea:focus{border-color:#f04d8d!important;box-shado
   .hq-header-copy span{font-size:8px}
   .app-header .hq-add-button{flex-basis:40px;width:40px!important;height:40px!important}
 }
+
+/* HQ header navigation + readable calendar names */
+.hq-brand-home{
+  min-width:0;display:flex;align-items:center;gap:11px;padding:0;border:0;background:transparent;color:inherit;text-align:left;border-radius:18px
+}
+.hq-brand-home:active .hq-logo-shell{transform:scale(.98)}
+.hq-logo-shell{transition:transform .14s ease}
+.calendar-cell{min-height:96px;overflow:visible}
+.calendar-due-list{gap:3px}
+.calendar-name{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.08;word-break:break-word;padding:4px 3px}
+@media(max-width:420px){
+  .calendar-cell{min-height:92px}
+  .calendar-name{font-size:6.8px;line-height:1.05;padding:3px 2px}
+}
