@@ -48,7 +48,7 @@ const BRUSHES=[
   {id:"fuzzy-yarn",name:"Fuzzy Yarn",category:"textures",note:"Soft yarn fibres",mode:"fuzzy",size:28,opacity:.8},
   {id:"stitch-line",name:"Stitch Line",category:"textures",note:"Even stitch marks",mode:"stitch",size:22,opacity:1},
   {id:"cross-stitch",name:"Cross Stitch",category:"textures",note:"Cross stitch marks",mode:"cross",size:22,opacity:1},
-  {id:"embroidered",name:"Embroidered",category:"textures",note:"Dense thread line",mode:"thread",size:25,opacity:.9},
+  {id:"embroidered",name:"Embroidered",category:"textures",note:"Dense directional embroidery threads",mode:"embroidered",size:25,opacity:.9},
   {id:"fabric-weave",name:"Fabric Weave",category:"textures",note:"Woven fabric texture",mode:"weave",size:28,opacity:.75},
   {id:"denim",name:"Denim Texture",category:"textures",note:"Rough denim grain",mode:"denim",size:30,opacity:.55},
   {id:"boucle",name:"Bouclé",category:"textures",note:"Nubby loop texture",mode:"boucle",size:31,opacity:.72},
@@ -91,7 +91,11 @@ const state={
   drawing:false,
   drawingPointer:null,
   lastPoint:null,
+  strokePoints:[],
+  strokeBase:null,
+  strokeCanvas:null,
   textureCarry:0,
+  textureIndex:0,
   viewScale:1,
   viewX:0,
   viewY:0,
@@ -194,33 +198,38 @@ function fitImage(img,w,h){
 
 function drawBrushPreview(canvas,brush){
   const c=canvas.getContext("2d"),w=canvas.width,h=canvas.height;
-  c.clearRect(0,0,w,h);c.save();c.strokeStyle="#202024";c.fillStyle="#202024";c.lineCap="round";c.lineJoin="round";
+  c.clearRect(0,0,w,h);
+  c.save();
   const mid=h/2;
   if(isTexture(brush.mode)){
-    for(let x=10;x<w-8;x+=13){previewTexture(c,brush.mode,x,mid+Math.sin(x/18)*5,10)}
+    const step=previewTextureSpacing(brush.mode);
+    let index=0;
+    for(let x=12;x<w-8;x+=step){
+      const y=mid+Math.sin(x/20)*4;
+      textureMark(c,brush.mode,x,y,12,0,index++,true,brush.opacity);
+    }
   }else{
-    c.globalAlpha=brush.opacity;c.lineWidth=Math.max(2,brush.size*.22);
-    if(brush.mode==="chisel")c.lineCap="butt";
-    c.beginPath();c.moveTo(8,mid+8);c.bezierCurveTo(w*.33,mid-16,w*.65,mid+12,w-8,mid-4);c.stroke();
+    c.strokeStyle="#202024";
+    c.globalAlpha=Math.max(.35,brush.opacity);
+    c.lineCap="round";c.lineJoin="round";
+    c.lineWidth=Math.max(2,brush.size*.22);
+    c.beginPath();c.moveTo(7,mid+8);c.bezierCurveTo(w*.28,mid-17,w*.62,mid+13,w-7,mid-5);c.stroke();
     if(brush.mode==="rough"){
-      c.globalAlpha=.28;c.lineWidth=2;c.beginPath();c.moveTo(8,mid+11);c.bezierCurveTo(w*.33,mid-12,w*.65,mid+15,w-8,mid-1);c.stroke();
+      c.globalAlpha=.25;c.lineWidth=1.4;
+      c.beginPath();c.moveTo(8,mid+11);c.bezierCurveTo(w*.3,mid-13,w*.64,mid+16,w-8,mid-2);c.stroke();
     }
   }
   c.restore();
 }
-function previewTexture(c,mode,x,y,s){
-  c.save();c.lineWidth=1.4;
-  if(mode==="crochet"||mode==="boucle"||mode==="lace"){c.beginPath();c.arc(x,y,s*.45,0,Math.PI*1.7);c.stroke()}
-  else if(mode==="knit"){c.beginPath();c.moveTo(x-3,y-6);c.quadraticCurveTo(x+4,y,x-3,y+6);c.stroke()}
-  else if(mode==="stitch"){c.beginPath();c.moveTo(x-4,y);c.lineTo(x+4,y);c.stroke()}
-  else if(mode==="cross"){c.beginPath();c.moveTo(x-4,y-4);c.lineTo(x+4,y+4);c.moveTo(x+4,y-4);c.lineTo(x-4,y+4);c.stroke()}
-  else if(mode==="sequin"||mode==="rhinestone"||mode==="bead"){c.beginPath();c.arc(x,y,s*.34,0,Math.PI*2);c.stroke()}
-  else if(mode==="mesh"||mode==="weave"){c.beginPath();c.moveTo(x-4,y-4);c.lineTo(x+4,y+4);c.moveTo(x+4,y-4);c.lineTo(x-4,y+4);c.stroke()}
-  else{for(let k=0;k<3;k++){c.beginPath();c.arc(x+(k-1)*3,y+(k%2?2:-2),1.2,0,Math.PI*2);c.fill()}}
-  c.restore();
+function previewTextureSpacing(mode){
+  if(["crochet","boucle","lace","sequin","rhinestone","bead"].includes(mode))return 17;
+  if(["knit","cross","mesh"].includes(mode))return 15;
+  if(["fur","fuzzy","glitter"].includes(mode))return 13;
+  return 12;
 }
-function isTexture(mode){return !["pencil","soft","rough","pen","marker","chisel"].includes(mode)}
-
+function isTexture(mode){
+  return !["pencil","soft","rough","pen","marker","chisel"].includes(mode);
+}
 function renderBrushCategories(){
   const root=$("#brushCategories");root.innerHTML="";
   CATEGORIES.forEach(([id,label])=>{
@@ -397,69 +406,250 @@ function pointFromEvent(e){
 }
 
 function beginStroke(p){
-  const layer=activeLayer();if(!layer)return;state.drawing=true;state.lastPoint=p;state.textureCarry=0;
-  if(isTexture(state.brush.mode))drawTexture(layer.canvas.getContext("2d"),p,p);
-  else if(state.tool==="brush")drawLine(layer.canvas.getContext("2d"),p,p);
+  const layer=activeLayer();if(!layer)return;
+  state.drawing=true;
+  state.lastPoint=p;
+  state.textureCarry=0;
+  state.textureIndex=0;
+
+  if(state.tool==="brush"&&!isTexture(state.brush.mode)){
+    state.strokePoints=[p];
+    state.strokeBase=layer.canvas.getContext("2d").getImageData(0,0,W,H);
+    state.strokeCanvas=document.createElement("canvas");
+    state.strokeCanvas.width=W;state.strokeCanvas.height=H;
+    redrawContinuousStroke(layer);
+  }else if(state.tool==="eraser"){
+    state.strokePoints=[p];
+    state.strokeBase=layer.canvas.getContext("2d").getImageData(0,0,W,H);
+    state.strokeCanvas=document.createElement("canvas");
+    state.strokeCanvas.width=W;state.strokeCanvas.height=H;
+    redrawContinuousStroke(layer);
+  }else if(state.tool==="brush"&&isTexture(state.brush.mode)){
+    drawTexture(layer.canvas.getContext("2d"),p,p);
+  }
   render();
 }
 function continueStroke(p){
-  if(!state.drawing)return;const layer=activeLayer();if(!layer)return;const ctx=layer.canvas.getContext("2d");
-  if(state.tool==="eraser")eraseLine(ctx,state.lastPoint,p);
-  else if(state.tool==="smudge")smudgeLine(layer.canvas,state.lastPoint,p);
-  else if(isTexture(state.brush.mode))drawTexture(ctx,state.lastPoint,p);
-  else drawLine(ctx,state.lastPoint,p);
-  state.lastPoint=p;render();
+  if(!state.drawing)return;
+  const layer=activeLayer();if(!layer)return;
+  const lctx=layer.canvas.getContext("2d");
+
+  if((state.tool==="brush"&&!isTexture(state.brush.mode))||state.tool==="eraser"){
+    const prev=state.strokePoints[state.strokePoints.length-1]||p;
+    const factor=state.brush.mode==="pen"?.58:state.brush.mode==="marker"?.50:state.brush.mode==="chisel"?.48:.46;
+    const smooth={
+      x:prev.x+(p.x-prev.x)*factor,
+      y:prev.y+(p.y-prev.y)*factor,
+      pressure:prev.pressure+(p.pressure-prev.pressure)*.5
+    };
+    state.strokePoints.push(smooth);
+    redrawContinuousStroke(layer);
+  }else if(state.tool==="smudge"){
+    smudgeLine(layer.canvas,state.lastPoint,p);
+  }else if(isTexture(state.brush.mode)){
+    drawTexture(lctx,state.lastPoint,p);
+  }
+  state.lastPoint=p;
+  render();
 }
 function endStroke(){
-  if(!state.drawing)return;state.drawing=false;state.lastPoint=null;pushHistory();renderLayers();scheduleSave();
+  if(!state.drawing)return;
+  state.drawing=false;
+  state.lastPoint=null;
+  state.strokePoints=[];
+  state.strokeBase=null;
+  state.strokeCanvas=null;
+  state.textureCarry=0;
+  pushHistory();renderLayers();scheduleSave();
 }
 function brushWidth(p){
-  const pressure=p&&p.pressure?(.55+p.pressure*.75):1;return state.size*pressure;
+  const pressure=p&&p.pressure?(.62+p.pressure*.62):1;
+  return Math.max(1,state.size*pressure);
 }
-function drawLine(ctx,a,b){
-  const brush=state.brush;ctx.save();ctx.globalCompositeOperation="source-over";ctx.strokeStyle=state.colour;ctx.globalAlpha=state.opacity*brush.opacity;ctx.lineWidth=brushWidth(b);ctx.lineCap=brush.mode==="chisel"?"butt":"round";ctx.lineJoin="round";
-  if(brush.mode==="pencil")ctx.globalAlpha*=.78;
-  if(brush.mode==="soft")ctx.globalAlpha*=.58;
-  if(brush.mode==="rough")ctx.globalAlpha*=.54;
-  ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
-  if(brush.mode==="rough"){
-    ctx.globalAlpha*=.35;ctx.lineWidth=Math.max(1,ctx.lineWidth*.25);ctx.beginPath();ctx.moveTo(a.x+2,a.y-2);ctx.lineTo(b.x+2,b.y-2);ctx.stroke();
+function redrawContinuousStroke(layer){
+  if(!state.strokeBase||!state.strokeCanvas)return;
+  const target=layer.canvas.getContext("2d");
+  target.putImageData(state.strokeBase,0,0);
+
+  const sc=state.strokeCanvas, sctx=sc.getContext("2d");
+  sctx.clearRect(0,0,W,H);
+  const pts=state.strokePoints;
+  if(!pts.length)return;
+
+  if(state.tool==="eraser"){
+    drawSmoothPathToMask(sctx,pts,"#000",state.size,"round",false);
+    target.save();
+    target.globalCompositeOperation="destination-out";
+    target.globalAlpha=1;
+    target.drawImage(sc,0,0);
+    target.restore();
+    return;
   }
-  ctx.restore();
+
+  const b=state.brush;
+  drawSmoothPathToMask(sctx,pts,state.colour,state.size,b.mode==="chisel"?"round":"round",true);
+
+  if(b.mode==="rough"&&pts.length>1){
+    sctx.save();sctx.globalAlpha=.36;sctx.translate(1.5,-1.5);
+    drawSmoothPathToMask(sctx,pts,state.colour,Math.max(1,state.size*.22),"round",false);
+    sctx.restore();
+  }
+
+  let modeOpacity=b.opacity;
+  if(b.mode==="pencil")modeOpacity*=.88;
+  if(b.mode==="soft")modeOpacity*=.72;
+  if(b.mode==="rough")modeOpacity*=.78;
+
+  target.save();
+  target.globalCompositeOperation="source-over";
+  target.globalAlpha=state.opacity*modeOpacity;
+  target.drawImage(sc,0,0);
+  target.restore();
 }
-function eraseLine(ctx,a,b){
-  ctx.save();ctx.globalCompositeOperation="destination-out";ctx.globalAlpha=1;ctx.strokeStyle="#000";ctx.lineCap="round";ctx.lineJoin="round";ctx.lineWidth=state.size;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();ctx.restore();
+function drawSmoothPathToMask(ctx,pts,colour,size,lineCap,usePressure){
+  ctx.save();
+  ctx.strokeStyle=colour;
+  ctx.fillStyle=colour;
+  ctx.globalAlpha=1;
+  ctx.lineJoin="round";
+  ctx.lineCap=lineCap||"round";
+
+  if(pts.length===1){
+    ctx.beginPath();ctx.arc(pts[0].x,pts[0].y,Math.max(1,size*.5),0,Math.PI*2);ctx.fill();ctx.restore();return;
+  }
+
+  for(let i=1;i<pts.length;i++){
+    const p0=pts[Math.max(0,i-2)],p1=pts[i-1],p2=pts[i];
+    const start=i===1?p1:{x:(p0.x+p1.x)/2,y:(p0.y+p1.y)/2};
+    const end={x:(p1.x+p2.x)/2,y:(p1.y+p2.y)/2};
+    const pressure=usePressure?(p1.pressure+p2.pressure)/2:.55;
+    ctx.lineWidth=usePressure?Math.max(1,size*(.62+pressure*.62)):Math.max(1,size);
+    ctx.beginPath();
+    ctx.moveTo(start.x,start.y);
+    ctx.quadraticCurveTo(p1.x,p1.y,end.x,end.y);
+    ctx.stroke();
+  }
+
+  const last=pts[pts.length-1],prev=pts[pts.length-2];
+  ctx.lineWidth=usePressure?Math.max(1,size*(.62+last.pressure*.62)):Math.max(1,size);
+  ctx.beginPath();
+  ctx.moveTo((prev.x+last.x)/2,(prev.y+last.y)/2);
+  ctx.lineTo(last.x,last.y);
+  ctx.stroke();
+  ctx.restore();
 }
 function smudgeLine(canvas,a,b){
-  const ctx=canvas.getContext("2d"),r=Math.max(8,state.size*.7),x=clamp(a.x-r,0,W-r*2),y=clamp(a.y-r,0,H-r*2),size=Math.max(4,Math.round(r*2));
+  const c=canvas.getContext("2d"),r=Math.max(8,state.size*.7),x=clamp(a.x-r,0,W-r*2),y=clamp(a.y-r,0,H-r*2),size=Math.max(4,Math.round(r*2));
   const temp=document.createElement("canvas");temp.width=size;temp.height=size;const t=temp.getContext("2d");t.drawImage(canvas,x,y,size,size,0,0,size,size);
-  ctx.save();ctx.globalAlpha=.22*state.opacity;ctx.filter="blur("+Math.max(1,r*.13)+"px)";ctx.drawImage(temp,b.x-r,b.y-r,size,size);ctx.restore();
+  c.save();c.globalAlpha=.18*state.opacity;c.filter="blur("+Math.max(1,r*.12)+"px)";c.drawImage(temp,b.x-r,b.y-r,size,size);c.restore();
+}
+function textureSpacing(mode,s){
+  const m={
+    crochet:.56,knit:.46,fuzzy:.28,stitch:.55,cross:.62,embroidered:.23,weave:.45,denim:.30,
+    boucle:.48,fur:.24,sequin:.68,rhinestone:.72,glitter:.23,chalk:.22,watercolour:.20,
+    velvet:.20,satin:.18,leather:.38,mesh:.56,lace:.72,bead:.66
+  };
+  return Math.max(4,s*(m[mode]||.42));
 }
 function drawTexture(ctx,a,b){
-  const dist=Math.hypot(b.x-a.x,b.y-a.y),step=Math.max(7,state.size*.55),n=Math.max(1,Math.ceil(dist/step));
-  for(let i=0;i<=n;i++){
-    const t=n?i/n:0,x=a.x+(b.x-a.x)*t,y=a.y+(b.y-a.y)*t;
-    textureMark(ctx,state.brush.mode,x,y,state.size);
+  const dx=b.x-a.x,dy=b.y-a.y,dist=Math.hypot(dx,dy),angle=dist?Math.atan2(dy,dx):0;
+  const spacing=textureSpacing(state.brush.mode,state.size);
+  if(dist<.01){
+    textureMark(ctx,state.brush.mode,a.x,a.y,state.size,angle,state.textureIndex++,false,state.brush.opacity);
+    return;
   }
+  let d=state.textureCarry?spacing-state.textureCarry:0;
+  while(d<=dist){
+    const t=d/dist;
+    textureMark(ctx,state.brush.mode,a.x+dx*t,a.y+dy*t,state.size,angle,state.textureIndex++,false,state.brush.opacity);
+    d+=spacing;
+  }
+  state.textureCarry=(state.textureCarry+dist)%spacing;
 }
-function textureMark(ctx,mode,x,y,s){
-  ctx.save();ctx.strokeStyle=state.colour;ctx.fillStyle=state.colour;ctx.globalAlpha=state.opacity*state.brush.opacity;ctx.lineWidth=Math.max(1,s*.08);ctx.lineCap="round";
-  if(mode==="crochet"||mode==="boucle"){ctx.beginPath();ctx.arc(x,y,s*.28,.2,Math.PI*1.8);ctx.stroke()}
-  else if(mode==="knit"){ctx.beginPath();ctx.moveTo(x-s*.16,y-s*.3);ctx.quadraticCurveTo(x+s*.25,y,x-s*.16,y+s*.3);ctx.stroke()}
-  else if(mode==="fuzzy"||mode==="fur"){for(let k=0;k<5;k++){const a=Math.random()*Math.PI*2,r=s*(.12+Math.random()*.25);ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+Math.cos(a)*r,y+Math.sin(a)*r);ctx.stroke()}}
-  else if(mode==="stitch"){ctx.beginPath();ctx.moveTo(x-s*.25,y);ctx.lineTo(x+s*.25,y);ctx.stroke()}
-  else if(mode==="cross"){ctx.beginPath();ctx.moveTo(x-s*.2,y-s*.2);ctx.lineTo(x+s*.2,y+s*.2);ctx.moveTo(x+s*.2,y-s*.2);ctx.lineTo(x-s*.2,y+s*.2);ctx.stroke()}
-  else if(mode==="thread"){for(let k=-2;k<=2;k++){ctx.beginPath();ctx.moveTo(x-s*.3,y+k*2);ctx.lineTo(x+s*.3,y+k*2);ctx.stroke()}}
-  else if(mode==="weave"||mode==="mesh"){ctx.beginPath();ctx.moveTo(x-s*.22,y-s*.22);ctx.lineTo(x+s*.22,y+s*.22);ctx.moveTo(x+s*.22,y-s*.22);ctx.lineTo(x-s*.22,y+s*.22);ctx.stroke()}
-  else if(mode==="denim"||mode==="leather"||mode==="chalk"||mode==="velvet"){for(let k=0;k<5;k++){const ox=(Math.random()-.5)*s*.5,oy=(Math.random()-.5)*s*.5;ctx.beginPath();ctx.arc(x+ox,y+oy,Math.max(1,s*.035),0,Math.PI*2);ctx.fill()}}
-  else if(mode==="sequin"||mode==="rhinestone"||mode==="bead"){ctx.beginPath();ctx.arc(x,y,s*.22,0,Math.PI*2);mode==="sequin"?ctx.stroke():ctx.fill();if(mode==="rhinestone"){ctx.fillStyle="#fff";ctx.globalAlpha=.65;ctx.beginPath();ctx.arc(x-s*.06,y-s*.06,s*.05,0,Math.PI*2);ctx.fill()}}
-  else if(mode==="glitter"){for(let k=0;k<6;k++){const ox=(Math.random()-.5)*s*.6,oy=(Math.random()-.5)*s*.6;ctx.beginPath();ctx.arc(x+ox,y+oy,Math.max(1,s*.025+Math.random()*s*.025),0,Math.PI*2);ctx.fill()}}
-  else if(mode==="watercolour"){ctx.globalAlpha*=.16;ctx.beginPath();ctx.arc(x,y,s*.5,0,Math.PI*2);ctx.fill()}
-  else if(mode==="satin"){ctx.globalAlpha*=.5;ctx.lineWidth=s*.3;ctx.beginPath();ctx.moveTo(x-s*.25,y);ctx.lineTo(x+s*.25,y);ctx.stroke()}
-  else if(mode==="lace"){ctx.beginPath();ctx.arc(x-s*.14,y,s*.2,Math.PI,0);ctx.arc(x+s*.14,y,s*.2,Math.PI,0);ctx.stroke()}
+function textureMark(ctx,mode,x,y,s,angle,index,preview=false,opacity=1){
+  const col=preview?"#202024":state.colour;
+  const baseAlpha=preview?Math.max(.7,opacity):state.opacity*opacity;
+  ctx.save();
+  ctx.translate(x,y);ctx.rotate(angle);
+  ctx.strokeStyle=col;ctx.fillStyle=col;ctx.lineCap="round";ctx.lineJoin="round";
+  ctx.globalAlpha=baseAlpha;
+
+  if(mode==="crochet"){
+    ctx.lineWidth=Math.max(1,s*.075);
+    ctx.beginPath();ctx.ellipse(-s*.12,0,s*.24,s*.15,-.18,0,Math.PI*2);ctx.stroke();
+    ctx.beginPath();ctx.ellipse(s*.14,0,s*.24,s*.15,.18,0,Math.PI*2);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(-s*.30,0);ctx.lineTo(s*.32,0);ctx.globalAlpha*=.45;ctx.stroke();
+  }else if(mode==="knit"){
+    ctx.lineWidth=Math.max(1,s*.065);
+    for(const off of [-s*.13,s*.13]){
+      ctx.beginPath();ctx.moveTo(-s*.30,off);ctx.quadraticCurveTo(-s*.05,off-s*.18,s*.12,off);ctx.quadraticCurveTo(s*.24,off+s*.16,s*.34,off);ctx.stroke();
+    }
+  }else if(mode==="fuzzy"){
+    ctx.lineWidth=Math.max(1,s*.10);ctx.beginPath();ctx.moveTo(-s*.34,0);ctx.lineTo(s*.34,0);ctx.stroke();
+    ctx.lineWidth=Math.max(.7,s*.035);ctx.globalAlpha*=.68;
+    for(let k=0;k<8;k++){const px=(Math.random()-.5)*s*.62,side=k%2?1:-1,len=s*(.14+Math.random()*.22);ctx.beginPath();ctx.moveTo(px,0);ctx.lineTo(px+len*.22,side*len);ctx.stroke()}
+  }else if(mode==="stitch"){
+    ctx.lineWidth=Math.max(1,s*.09);ctx.beginPath();ctx.moveTo(-s*.30,0);ctx.lineTo(s*.30,0);ctx.stroke();
+    ctx.globalAlpha*=.35;ctx.beginPath();ctx.arc(-s*.32,0,s*.04,0,Math.PI*2);ctx.arc(s*.32,0,s*.04,0,Math.PI*2);ctx.fill();
+  }else if(mode==="cross"){
+    ctx.lineWidth=Math.max(1,s*.07);ctx.beginPath();ctx.moveTo(-s*.20,-s*.20);ctx.lineTo(s*.20,s*.20);ctx.moveTo(s*.20,-s*.20);ctx.lineTo(-s*.20,s*.20);ctx.stroke();
+  }else if(mode==="embroidered"){
+    ctx.lineWidth=Math.max(.8,s*.035);
+    for(let k=-3;k<=3;k++){ctx.globalAlpha=baseAlpha*(.62+Math.random()*.3);ctx.beginPath();ctx.moveTo(-s*.34,k*s*.035);ctx.quadraticCurveTo(0,k*s*.02+Math.sin(index+k)*s*.035,s*.34,k*s*.035);ctx.stroke()}
+  }else if(mode==="weave"){
+    ctx.lineWidth=Math.max(.7,s*.035);ctx.globalAlpha*=.78;
+    for(let k=-1;k<=1;k++){const o=k*s*.16;ctx.beginPath();ctx.moveTo(-s*.34,o);ctx.lineTo(s*.34,o);ctx.stroke();ctx.beginPath();ctx.moveTo(o,-s*.30);ctx.lineTo(o,s*.30);ctx.stroke()}
+  }else if(mode==="denim"){
+    ctx.lineWidth=Math.max(.7,s*.03);ctx.globalAlpha*=.62;
+    for(let k=-2;k<=2;k++){ctx.beginPath();ctx.moveTo(-s*.32,k*s*.10);ctx.lineTo(s*.32,k*s*.10+s*.20);ctx.stroke()}
+    ctx.globalAlpha*=.45;for(let k=0;k<4;k++){ctx.beginPath();ctx.arc((Math.random()-.5)*s*.5,(Math.random()-.5)*s*.35,s*.018,0,Math.PI*2);ctx.fill()}
+  }else if(mode==="boucle"){
+    ctx.lineWidth=Math.max(1,s*.055);
+    const loops=3;for(let k=0;k<loops;k++){const ox=(k-1)*s*.18,ry=s*(.10+((index+k)%3)*.025);ctx.beginPath();ctx.ellipse(ox,(k%2?1:-1)*s*.04,s*.13,ry,k*.22,0,Math.PI*2);ctx.stroke()}
+    ctx.beginPath();ctx.arc(s*.18,-s*.10,s*.055,0,Math.PI*2);ctx.fill();
+  }else if(mode==="fur"){
+    ctx.lineWidth=Math.max(.65,s*.025);
+    for(let k=0;k<8;k++){const yy=(k-3.5)*s*.055,len=s*(.25+Math.random()*.28),bend=(Math.random()-.5)*s*.12;ctx.globalAlpha=baseAlpha*(.45+Math.random()*.4);ctx.beginPath();ctx.moveTo(-s*.20,yy);ctx.quadraticCurveTo(0,yy+bend,len,yy+bend*.35);ctx.stroke()}
+  }else if(mode==="sequin"){
+    const r=s*.22;ctx.lineWidth=Math.max(1,s*.055);ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.stroke();
+    ctx.globalAlpha*=.45;ctx.beginPath();ctx.arc(-r*.28,-r*.28,r*.22,0,Math.PI*2);ctx.fill();
+  }else if(mode==="rhinestone"){
+    const r=s*.25;ctx.lineWidth=Math.max(1,s*.045);ctx.beginPath();ctx.moveTo(0,-r);ctx.lineTo(r,0);ctx.lineTo(0,r);ctx.lineTo(-r,0);ctx.closePath();ctx.stroke();
+    ctx.beginPath();ctx.moveTo(0,-r);ctx.lineTo(0,r);ctx.moveTo(-r,0);ctx.lineTo(r,0);ctx.stroke();
+    ctx.fillStyle="#fff";ctx.globalAlpha=.7;ctx.beginPath();ctx.arc(-r*.22,-r*.22,r*.14,0,Math.PI*2);ctx.fill();
+  }else if(mode==="glitter"){
+    ctx.lineWidth=Math.max(.7,s*.025);
+    for(let k=0;k<5;k++){const gx=(Math.random()-.5)*s*.52,gy=(Math.random()-.5)*s*.45,r=s*(.025+Math.random()*.035);ctx.globalAlpha=baseAlpha*(.45+Math.random()*.55);ctx.beginPath();ctx.arc(gx,gy,r,0,Math.PI*2);ctx.fill()}
+    if(index%3===0){ctx.globalAlpha=baseAlpha*.8;ctx.beginPath();ctx.moveTo(-s*.09,0);ctx.lineTo(s*.09,0);ctx.moveTo(0,-s*.09);ctx.lineTo(0,s*.09);ctx.stroke()}
+  }else if(mode==="chalk"){
+    ctx.globalAlpha=baseAlpha*.28;ctx.lineWidth=s*.24;ctx.beginPath();ctx.moveTo(-s*.28,0);ctx.lineTo(s*.28,0);ctx.stroke();
+    ctx.globalAlpha=baseAlpha*.62;for(let k=0;k<7;k++){ctx.beginPath();ctx.arc((Math.random()-.5)*s*.58,(Math.random()-.5)*s*.28,s*(.012+Math.random()*.025),0,Math.PI*2);ctx.fill()}
+  }else if(mode==="watercolour"){
+    ctx.globalAlpha=baseAlpha*.09;ctx.filter="blur("+Math.max(1,s*.06)+"px)";
+    for(let k=0;k<3;k++){ctx.beginPath();ctx.ellipse((k-1)*s*.12,(Math.random()-.5)*s*.10,s*.34,s*.25,0,0,Math.PI*2);ctx.fill()}
+  }else if(mode==="velvet"){
+    ctx.globalAlpha=baseAlpha*.32;ctx.lineWidth=s*.24;ctx.beginPath();ctx.moveTo(-s*.30,0);ctx.lineTo(s*.30,0);ctx.stroke();
+    ctx.globalAlpha=baseAlpha*.7;ctx.lineWidth=Math.max(.6,s*.02);for(let k=0;k<9;k++){const px=(k-4)*s*.07;ctx.beginPath();ctx.moveTo(px,-s*.16);ctx.lineTo(px+s*.04,s*.16);ctx.stroke()}
+  }else if(mode==="satin"){
+    ctx.globalAlpha=baseAlpha*.55;ctx.lineWidth=s*.34;ctx.beginPath();ctx.moveTo(-s*.34,0);ctx.lineTo(s*.34,0);ctx.stroke();
+    ctx.strokeStyle=preview?"#fff":"rgba(255,255,255,.82)";ctx.globalAlpha=.62;ctx.lineWidth=Math.max(1,s*.055);ctx.beginPath();ctx.moveTo(-s*.30,-s*.06);ctx.lineTo(s*.30,-s*.06);ctx.stroke();
+  }else if(mode==="leather"){
+    ctx.lineWidth=Math.max(.7,s*.025);ctx.globalAlpha=baseAlpha*.55;
+    for(let k=0;k<4;k++){const ox=(Math.random()-.5)*s*.42,oy=(Math.random()-.5)*s*.30,r=s*(.07+Math.random()*.06);ctx.beginPath();for(let n=0;n<6;n++){const a=n/6*Math.PI*2,rr=r*(.75+Math.random()*.35),px=ox+Math.cos(a)*rr,py=oy+Math.sin(a)*rr;n?ctx.lineTo(px,py):ctx.moveTo(px,py)}ctx.closePath();ctx.stroke()}
+  }else if(mode==="mesh"){
+    ctx.lineWidth=Math.max(.7,s*.035);ctx.globalAlpha*=.78;
+    const rw=s*.26,rh=s*.22;ctx.beginPath();ctx.moveTo(-rw,0);ctx.lineTo(0,-rh);ctx.lineTo(rw,0);ctx.lineTo(0,rh);ctx.closePath();ctx.stroke();
+  }else if(mode==="lace"){
+    ctx.lineWidth=Math.max(.8,s*.045);
+    ctx.beginPath();ctx.arc(-s*.16,0,s*.16,Math.PI,0);ctx.arc(s*.16,0,s*.16,Math.PI,0);ctx.stroke();
+    ctx.globalAlpha*=.7;ctx.beginPath();ctx.arc(0,s*.05,s*.055,0,Math.PI*2);ctx.fill();
+  }else if(mode==="bead"){
+    const r=s*.18;ctx.lineWidth=Math.max(1,s*.05);ctx.globalAlpha*=.7;ctx.beginPath();ctx.moveTo(-s*.34,0);ctx.lineTo(s*.34,0);ctx.stroke();
+    ctx.globalAlpha=baseAlpha;ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle="#fff";ctx.globalAlpha=.55;ctx.beginPath();ctx.arc(-r*.28,-r*.28,r*.18,0,Math.PI*2);ctx.fill();
+  }
   ctx.restore();
 }
-
 function pushHistory(){
   const layer=activeLayer();if(!layer)return;
   const entry={layerId:layer.id,data:layer.canvas.toDataURL("image/png")};
@@ -707,7 +897,10 @@ viewport.addEventListener("pointermove",e=>{
       state.viewScale=clamp(state.gesture.scale*(dist/state.gesture.dist),.2,5);state.viewX=midX-r.left-cx*state.viewScale;state.viewY=midY-r.top-cy*state.viewScale;applyView();return;
     }
   }
-  if(state.drawing&&e.pointerId===state.drawingPointer)continueStroke(pointFromEvent(e));
+  if(state.drawing&&e.pointerId===state.drawingPointer){
+    const samples=typeof e.getCoalescedEvents==="function"?e.getCoalescedEvents():[e];
+    for(const sample of samples)continueStroke(pointFromEvent(sample));
+  }
 });
 function pointerEnd(e){
   if(state.pointers.has(e.pointerId))state.pointers.delete(e.pointerId);
