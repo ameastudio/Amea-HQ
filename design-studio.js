@@ -26,7 +26,6 @@ const CATEGORIES=[
   ["sketching","Sketching"],
   ["inking","Inking"],
   ["markers","Markers"],
-  ["textures","Textures"],
   ["favourites","Favorites"]
 ];
 
@@ -42,28 +41,7 @@ const BRUSHES=[
   {id:"brush-marker",name:"Brush Marker",category:"markers",note:"Soft marker stroke",mode:"marker",size:34,opacity:.72},
   {id:"alcohol-marker",name:"Alcohol Marker",category:"markers",note:"Layerable broad marker",mode:"marker",size:46,opacity:.38},
   {id:"chisel-marker",name:"Chisel Marker",category:"markers",note:"Broad fashion marker",mode:"chisel",size:44,opacity:.55},
-  {id:"highlighter",name:"Highlighter",category:"markers",note:"Transparent colour",mode:"marker",size:58,opacity:.22},
-  {id:"crochet-loop",name:"Crochet Loop",category:"textures",note:"Looped crochet texture",mode:"crochet",size:26,opacity:1},
-  {id:"knit-rib",name:"Knit Rib",category:"textures",note:"Vertical knit ribs",mode:"knit",size:26,opacity:1},
-  {id:"fuzzy-yarn",name:"Fuzzy Yarn",category:"textures",note:"Soft yarn fibres",mode:"fuzzy",size:28,opacity:.8},
-  {id:"stitch-line",name:"Stitch Line",category:"textures",note:"Even stitch marks",mode:"stitch",size:22,opacity:1},
-  {id:"cross-stitch",name:"Cross Stitch",category:"textures",note:"Cross stitch marks",mode:"cross",size:22,opacity:1},
-  {id:"embroidered",name:"Embroidered",category:"textures",note:"Dense directional embroidery threads",mode:"embroidered",size:25,opacity:.9},
-  {id:"fabric-weave",name:"Fabric Weave",category:"textures",note:"Woven fabric texture",mode:"weave",size:28,opacity:.75},
-  {id:"denim",name:"Denim Texture",category:"textures",note:"Rough denim grain",mode:"denim",size:30,opacity:.55},
-  {id:"boucle",name:"Bouclé",category:"textures",note:"Nubby loop texture",mode:"boucle",size:31,opacity:.72},
-  {id:"fur",name:"Fur",category:"textures",note:"Fine tapered strands",mode:"fur",size:34,opacity:.62},
-  {id:"sequins",name:"Sequins",category:"textures",note:"Reflective sequin dots",mode:"sequin",size:30,opacity:.9},
-  {id:"rhinestones",name:"Rhinestones",category:"textures",note:"Sparkling stone chain",mode:"rhinestone",size:28,opacity:1},
-  {id:"glitter",name:"Glitter",category:"textures",note:"Fine scattered sparkle",mode:"glitter",size:26,opacity:.72},
-  {id:"chalk",name:"Chalk Texture",category:"textures",note:"Powdery chalk line",mode:"chalk",size:34,opacity:.5},
-  {id:"watercolour",name:"Watercolour Texture",category:"textures",note:"Soft wet colour",mode:"watercolour",size:48,opacity:.28},
-  {id:"velvet",name:"Velvet",category:"textures",note:"Soft dense fabric",mode:"velvet",size:34,opacity:.55},
-  {id:"satin",name:"Satin Shine",category:"textures",note:"Smooth highlight stroke",mode:"satin",size:34,opacity:.7},
-  {id:"leather",name:"Leather Grain",category:"textures",note:"Fine leather grain",mode:"leather",size:28,opacity:.58},
-  {id:"mesh",name:"Mesh",category:"textures",note:"Open mesh marks",mode:"mesh",size:30,opacity:.85},
-  {id:"lace",name:"Lace Detail",category:"textures",note:"Decorative lace loops",mode:"lace",size:32,opacity:.85},
-  {id:"bead",name:"Bead Chain",category:"textures",note:"Linked round beads",mode:"bead",size:25,opacity:1}
+  {id:"highlighter",name:"Highlighter",category:"markers",note:"Transparent colour",mode:"marker",size:58,opacity:.22}
 ];
 
 const state={
