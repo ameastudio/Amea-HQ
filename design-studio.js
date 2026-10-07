@@ -1344,7 +1344,7 @@ document.addEventListener("pointerdown",e=>{if(!galleryMenu.classList.contains("
 $("#brushBtn").onclick=()=>{setTool("brush");togglePanel($("#brushPanel"))};
 $("#smudgeBtn").onclick=()=>{setTool("smudge");closePanels()};
 $("#eraserBtn").onclick=()=>{setTool("eraser");togglePanel($("#eraserPanel"))};
-$(".eraser-mode").forEach(b=>b.onclick=()=>setEraserMode(b.dataset.eraserMode));
+Array.from(document.querySelectorAll(".eraser-mode")).forEach(b=>b.onclick=()=>setEraserMode(b.dataset.eraserMode));
 $("#layersBtn").onclick=()=>togglePanel($("#layersPanel"));
 $("#colourBtn").onclick=()=>togglePanel($("#colourPanel"));
 $("#actionsBtn").onclick=()=>togglePanel($("#actionsPanel"));
