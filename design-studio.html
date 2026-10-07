@@ -81,6 +81,14 @@
           <span class="opacity-dot">◐</span>
         </label>
       </div>
+
+      <div class="view-switcher" aria-label="Design side">
+        <div class="side-segment">
+          <button class="side-button active" data-side="front">Front</button>
+          <button class="side-button" data-side="back">Back</button>
+        </div>
+        <button id="overlayBtn" class="overlay-button" aria-pressed="false">Overlay</button>
+      </div>
     </section>
 
     <aside id="brushPanel" class="floating-panel brush-panel hidden" aria-label="Brush Library">
@@ -137,13 +145,15 @@
         <strong>Croquis</strong>
         <button class="close-panel" data-close-panel>×</button>
       </div>
-      <button class="croquis-choice" data-croquis="front">Front</button>
-      <button class="croquis-choice" data-croquis="back">Back</button>
-      <button class="croquis-choice" data-croquis="blank">Blank</button>
+      <label class="toggle-row">
+        <span>Show croquis</span>
+        <input id="croquisVisibleToggle" type="checkbox" checked />
+      </label>
       <div class="croquis-opacity-row">
         <span>Opacity</span><output id="croquisOpacityOutput">35%</output>
         <input id="croquisOpacitySlider" type="range" min="0" max="100" value="35" />
       </div>
+      <p class="panel-note">Front and Back belong to the same design. Use the switch above the canvas to move between them.</p>
     </aside>
   </main>
 
@@ -154,18 +164,19 @@
         <h2 id="createTitle">New canvas</h2>
         <span></span>
       </div>
-      <div class="new-canvas-options">
-        <button class="new-canvas-card" data-new-croquis="front">
-          <canvas class="new-preview" data-preview="front" width="180" height="220"></canvas>
-          <strong>Front</strong>
+      <div class="new-canvas-options two-options">
+        <button class="new-canvas-card" data-new-kind="fashion">
+          <div class="pair-preview">
+            <img src="design-assets/croquis-front.svg" alt="" />
+            <img src="design-assets/croquis-back.svg" alt="" />
+          </div>
+          <strong>Fashion Design</strong>
+          <small>Front + Back together</small>
         </button>
-        <button class="new-canvas-card" data-new-croquis="back">
-          <canvas class="new-preview" data-preview="back" width="180" height="220"></canvas>
-          <strong>Back</strong>
-        </button>
-        <button class="new-canvas-card" data-new-croquis="blank">
+        <button class="new-canvas-card" data-new-kind="blank">
           <div class="blank-preview"></div>
-          <strong>Blank</strong>
+          <strong>Blank Canvas</strong>
+          <small>No croquis</small>
         </button>
       </div>
     </div>
