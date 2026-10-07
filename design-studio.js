@@ -253,7 +253,7 @@ function positionCanvasObject(node,o){
 }
 function renderCanvasElements(){
   const root=$("#canvasObjectLayer");if(!root)return;root.innerHTML="";
-  state.elements.forEach(o=>{
+  state.elements.slice().reverse().forEach(o=>{
     if(o.visible===false)return;
     const node=document.createElement("div");node.className="canvas-object "+(o.type==="image"?"image-object":"text-object")+(o.id===state.selectedElementId?" selected":"");
     node.dataset.objectId=o.id;
@@ -262,6 +262,11 @@ function renderCanvasElements(){
     positionCanvasObject(node,o);
     node.onpointerdown=e=>{
       e.preventDefault();e.stopPropagation();
+      if(e.pointerType==="pen"&&["brush","eraser","smudge"].includes(state.tool)){
+        state.drawingPointer=e.pointerId;beginStroke(pointFromEvent(e));
+        try{viewport.setPointerCapture(e.pointerId)}catch(_){}
+        return;
+      }
       selectCanvasElement(o.id,true,false);
       state.elementDrag={id:o.id,pointerId:e.pointerId,lastX:e.clientX,lastY:e.clientY,node};
       try{node.setPointerCapture(e.pointerId)}catch(_){}
