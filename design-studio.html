@@ -94,7 +94,10 @@
     <aside id="brushPanel" class="floating-panel brush-panel hidden" aria-label="Brush Library">
       <div class="panel-titlebar">
         <strong>Brush Library</strong>
-        <button class="close-panel" data-close-panel>×</button>
+        <div class="panel-title-actions">
+          <button id="createBrushBtn" class="panel-plus" aria-label="Create brush">＋</button>
+          <button class="close-panel" data-close-panel>×</button>
+        </div>
       </div>
       <div class="brush-library">
         <nav id="brushCategories" class="brush-categories"></nav>
@@ -211,6 +214,50 @@
           <strong>Blank Canvas</strong>
           <small>Plain white canvas</small>
         </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="brushStudioModal" class="modal brush-studio-modal hidden" role="dialog" aria-modal="true" aria-labelledby="brushStudioTitle">
+    <div class="brush-studio-card">
+      <div class="modal-titlebar">
+        <button id="cancelBrushStudioBtn" class="text-button">Cancel</button>
+        <h2 id="brushStudioTitle">Brush Studio</h2>
+        <button id="saveBrushBtn" class="text-button brush-save-button">Save</button>
+      </div>
+
+      <div class="brush-studio-body">
+        <section class="brush-preview-section">
+          <canvas id="brushStudioPreview" width="640" height="190" aria-label="Live brush preview"></canvas>
+          <div class="brush-name-row">
+            <label for="brushNameInput">Brush name</label>
+            <input id="brushNameInput" maxlength="40" value="Untitled Brush" />
+          </div>
+        </section>
+
+        <section class="brush-source-grid">
+          <div class="brush-source-card">
+            <div class="brush-source-heading"><strong>Shape</strong><button id="clearShapeBtn" type="button">Clear</button></div>
+            <div id="shapePreview" class="brush-source-preview"><span>Round</span></div>
+            <label class="brush-import-button">Import Shape<input id="shapeInput" type="file" accept="image/*" /></label>
+            <small>Transparent PNG or white shape on dark background works best.</small>
+          </div>
+          <div class="brush-source-card">
+            <div class="brush-source-heading"><strong>Grain</strong><button id="clearGrainBtn" type="button">Clear</button></div>
+            <div id="grainPreview" class="brush-source-preview"><span>None</span></div>
+            <label class="brush-import-button">Import Grain<input id="grainInput" type="file" accept="image/*" /></label>
+            <small>Use a texture image to break up the brush surface.</small>
+          </div>
+        </section>
+
+        <section class="brush-setting-list">
+          <label class="brush-setting"><span>Spacing <output id="brushSpacingOut">12%</output></span><input id="brushSpacing" type="range" min="1" max="100" value="12" /></label>
+          <label class="brush-setting"><span>Size <output id="brushSizeOut">18%</output></span><input id="brushSize" type="range" min="1" max="120" value="22" /></label>
+          <label class="brush-setting"><span>Opacity <output id="brushOpacityOut">100%</output></span><input id="brushOpacity" type="range" min="5" max="100" value="100" /></label>
+          <label class="brush-setting"><span>Taper <output id="brushTaperOut">0%</output></span><input id="brushTaper" type="range" min="0" max="100" value="0" /></label>
+          <label class="brush-setting"><span>Smoothing <output id="brushSmoothingOut">55%</output></span><input id="brushSmoothing" type="range" min="0" max="100" value="55" /></label>
+          <label class="brush-setting"><span>Pressure <output id="brushPressureOut">65%</output></span><input id="brushPressure" type="range" min="0" max="100" value="65" /></label>
+        </section>
       </div>
     </div>
   </div>
