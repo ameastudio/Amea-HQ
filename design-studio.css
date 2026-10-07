@@ -309,3 +309,15 @@ svg{fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-l
 @media(max-width:520px){
   .export-options{grid-template-columns:1fr}
 }
+
+/* Eraser modes */
+.eraser-panel{width:min(350px,calc(100vw - 70px));padding-bottom:8px}
+.eraser-mode-list{padding:8px}
+.eraser-mode{width:100%;display:grid;grid-template-columns:38px minmax(0,1fr) 22px;align-items:center;gap:9px;border:1px solid transparent;background:transparent;border-radius:12px;padding:10px;text-align:left;color:var(--ink)}
+.eraser-mode+.eraser-mode{margin-top:4px}
+.eraser-mode.active{background:var(--accent-soft);border-color:var(--accent-line)}
+.eraser-mode-icon{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:#fff;color:var(--accent);font-size:17px;border:1px solid #f1dbe4}
+.eraser-mode strong{display:block;font-size:11px}
+.eraser-mode small{display:block;margin-top:3px;font-size:8px;color:var(--muted);line-height:1.35}
+.eraser-mode b{opacity:0;color:var(--accent);font-size:13px}
+.eraser-mode.active b{opacity:1}

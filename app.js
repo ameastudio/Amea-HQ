@@ -45,9 +45,19 @@ function greeting(){
   const h=jamaicaHour();
   return h<5?"Good night":h<12?"Good morning":h<17?"Good afternoon":h<21?"Good evening":"Good night";
 }
+function hqDateLabel(){
+  try{
+    return new Intl.DateTimeFormat("en-US",{timeZone:"America/Jamaica",weekday:"long",month:"long",day:"numeric"}).format(new Date());
+  }catch(e){
+    return new Intl.DateTimeFormat("en-US",{weekday:"long",month:"long",day:"numeric"}).format(new Date());
+  }
+}
 function refreshHomeGreeting(){
   const el=$("#homeGreeting");
   if(el)el.textContent=`${greeting()}, Améa Boss ✨`;
+  const headerGreeting=$("#hqHeaderGreeting"),headerDate=$("#hqHeaderDate");
+  if(headerGreeting)headerGreeting.textContent=`${greeting()}, Bri ♡`;
+  if(headerDate)headerDate.textContent=hqDateLabel();
 }
 
 const SUPABASE_URL="https://ndmrwfctiomruibiczrj.supabase.co";
@@ -569,11 +579,7 @@ function setHomeAnalytics(mode){
 
 
 function applyAmeaBrandHeader(){
-  const h=document.querySelector("header h1");
-  if(h&&!h.classList.contains("amea-brand-header")){
-    h.classList.add("amea-brand-header");
-    h.innerHTML=`<img src="amea-logo.png" alt="Améa"><small>HQ</small>`;
-  }
+  refreshHomeGreeting();
 }
 
 let studioPatternId="";
@@ -1509,10 +1515,6 @@ function page(x){
   const recent=orders.slice().sort((a,b)=>new Date(b.created||0)-new Date(a.created||0)).slice(0,4);
 
   v.innerHTML=`<div class="hq-home core-hq-home">
-    <section class="hq-welcome">
-      <div><span class="hq-kicker">AMÉA HQ</span><h2 id="homeGreeting">${greeting()}, Améa Boss ♡</h2><p>Your order-tracking business hub.</p></div>
-    </section>
-
     <section class="hq-overall-grid">
       <div><span>Total received</span><strong>${M(sales)}</strong><small>All time</small></div>
       <div><span>Total orders</span><strong>${orders.length}</strong><small>All time</small></div>

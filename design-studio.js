@@ -61,6 +61,8 @@ const state={
   layers:[],
   activeLayerId:null,
   tool:"brush",
+  eraserMode:"partial",
+  strokeEraseLast:null,
   brush:BRUSHES[0],
   brushCategory:"sketching",
   colour:"#111111",
@@ -410,10 +412,54 @@ function syncToolButtons(){
 }
 function setTool(tool){
   state.tool=tool;syncToolButtons();
-  if(tool==="eraser")$("#sizeSlider").value=clamp(state.size,2,120);
+  if(tool==="eraser"){$("#sizeSlider").value=clamp(state.size,2,120);syncEraserModes()}
   updateSliderLabels();
 }
 
+function syncEraserModes(){
+  $$(".eraser-mode").forEach(b=>b.classList.toggle("active",b.dataset.eraserMode===state.eraserMode));
+}
+function setEraserMode(mode){
+  state.eraserMode=mode==="stroke"?"stroke":"partial";
+  state.tool="eraser";syncToolButtons();syncEraserModes();
+  toast(state.eraserMode==="stroke"?"Stroke Erase":"Partial Erase");
+}
+function nearestPaintedPixel(imageData,x,y,radius){
+  const w=imageData.width,h=imageData.height,data=imageData.data;
+  x=Math.round(x);y=Math.round(y);radius=Math.max(2,Math.round(radius));
+  let best=-1,bestD=Infinity;
+  for(let yy=Math.max(0,y-radius);yy<=Math.min(h-1,y+radius);yy++){
+    for(let xx=Math.max(0,x-radius);xx<=Math.min(w-1,x+radius);xx++){
+      const d2=(xx-x)*(xx-x)+(yy-y)*(yy-y);if(d2>radius*radius||d2>=bestD)continue;
+      if(data[(yy*w+xx)*4+3]>8){best=yy*w+xx;bestD=d2}
+    }
+  }
+  return best;
+}
+function eraseConnectedStroke(layer,p){
+  const ctx=layer.canvas.getContext("2d"),img=ctx.getImageData(0,0,W,H),data=img.data;
+  const start=nearestPaintedPixel(img,p.x,p.y,Math.max(8,state.size*.7));
+  if(start<0)return false;
+
+  const visited=new Uint8Array(W*H),queue=new Int32Array(W*H);
+  let head=0,tail=0;queue[tail++]=start;visited[start]=1;
+  const component=[];
+  while(head<tail){
+    const n=queue[head++],alpha=data[n*4+3];
+    if(alpha<=8)continue;
+    component.push(n);
+    const x=n%W,y=(n/W)|0;
+    for(let oy=-1;oy<=1;oy++)for(let ox=-1;ox<=1;ox++){
+      if(!ox&&!oy)continue;
+      const nx=x+ox,ny=y+oy;if(nx<0||ny<0||nx>=W||ny>=H)continue;
+      const ni=ny*W+nx;if(visited[ni])continue;
+      visited[ni]=1;if(data[ni*4+3]>8)queue[tail++]=ni;
+    }
+  }
+  if(!component.length)return false;
+  for(const n of component){const i=n*4;data[i]=data[i+1]=data[i+2]=data[i+3]=0}
+  ctx.putImageData(img,0,0);return true;
+}
 function hsvToRgb(h,s,v){
   h=((h%360)+360)%360;s=clamp(s,0,1);v=clamp(v,0,1);
   const c=v*s,x=c*(1-Math.abs((h/60)%2-1)),m=v-c;
@@ -748,11 +794,15 @@ function beginStroke(p){
     state.strokeCanvas.width=W;state.strokeCanvas.height=H;
     redrawContinuousStroke(layer);
   }else if(state.tool==="eraser"){
-    state.strokePoints=[p];
-    state.strokeBase=layer.canvas.getContext("2d").getImageData(0,0,W,H);
-    state.strokeCanvas=document.createElement("canvas");
-    state.strokeCanvas.width=W;state.strokeCanvas.height=H;
-    redrawContinuousStroke(layer);
+    if(state.eraserMode==="stroke"){
+      state.strokeEraseLast=p;eraseConnectedStroke(layer,p);
+    }else{
+      state.strokePoints=[p];
+      state.strokeBase=layer.canvas.getContext("2d").getImageData(0,0,W,H);
+      state.strokeCanvas=document.createElement("canvas");
+      state.strokeCanvas.width=W;state.strokeCanvas.height=H;
+      redrawContinuousStroke(layer);
+    }
   }else if(state.tool==="brush"&&isTexture(state.brush.mode)){
     drawTexture(layer.canvas.getContext("2d"),p,p);
   }
@@ -763,7 +813,7 @@ function continueStroke(p){
   const layer=activeLayer();if(!layer)return;
   const lctx=layer.canvas.getContext("2d");
 
-  if((state.tool==="brush"&&!isTexture(state.brush.mode))||state.tool==="eraser"){
+  if((state.tool==="brush"&&!isTexture(state.brush.mode))||(state.tool==="eraser"&&state.eraserMode==="partial")){
     const prev=state.strokePoints[state.strokePoints.length-1]||p;
     const factor=state.brush.mode==="custom"?clamp(.78-(Number(state.brush.smoothing)||0)*.0058,.20,.78):state.brush.mode==="pen"?.58:state.brush.mode==="marker"?.50:state.brush.mode==="chisel"?.48:.46;
     const smooth={
@@ -773,6 +823,11 @@ function continueStroke(p){
     };
     state.strokePoints.push(smooth);
     redrawContinuousStroke(layer);
+  }else if(state.tool==="eraser"&&state.eraserMode==="stroke"){
+    const last=state.strokeEraseLast||p;
+    if(Math.hypot(p.x-last.x,p.y-last.y)>Math.max(6,state.size*.35)){
+      eraseConnectedStroke(layer,p);state.strokeEraseLast=p;
+    }
   }else if(state.tool==="smudge"){
     smudgeLine(layer.canvas,state.lastPoint,p);
   }else if(isTexture(state.brush.mode)){
@@ -789,6 +844,7 @@ function endStroke(){
   state.strokeBase=null;
   state.strokeCanvas=null;
   state.textureCarry=0;
+  state.strokeEraseLast=null;
   pushHistory();renderLayers();scheduleSave();
 }
 function brushWidth(p){
@@ -1287,7 +1343,8 @@ document.addEventListener("pointerdown",e=>{if(!galleryMenu.classList.contains("
 
 $("#brushBtn").onclick=()=>{setTool("brush");togglePanel($("#brushPanel"))};
 $("#smudgeBtn").onclick=()=>{setTool("smudge");closePanels()};
-$("#eraserBtn").onclick=()=>{setTool("eraser");closePanels()};
+$("#eraserBtn").onclick=()=>{setTool("eraser");togglePanel($("#eraserPanel"))};
+Array.from(document.querySelectorAll(".eraser-mode")).forEach(b=>b.onclick=()=>setEraserMode(b.dataset.eraserMode));
 $("#layersBtn").onclick=()=>togglePanel($("#layersPanel"));
 $("#colourBtn").onclick=()=>togglePanel($("#colourPanel"));
 $("#actionsBtn").onclick=()=>togglePanel($("#actionsPanel"));
@@ -1390,6 +1447,11 @@ viewport.addEventListener("pointerdown",e=>{
 
   // Mouse clicks do not drop a dot. Drawing starts only after a small drag.
   if(e.pointerType==="mouse"&&e.button===0){
+    if(state.tool==="eraser"&&state.eraserMode==="stroke"){
+      state.drawingPointer=e.pointerId;beginStroke(pointFromEvent(e));
+      try{viewport.setPointerCapture(e.pointerId)}catch(_){}
+      return;
+    }
     state.pendingDraw={pointerId:e.pointerId,startEvent:{clientX:e.clientX,clientY:e.clientY,pointerType:e.pointerType,pressure:e.pressure},startX:e.clientX,startY:e.clientY};
     try{viewport.setPointerCapture(e.pointerId)}catch(_){}
   }
@@ -1454,7 +1516,7 @@ window.addEventListener("keydown",e=>{
 });
 
 function init(){
-  normaliseCustomBrushes();renderGallery();renderBrushCategories();renderBrushList();normalizePalettes();renderRecentColours();renderPalettes();setColour(state.colour,false);setColourTab("disc");syncReferenceActions();updateSliderLabels();syncToolButtons();syncHistoryButtons();
+  normaliseCustomBrushes();renderGallery();renderBrushCategories();renderBrushList();normalizePalettes();renderRecentColours();renderPalettes();setColour(state.colour,false);setColourTab("disc");syncReferenceActions();syncEraserModes();updateSliderLabels();syncToolButtons();syncHistoryButtons();
   croquisImages.front.onload=()=>{render();};
   croquisImages.back.onload=()=>{render();};
 }
