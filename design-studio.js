@@ -69,9 +69,14 @@ const BRUSHES=[
 const state={
   designs:loadJSON(STORAGE_KEY,[]),
   currentId:null,
-  currentCroquis:"front",
+  activeView:"front",
+  designKind:"fashion",
+  croquisVisible:true,
   croquisOpacity:.35,
+  overlayOther:false,
   referenceImage:null,
+  views:{front:[],back:[]},
+  activeLayerByView:{front:null,back:null},
   layers:[],
   activeLayerId:null,
   tool:"brush",
@@ -120,140 +125,65 @@ function escapeHtml(s){
   return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 }
 
+const croquisImages={front:new Image(),back:new Image()};
+croquisImages.front.src="design-assets/croquis-front.svg";
+croquisImages.back.src="design-assets/croquis-back.svg";
+
 function drawCroquis(ctx,type,opacity,w=W,h=H){
-  if(type==="blank")return;
-  const sx=w/900,sy=h/1100;
+  if(type==="blank"||!state.croquisVisible)return;
+  const img=croquisImages[type];
+  if(!img||!img.complete||!img.naturalWidth)return;
+  const targetH=h*.94;
+  const targetW=targetH*(320/1175);
   ctx.save();
-  ctx.scale(sx,sy);
   ctx.globalAlpha=opacity;
-  ctx.strokeStyle="#8f8f98";
-  ctx.lineWidth=1.55;
-  ctx.lineCap="round";
-  ctx.lineJoin="round";
-  const cx=450;
-  const back=type==="back";
-
-  ctx.beginPath();
-  ctx.ellipse(cx,100,43,59,0,0,Math.PI*2);
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.moveTo(427,154);ctx.lineTo(423,196);
-  ctx.moveTo(473,154);ctx.lineTo(477,196);
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.moveTo(423,196);
-  ctx.bezierCurveTo(382,202,344,216,326,244);
-  ctx.bezierCurveTo(310,290,323,354,349,404);
-  ctx.bezierCurveTo(368,443,370,475,356,519);
-  ctx.bezierCurveTo(343,559,327,597,317,645);
-  ctx.bezierCurveTo(313,687,337,719,365,738);
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.moveTo(477,196);
-  ctx.bezierCurveTo(518,202,556,216,574,244);
-  ctx.bezierCurveTo(590,290,577,354,551,404);
-  ctx.bezierCurveTo(532,443,530,475,544,519);
-  ctx.bezierCurveTo(557,559,573,597,583,645);
-  ctx.bezierCurveTo(587,687,563,719,535,738);
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.moveTo(326,244);
-  ctx.bezierCurveTo(296,330,282,417,286,510);
-  ctx.bezierCurveTo(289,589,302,662,308,736);
-  ctx.bezierCurveTo(309,765,299,787,289,804);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(574,244);
-  ctx.bezierCurveTo(604,330,618,417,614,510);
-  ctx.bezierCurveTo(611,589,598,662,592,736);
-  ctx.bezierCurveTo(591,765,601,787,611,804);
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.moveTo(365,738);
-  ctx.bezierCurveTo(350,785,350,832,363,877);
-  ctx.bezierCurveTo(373,920,380,973,381,1030);
-  ctx.bezierCurveTo(383,1055,377,1070,365,1081);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(535,738);
-  ctx.bezierCurveTo(550,785,550,832,537,877);
-  ctx.bezierCurveTo(527,920,520,973,519,1030);
-  ctx.bezierCurveTo(517,1055,523,1070,535,1081);
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.moveTo(438,738);
-  ctx.bezierCurveTo(425,805,421,870,427,931);
-  ctx.bezierCurveTo(432,985,431,1037,429,1078);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(462,738);
-  ctx.bezierCurveTo(475,805,479,870,473,931);
-  ctx.bezierCurveTo(468,985,469,1037,471,1078);
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.moveTo(365,1081);ctx.quadraticCurveTo(389,1092,429,1078);
-  ctx.moveTo(535,1081);ctx.quadraticCurveTo(511,1092,471,1078);
-  ctx.stroke();
-
-  if(back){
-    ctx.beginPath();
-    ctx.moveTo(450,195);ctx.bezierCurveTo(440,255,440,322,450,389);
-    ctx.bezierCurveTo(459,430,459,474,450,521);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(401,283);ctx.quadraticCurveTo(450,307,499,283);
-    ctx.stroke();
-  }else{
-    ctx.beginPath();
-    ctx.moveTo(389,286);ctx.bezierCurveTo(410,264,432,265,450,287);
-    ctx.bezierCurveTo(468,265,490,264,511,286);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(450,296);ctx.bezierCurveTo(444,360,445,426,450,493);
-    ctx.stroke();
-  }
-
-  ctx.beginPath();
-  ctx.moveTo(356,519);ctx.bezierCurveTo(389,540,420,545,450,543);
-  ctx.bezierCurveTo(480,545,511,540,544,519);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(317,645);ctx.bezierCurveTo(355,610,396,603,450,617);
-  ctx.bezierCurveTo(504,603,545,610,583,645);
-  ctx.stroke();
-
+  ctx.globalCompositeOperation="multiply";
+  ctx.drawImage(img,(w-targetW)/2,(h-targetH)/2,targetW,targetH);
   ctx.restore();
 }
-
 function newLayer(name){
   const c=document.createElement("canvas");c.width=W;c.height=H;
   return {id:layerUid(),name:name||"Layer",visible:true,opacity:1,blend:"source-over",canvas:c};
 }
 function activeLayer(){return state.layers.find(l=>l.id===state.activeLayerId)||state.layers[0]||null}
 function setActiveLayer(id){
-  if(state.layers.some(l=>l.id===id))state.activeLayerId=id;
+  if(state.layers.some(l=>l.id===id)){
+    state.activeLayerId=id;
+    state.activeLayerByView[state.activeView]=id;
+  }
   resetHistory();
   renderLayers();
 }
-function compositeTo(ctx,includeReference=true){
-  ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,W,H);ctx.fillStyle="#fff";ctx.fillRect(0,0,W,H);
-  drawCroquis(ctx,state.currentCroquis,state.croquisOpacity);
+function renderLayerArray(ctx,layers,alpha=1){
+  for(let i=layers.length-1;i>=0;i--){
+    const l=layers[i];if(!l.visible)continue;
+    ctx.globalAlpha=alpha*l.opacity;
+    ctx.globalCompositeOperation=l.blend||"source-over";
+    ctx.drawImage(l.canvas,0,0);
+  }
+}
+function compositeTo(ctx,includeReference=true,view=state.activeView,includeOverlay=state.overlayOther){
+  ctx.save();
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle="#fff";ctx.fillRect(0,0,W,H);
+
+  const croquisType=state.designKind==="blank"?"blank":view;
+  drawCroquis(ctx,croquisType,state.croquisOpacity);
+
+  if(includeOverlay&&state.designKind!=="blank"){
+    const other=view==="front"?"back":"front";
+    drawCroquis(ctx,other,.09);
+    renderLayerArray(ctx,state.views[other]||[],.16);
+  }
+
   if(includeReference&&state.referenceImage){
     ctx.globalAlpha=.38;ctx.globalCompositeOperation="source-over";
     const r=fitImage(state.referenceImage,W,H);
     ctx.drawImage(state.referenceImage,r.x,r.y,r.w,r.h);
   }
-  for(let i=state.layers.length-1;i>=0;i--){
-    const l=state.layers[i];if(!l.visible)continue;
-    ctx.globalAlpha=l.opacity;ctx.globalCompositeOperation=l.blend||"source-over";ctx.drawImage(l.canvas,0,0);
-  }
+
+  renderLayerArray(ctx,state.views[view]||state.layers,1);
   ctx.restore();
 }
 function render(){compositeTo(dctx,true)}
@@ -419,12 +349,13 @@ function renameLayer(layer){
 }
 function duplicateLayer(layer){
   const copy=newLayer(layer.name+" copy");copy.visible=layer.visible;copy.opacity=layer.opacity;copy.blend=layer.blend;copy.canvas.getContext("2d").drawImage(layer.canvas,0,0);
-  const i=state.layers.indexOf(layer);state.layers.splice(i,0,copy);state.activeLayerId=copy.id;render();renderLayers();resetHistory();scheduleSave();
+  const i=state.layers.indexOf(layer);state.layers.splice(i,0,copy);state.activeLayerId=copy.id;state.activeLayerByView[state.activeView]=copy.id;render();renderLayers();resetHistory();scheduleSave();
 }
 function deleteLayer(layer){
   if(state.layers.length<=1){toast("Keep at least one layer");return}
   const i=state.layers.indexOf(layer);state.layers.splice(i,1);
   if(state.activeLayerId===layer.id)state.activeLayerId=state.layers[Math.min(i,state.layers.length-1)].id;
+  state.activeLayerByView[state.activeView]=state.activeLayerId;
   render();renderLayers();resetHistory();scheduleSave();
 }
 function moveLayer(index,delta){
@@ -436,7 +367,9 @@ function reorderLayer(fromId,toId){
   if(from<0||to<0||from===to)return;const [l]=state.layers.splice(from,1);state.layers.splice(to,0,l);render();renderLayers();scheduleSave();
 }
 function addLayer(){
-  const layer=newLayer("Layer "+(state.layers.length+1));state.layers.unshift(layer);state.activeLayerId=layer.id;renderLayers();resetHistory();scheduleSave();
+  const layer=newLayer("Layer "+(state.layers.length+1));
+  state.layers.unshift(layer);state.activeLayerId=layer.id;state.activeLayerByView[state.activeView]=layer.id;
+  renderLayers();resetHistory();scheduleSave();
 }
 
 function closePanels(){$$(".floating-panel").forEach(p=>p.classList.add("hidden"))}
@@ -542,16 +475,28 @@ function undo(){if(state.historyIndex<=0)return;state.historyIndex--;restoreHist
 function redo(){if(state.historyIndex>=state.history.length-1)return;state.historyIndex++;restoreHistory(state.historyIndex)}
 function syncHistoryButtons(){$("#undoBtn").disabled=state.historyIndex<=0;$("#redoBtn").disabled=state.historyIndex>=state.history.length-1}
 
-function serializeLayers(){return state.layers.map(l=>({id:l.id,name:l.name,visible:l.visible,opacity:l.opacity,blend:l.blend,data:l.canvas.toDataURL("image/png")}))}
+function serializeLayers(layers=state.layers){return layers.map(l=>({id:l.id,name:l.name,visible:l.visible,opacity:l.opacity,blend:l.blend,data:l.canvas.toDataURL("image/png")}))}
 function thumbnailData(){
-  const c=document.createElement("canvas");c.width=200;c.height=250;const x=c.getContext("2d");const full=document.createElement("canvas");full.width=W;full.height=H;compositeTo(full.getContext("2d"),false);x.drawImage(full,0,0,200,250);return c.toDataURL("image/jpeg",.72);
+  const c=document.createElement("canvas");c.width=200;c.height=250;const x=c.getContext("2d");
+  const full=document.createElement("canvas");full.width=W;full.height=H;
+  compositeTo(full.getContext("2d"),false,"front",false);
+  x.drawImage(full,0,0,200,250);
+  return c.toDataURL("image/jpeg",.72);
 }
 function currentDesign(){
   return state.designs.find(d=>d.id===state.currentId)||null;
 }
 function saveCurrentDesign(){
   const d=currentDesign();if(!d)return;
-  d.name=$("#designNameInput").value.trim()||"Untitled Artwork";d.croquis=state.currentCroquis;d.croquisOpacity=state.croquisOpacity;d.updatedAt=Date.now();d.layers=serializeLayers();d.thumbnail=thumbnailData();
+  d.name=$("#designNameInput").value.trim()||"Untitled Artwork";
+  d.kind=state.designKind;
+  d.activeView=state.activeView;
+  d.croquisVisible=state.croquisVisible;
+  d.croquisOpacity=state.croquisOpacity;
+  d.updatedAt=Date.now();
+  d.views={front:serializeLayers(state.views.front),back:serializeLayers(state.views.back)};
+  delete d.layers;delete d.croquis;
+  d.thumbnail=thumbnailData();
   saveJSON(STORAGE_KEY,state.designs);
 }
 function scheduleSave(){clearTimeout(scheduleSave.t);scheduleSave.t=setTimeout(saveCurrentDesign,220)}
@@ -559,20 +504,57 @@ async function drawDataUrl(canvas,data){
   const ctx=canvas.getContext("2d");ctx.clearRect(0,0,W,H);if(!data)return;
   await new Promise(resolve=>{const img=new Image();img.onload=()=>{ctx.drawImage(img,0,0,W,H);resolve()};img.onerror=resolve;img.src=data});
 }
-async function loadDesign(design){
-  state.currentId=design.id;state.currentCroquis=design.croquis||"front";state.croquisOpacity=typeof design.croquisOpacity==="number"?design.croquisOpacity:.35;state.referenceImage=null;
-  state.layers=[];
-  for(const saved of design.layers||[]){
-    const l=newLayer(saved.name||"Layer");l.id=saved.id||layerUid();l.visible=saved.visible!==false;l.opacity=typeof saved.opacity==="number"?saved.opacity:1;l.blend=saved.blend||"source-over";await drawDataUrl(l.canvas,saved.data);state.layers.push(l);
+async function deserializeLayerArray(savedLayers){
+  const arr=[];
+  for(const saved of savedLayers||[]){
+    const l=newLayer(saved.name||"Layer");
+    l.id=saved.id||layerUid();l.visible=saved.visible!==false;
+    l.opacity=typeof saved.opacity==="number"?saved.opacity:1;
+    l.blend=saved.blend||"source-over";
+    await drawDataUrl(l.canvas,saved.data);
+    arr.push(l);
   }
-  if(!state.layers.length)state.layers=[newLayer("Layer 1")];
-  state.activeLayerId=state.layers[0].id;$("#designNameInput").value=design.name||"Untitled Artwork";$("#croquisOpacitySlider").value=Math.round(state.croquisOpacity*100);$("#croquisOpacityOutput").textContent=Math.round(state.croquisOpacity*100)+"%";
-  galleryScreen.classList.add("hidden");editorScreen.classList.remove("hidden");render();renderLayers();renderCroquisChoices();resetHistory();requestAnimationFrame(fitCanvas);
+  if(!arr.length)arr.push(newLayer("Layer 1"));
+  return arr;
 }
-function createDesign(croquis){
-  const now=Date.now(),d={id:uid(),name:"Untitled Artwork",croquis:croquis,croquisOpacity:.35,updatedAt:now,layers:[],thumbnail:""};
+async function loadDesign(design){
+  state.currentId=design.id;
+  state.designKind=design.kind||"fashion";
+  state.activeView=design.activeView==="back"?"back":"front";
+  state.croquisVisible=design.croquisVisible!==false&&state.designKind!=="blank";
+  state.croquisOpacity=typeof design.croquisOpacity==="number"?design.croquisOpacity:.35;
+  state.overlayOther=false;state.referenceImage=null;
+
+  if(design.views){
+    state.views.front=await deserializeLayerArray(design.views.front);
+    state.views.back=await deserializeLayerArray(design.views.back);
+  }else{
+    const legacy=await deserializeLayerArray(design.layers||[]);
+    state.views.front=design.croquis==="back"?[newLayer("Layer 1")]:legacy;
+    state.views.back=design.croquis==="back"?legacy:[newLayer("Layer 1")];
+  }
+
+  state.activeLayerByView.front=state.views.front[0].id;
+  state.activeLayerByView.back=state.views.back[0].id;
+  state.layers=state.views[state.activeView];
+  state.activeLayerId=state.activeLayerByView[state.activeView];
+
+  $("#designNameInput").value=design.name||"Untitled Artwork";
+  $("#croquisVisibleToggle").checked=state.croquisVisible;
+  $("#croquisOpacitySlider").value=Math.round(state.croquisOpacity*100);
+  $("#croquisOpacityOutput").textContent=Math.round(state.croquisOpacity*100)+"%";
+
+  galleryScreen.classList.add("hidden");editorScreen.classList.remove("hidden");
+  syncViewControls();render();renderLayers();resetHistory();requestAnimationFrame(fitCanvas);
+}
+function createDesign(kind){
+  const now=Date.now(),d={
+    id:uid(),name:"Untitled Artwork",kind:kind==="blank"?"blank":"fashion",
+    activeView:"front",croquisVisible:kind!=="blank",croquisOpacity:.35,updatedAt:now,
+    views:{front:[],back:[]},thumbnail:""
+  };
   state.designs.unshift(d);saveJSON(STORAGE_KEY,state.designs);createModal.classList.add("hidden");
-  loadDesign(d).then(()=>{saveCurrentDesign()});
+  loadDesign(d).then(saveCurrentDesign);
 }
 function returnToGallery(){
   saveCurrentDesign();closePanels();editorScreen.classList.add("hidden");galleryScreen.classList.remove("hidden");renderGallery();
@@ -598,32 +580,62 @@ function toggleGallerySelection(id){
 function openGalleryMenu(e,id){
   state.selectedGalleryId=id;const r=e.currentTarget.getBoundingClientRect();galleryMenu.style.left=Math.min(window.innerWidth-160,r.left-115)+"px";galleryMenu.style.top=Math.min(window.innerHeight-190,r.bottom+4)+"px";galleryMenu.classList.remove("hidden");
 }
+async function renderSavedSide(ctx,d,side){
+  ctx.fillStyle="#fff";ctx.fillRect(0,0,W,H);
+  const kind=d.kind||"fashion";
+  const oldVisible=state.croquisVisible;
+  state.croquisVisible=d.croquisVisible!==false&&kind!=="blank";
+  drawCroquis(ctx,kind==="blank"?"blank":side,typeof d.croquisOpacity==="number"?d.croquisOpacity:.35);
+  state.croquisVisible=oldVisible;
+  let saved=(d.views&&d.views[side])||[];
+  if(!d.views&&d.layers&&((d.croquis||"front")===side))saved=d.layers;
+  for(let i=saved.length-1;i>=0;i--){
+    const item=saved[i];if(item.visible===false)continue;
+    const temp=document.createElement("canvas");temp.width=W;temp.height=H;await drawDataUrl(temp,item.data);
+    ctx.globalAlpha=typeof item.opacity==="number"?item.opacity:1;ctx.globalCompositeOperation=item.blend||"source-over";ctx.drawImage(temp,0,0);
+  }
+  ctx.globalAlpha=1;ctx.globalCompositeOperation="source-over";
+}
 async function exportStoredDesign(d){
-  const c=document.createElement("canvas");c.width=W;c.height=H;const x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,W,H);drawCroquis(x,d.croquis||"front",typeof d.croquisOpacity==="number"?d.croquisOpacity:.35);
-  const layers=[];
-  for(const saved of d.layers||[]){const l=newLayer(saved.name||"Layer");l.visible=saved.visible!==false;l.opacity=typeof saved.opacity==="number"?saved.opacity:1;l.blend=saved.blend||"source-over";await drawDataUrl(l.canvas,saved.data);layers.push(l)}
-  for(let i=layers.length-1;i>=0;i--){const l=layers[i];if(!l.visible)continue;x.globalAlpha=l.opacity;x.globalCompositeOperation=l.blend;x.drawImage(l.canvas,0,0)}
-  downloadCanvas(c,d.name||"Artwork");
+  const c=document.createElement("canvas");c.width=W*2;c.height=H;const x=c.getContext("2d");
+  const left=document.createElement("canvas"),right=document.createElement("canvas");left.width=right.width=W;left.height=right.height=H;
+  await renderSavedSide(left.getContext("2d"),d,"front");await renderSavedSide(right.getContext("2d"),d,"back");
+  x.drawImage(left,0,0);x.drawImage(right,W,0);downloadCanvas(c,d.name||"Artwork");
 }
 function downloadCanvas(canvas,name){
   const a=document.createElement("a");a.download=(name||"Artwork").replace(/[^a-z0-9-_]+/gi,"-")+".png";a.href=canvas.toDataURL("image/png");a.click();
 }
 function exportCurrent(){
-  const c=document.createElement("canvas");c.width=W;c.height=H;compositeTo(c.getContext("2d"),false);downloadCanvas(c,$("#designNameInput").value);toast("Exported");
+  const c=document.createElement("canvas");c.width=W*2;c.height=H;const x=c.getContext("2d");
+  const left=document.createElement("canvas"),right=document.createElement("canvas");left.width=right.width=W;left.height=right.height=H;
+  compositeTo(left.getContext("2d"),false,"front",false);
+  compositeTo(right.getContext("2d"),false,"back",false);
+  x.drawImage(left,0,0);x.drawImage(right,W,0);
+  downloadCanvas(c,$("#designNameInput").value);toast("Front + Back exported");
 }
 
-function renderCroquisChoices(){
-  $$(".croquis-choice").forEach(b=>b.classList.toggle("active",b.dataset.croquis===state.currentCroquis));
+function syncViewControls(){
+  $$(".side-button").forEach(b=>b.classList.toggle("active",b.dataset.side===state.activeView));
+  $("#overlayBtn").classList.toggle("active",state.overlayOther);
+  $("#overlayBtn").setAttribute("aria-pressed",state.overlayOther?"true":"false");
 }
-function renderNewPreviews(){
-  $$("[data-preview]").forEach(c=>{const x=c.getContext("2d");x.clearRect(0,0,c.width,c.height);x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);drawCroquis(x,c.dataset.preview,.5,c.width,c.height)});
+function switchView(side){
+  if(side!== "front" && side!=="back" || side===state.activeView)return;
+  state.activeLayerByView[state.activeView]=state.activeLayerId;
+  state.activeView=side;
+  state.layers=state.views[side];
+  state.activeLayerId=state.activeLayerByView[side]||state.layers[0]?.id||null;
+  if(state.activeLayerId)state.activeLayerByView[side]=state.activeLayerId;
+  syncViewControls();render();renderLayers();resetHistory();scheduleSave();
 }
 
 $("#newDesignBtn").onclick=()=>createModal.classList.remove("hidden");
 $("#emptyCreateBtn").onclick=()=>createModal.classList.remove("hidden");
 $("#cancelCreateBtn").onclick=()=>createModal.classList.add("hidden");
-$$("[data-new-croquis]").forEach(b=>b.onclick=()=>createDesign(b.dataset.newCroquis));
+$("[data-new-kind]").forEach(b=>b.onclick=()=>createDesign(b.dataset.newKind));
 $("#backToGalleryBtn").onclick=returnToGallery;
+$(".side-button").forEach(b=>b.onclick=()=>switchView(b.dataset.side));
+$("#overlayBtn").onclick=()=>{state.overlayOther=!state.overlayOther;syncViewControls();render()};
 
 $("#selectGalleryBtn").onclick=()=>{
   state.selectMode=!state.selectMode;if(!state.selectMode)state.selectedGallery.clear();
@@ -663,6 +675,7 @@ $("#colourPicker").oninput=e=>setColour(e.target.value);
 $("#hexInput").onchange=e=>{if(!setColour(e.target.value)){$("#hexInput").value=state.colour;toast("Use a 6-digit hex colour")}};
 
 $$(".croquis-choice").forEach(b=>b.onclick=()=>{state.currentCroquis=b.dataset.croquis;renderCroquisChoices();render();scheduleSave()});
+$("#croquisVisibleToggle").onchange=e=>{state.croquisVisible=e.target.checked;render();scheduleSave()};
 $("#croquisOpacitySlider").oninput=e=>{state.croquisOpacity=+e.target.value/100;$("#croquisOpacityOutput").textContent=e.target.value+"%";render()};
 $("#croquisOpacitySlider").onchange=scheduleSave;
 
@@ -708,7 +721,9 @@ window.addEventListener("keydown",e=>{
 });
 
 function init(){
-  renderGallery();renderNewPreviews();renderBrushCategories();renderBrushList();renderDefaultPalette();setColour(state.colour,false);updateSliderLabels();syncToolButtons();syncHistoryButtons();
+  renderGallery();renderBrushCategories();renderBrushList();renderDefaultPalette();setColour(state.colour,false);updateSliderLabels();syncToolButtons();syncHistoryButtons();
+  croquisImages.front.onload=()=>{render();};
+  croquisImages.back.onload=()=>{render();};
 }
 init();
 })();
