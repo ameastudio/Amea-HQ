@@ -169,27 +169,28 @@
         <strong>Actions</strong>
         <button class="close-panel" data-close-panel>×</button>
       </div>
-      <button class="action-row" id="croquisAction">Croquis <span>›</span></button>
-      <label class="action-row file-row">Add reference image <span>›</span><input id="referenceInput" type="file" accept="image/*" /></label>
+      <button class="action-row" id="croquisAction">Mannequin <span>›</span></button>
+      <label class="action-row file-row">Reference image <span id="referenceStatus">Add ›</span><input id="referenceInput" type="file" accept="image/*" /></label>
+      <button class="action-row subtle-danger hidden" id="removeReferenceAction">Remove reference image <span>×</span></button>
       <button class="action-row" id="fitCanvasAction">Fit canvas <span>⌗</span></button>
-      <button class="action-row" id="exportAction">Export PNG <span>↥</span></button>
+      <button class="action-row" id="exportAction">Export <span>↥</span></button>
       <button class="action-row danger" id="clearLayerAction">Clear active layer <span>×</span></button>
     </aside>
 
-    <aside id="croquisPanel" class="floating-panel croquis-panel hidden" aria-label="Croquis">
+    <aside id="croquisPanel" class="floating-panel croquis-panel hidden" aria-label="Mannequin">
       <div class="panel-titlebar">
-        <strong>Croquis</strong>
+        <strong>Mannequin</strong>
         <button class="close-panel" data-close-panel>×</button>
       </div>
       <label class="toggle-row">
-        <span>Show croquis</span>
+        <span>Show mannequin</span>
         <input id="croquisVisibleToggle" type="checkbox" checked />
       </label>
       <div class="croquis-opacity-row">
         <span>Opacity</span><output id="croquisOpacityOutput">35%</output>
         <input id="croquisOpacitySlider" type="range" min="0" max="100" value="35" />
       </div>
-      <p class="panel-note">Front and Back belong to the same design. Use the switch above the canvas to move between them.</p>
+      <p class="panel-note">Front and Back belong to the same design. The mannequin settings apply to both views.</p>
     </aside>
   </main>
 
@@ -214,6 +215,32 @@
           <strong>Blank Canvas</strong>
           <small>Plain white canvas</small>
         </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="exportModal" class="modal export-modal hidden" role="dialog" aria-modal="true" aria-labelledby="exportTitle">
+    <div class="export-card">
+      <div class="modal-titlebar">
+        <button id="cancelExportBtn" class="text-button">Cancel</button>
+        <h2 id="exportTitle">Export</h2>
+        <span></span>
+      </div>
+      <div class="export-body">
+        <div id="fashionExportOptions" class="export-options">
+          <button class="export-option" data-export-mode="current"><strong>Current Side</strong><small>Export the side you are viewing</small></button>
+          <button class="export-option" data-export-mode="front"><strong>Front</strong><small>Front only</small></button>
+          <button class="export-option" data-export-mode="back"><strong>Back</strong><small>Back only</small></button>
+          <button class="export-option featured" data-export-mode="both"><strong>Front + Back</strong><small>Side-by-side in one PNG</small></button>
+        </div>
+        <div id="blankExportOptions" class="export-options one-option hidden">
+          <button class="export-option featured" data-export-mode="current"><strong>Canvas</strong><small>Export this canvas as PNG</small></button>
+        </div>
+        <label id="includeMannequinRow" class="export-toggle">
+          <span><strong>Include mannequin</strong><small>Turn this off for artwork only</small></span>
+          <input id="exportIncludeMannequin" type="checkbox" checked />
+        </label>
+        <p class="export-note">Reference images and Overlay are never included in exports.</p>
       </div>
     </div>
   </div>
