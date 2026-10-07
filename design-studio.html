@@ -94,7 +94,10 @@
     <aside id="brushPanel" class="floating-panel brush-panel hidden" aria-label="Brush Library">
       <div class="panel-titlebar">
         <strong>Brush Library</strong>
-        <button class="close-panel" data-close-panel>×</button>
+        <div class="panel-title-actions">
+          <button id="createBrushBtn" class="panel-plus" aria-label="Create brush">＋</button>
+          <button class="close-panel" data-close-panel>×</button>
+        </div>
       </div>
       <div class="brush-library">
         <nav id="brushCategories" class="brush-categories"></nav>
@@ -104,7 +107,7 @@
 
     <aside id="layersPanel" class="floating-panel layers-panel hidden" aria-label="Layers">
       <div class="panel-titlebar">
-        <strong>Layers</strong>
+        <div class="layer-title-wrap"><strong>Layers</strong><span id="layersSideLabel">Front</span></div>
         <button id="addLayerBtn" class="panel-plus" aria-label="Add layer">＋</button>
       </div>
       <div id="layersList" class="layers-list"></div>
@@ -115,17 +118,50 @@
         <strong>Colours</strong>
         <button class="close-panel" data-close-panel>×</button>
       </div>
-      <div class="colour-picker-wrap">
-        <input id="colourPicker" type="color" value="#111111" />
+
+      <div class="colour-tabs" role="tablist">
+        <button class="colour-tab active" data-colour-tab="disc">Disc</button>
+        <button class="colour-tab" data-colour-tab="classic">Classic</button>
+        <button class="colour-tab" data-colour-tab="palettes">Palettes</button>
       </div>
+
+      <section class="colour-view" data-colour-view="disc">
+        <div class="disc-picker-wrap">
+          <canvas id="colourDisc" width="240" height="240" aria-label="Colour wheel"></canvas>
+          <div id="discMarker" class="disc-marker"></div>
+        </div>
+      </section>
+
+      <section class="colour-view hidden" data-colour-view="classic">
+        <div class="classic-picker-wrap">
+          <canvas id="classicSquare" width="260" height="180" aria-label="Saturation and brightness picker"></canvas>
+          <div id="classicMarker" class="classic-marker"></div>
+        </div>
+        <input id="hueSlider" class="hue-slider" type="range" min="0" max="360" value="0" aria-label="Hue" />
+      </section>
+
+      <section class="colour-view hidden" data-colour-view="palettes">
+        <div class="palette-toolbar">
+          <select id="paletteSelect" aria-label="Saved palettes"></select>
+          <button id="newPaletteBtn" class="mini-action">＋ Palette</button>
+        </div>
+        <div id="savedPalette" class="saved-palette"></div>
+        <button id="addColourToPaletteBtn" class="palette-add-current">＋ Add current colour</button>
+      </section>
+
+      <div class="colour-current-row">
+        <button id="eyedropperBtn" class="eyedropper-button" type="button">⌾ Eyedropper</button>
+        <div class="current-colour-preview"><span id="currentColourChip"></span><span id="currentColourText">#111111</span></div>
+      </div>
+
       <div class="colour-row">
         <label>Hex</label>
-        <input id="hexInput" value="#111111" maxlength="7" />
+        <input id="hexInput" value="#111111" maxlength="7" inputmode="text" />
+        <input id="colourPicker" class="native-colour-input" type="color" value="#111111" aria-label="System colour picker" />
       </div>
-      <div class="section-label">Recent</div>
+
+      <div class="section-label">Recent <span class="section-hint">hold to remove</span></div>
       <div id="recentColours" class="recent-colours"></div>
-      <div class="section-label">Palette</div>
-      <div id="defaultPalette" class="default-palette"></div>
     </aside>
 
     <aside id="actionsPanel" class="floating-panel actions-panel hidden" aria-label="Actions">
@@ -133,27 +169,28 @@
         <strong>Actions</strong>
         <button class="close-panel" data-close-panel>×</button>
       </div>
-      <button class="action-row" id="croquisAction">Croquis <span>›</span></button>
-      <label class="action-row file-row">Add reference image <span>›</span><input id="referenceInput" type="file" accept="image/*" /></label>
+      <button class="action-row" id="croquisAction">Mannequin <span>›</span></button>
+      <label class="action-row file-row">Reference image <span id="referenceStatus">Add ›</span><input id="referenceInput" type="file" accept="image/*" /></label>
+      <button class="action-row subtle-danger hidden" id="removeReferenceAction">Remove reference image <span>×</span></button>
       <button class="action-row" id="fitCanvasAction">Fit canvas <span>⌗</span></button>
-      <button class="action-row" id="exportAction">Export PNG <span>↥</span></button>
+      <button class="action-row" id="exportAction">Export <span>↥</span></button>
       <button class="action-row danger" id="clearLayerAction">Clear active layer <span>×</span></button>
     </aside>
 
-    <aside id="croquisPanel" class="floating-panel croquis-panel hidden" aria-label="Croquis">
+    <aside id="croquisPanel" class="floating-panel croquis-panel hidden" aria-label="Mannequin">
       <div class="panel-titlebar">
-        <strong>Croquis</strong>
+        <strong>Mannequin</strong>
         <button class="close-panel" data-close-panel>×</button>
       </div>
       <label class="toggle-row">
-        <span>Show croquis</span>
+        <span>Show mannequin</span>
         <input id="croquisVisibleToggle" type="checkbox" checked />
       </label>
       <div class="croquis-opacity-row">
         <span>Opacity</span><output id="croquisOpacityOutput">35%</output>
         <input id="croquisOpacitySlider" type="range" min="0" max="100" value="35" />
       </div>
-      <p class="panel-note">Front and Back belong to the same design. Use the switch above the canvas to move between them.</p>
+      <p class="panel-note">Front and Back belong to the same design. The mannequin settings apply to both views.</p>
     </aside>
   </main>
 
@@ -170,14 +207,84 @@
             <img src="design-assets/croquis-front.svg" alt="" />
             <img src="design-assets/croquis-back.svg" alt="" />
           </div>
-          <strong>Fashion Design</strong>
+          <strong>Mannequin Canvas</strong>
           <small>Front + Back together</small>
         </button>
         <button class="new-canvas-card" data-new-kind="blank">
           <div class="blank-preview"></div>
           <strong>Blank Canvas</strong>
-          <small>No croquis</small>
+          <small>Plain white canvas</small>
         </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="exportModal" class="modal export-modal hidden" role="dialog" aria-modal="true" aria-labelledby="exportTitle">
+    <div class="export-card">
+      <div class="modal-titlebar">
+        <button id="cancelExportBtn" class="text-button">Cancel</button>
+        <h2 id="exportTitle">Export</h2>
+        <span></span>
+      </div>
+      <div class="export-body">
+        <div id="fashionExportOptions" class="export-options">
+          <button class="export-option" data-export-mode="current"><strong>Current Side</strong><small>Export the side you are viewing</small></button>
+          <button class="export-option" data-export-mode="front"><strong>Front</strong><small>Front only</small></button>
+          <button class="export-option" data-export-mode="back"><strong>Back</strong><small>Back only</small></button>
+          <button class="export-option featured" data-export-mode="both"><strong>Front + Back</strong><small>Side-by-side in one PNG</small></button>
+        </div>
+        <div id="blankExportOptions" class="export-options one-option hidden">
+          <button class="export-option featured" data-export-mode="current"><strong>Canvas</strong><small>Export this canvas as PNG</small></button>
+        </div>
+        <label id="includeMannequinRow" class="export-toggle">
+          <span><strong>Include mannequin</strong><small>Turn this off for artwork only</small></span>
+          <input id="exportIncludeMannequin" type="checkbox" checked />
+        </label>
+        <p class="export-note">Reference images and Overlay are never included in exports.</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="brushStudioModal" class="modal brush-studio-modal hidden" role="dialog" aria-modal="true" aria-labelledby="brushStudioTitle">
+    <div class="brush-studio-card">
+      <div class="modal-titlebar">
+        <button id="cancelBrushStudioBtn" class="text-button">Cancel</button>
+        <h2 id="brushStudioTitle">Brush Studio</h2>
+        <button id="saveBrushBtn" class="text-button brush-save-button">Save</button>
+      </div>
+
+      <div class="brush-studio-body">
+        <section class="brush-preview-section">
+          <canvas id="brushStudioPreview" width="640" height="190" aria-label="Live brush preview"></canvas>
+          <div class="brush-name-row">
+            <label for="brushNameInput">Brush name</label>
+            <input id="brushNameInput" maxlength="40" value="Untitled Brush" />
+          </div>
+        </section>
+
+        <section class="brush-source-grid">
+          <div class="brush-source-card">
+            <div class="brush-source-heading"><strong>Shape</strong><button id="clearShapeBtn" type="button">Clear</button></div>
+            <div id="shapePreview" class="brush-source-preview"><span>Round</span></div>
+            <label class="brush-import-button">Import Shape<input id="shapeInput" type="file" accept="image/*" /></label>
+            <small>Transparent PNG or white shape on dark background works best.</small>
+          </div>
+          <div class="brush-source-card">
+            <div class="brush-source-heading"><strong>Grain</strong><button id="clearGrainBtn" type="button">Clear</button></div>
+            <div id="grainPreview" class="brush-source-preview"><span>None</span></div>
+            <label class="brush-import-button">Import Grain<input id="grainInput" type="file" accept="image/*" /></label>
+            <small>Use a texture image to break up the brush surface.</small>
+          </div>
+        </section>
+
+        <section class="brush-setting-list">
+          <label class="brush-setting"><span>Spacing <output id="brushSpacingOut">12%</output></span><input id="brushSpacing" type="range" min="1" max="100" value="12" /></label>
+          <label class="brush-setting"><span>Size <output id="brushSizeOut">18%</output></span><input id="brushSize" type="range" min="1" max="120" value="22" /></label>
+          <label class="brush-setting"><span>Opacity <output id="brushOpacityOut">100%</output></span><input id="brushOpacity" type="range" min="5" max="100" value="100" /></label>
+          <label class="brush-setting"><span>Taper <output id="brushTaperOut">0%</output></span><input id="brushTaper" type="range" min="0" max="100" value="0" /></label>
+          <label class="brush-setting"><span>Smoothing <output id="brushSmoothingOut">55%</output></span><input id="brushSmoothing" type="range" min="0" max="100" value="55" /></label>
+          <label class="brush-setting"><span>Pressure <output id="brushPressureOut">65%</output></span><input id="brushPressure" type="range" min="0" max="100" value="65" /></label>
+        </section>
       </div>
     </div>
   </div>
@@ -190,21 +297,6 @@
   </div>
 
   <div id="toast" class="toast"></div>
-  <script>
-fetch("design-studio.js",{cache:"no-store"})
-  .then(r=>{if(!r.ok)throw new Error("runtime");return r.text()})
-  .then(src=>{
-    src=src.split("\n").map(line=>{
-      const t=line.trimStart();
-      if(line.includes(".forEach")&&t.startsWith('$(\"')){
-        const pad=line.slice(0,line.length-t.length);
-        return pad+"$"+t;
-      }
-      return line;
-    }).join("\n");
-    (0,eval)(src);
-  })
-  .catch(()=>{const t=document.getElementById("toast");if(t){t.textContent="Design Studio could not start";t.classList.add("show")}});
-</script>
+  <script src="design-studio.js"></script>
 </body>
 </html>
