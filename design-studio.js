@@ -1246,7 +1246,7 @@ function syncReferenceActions(){
   $("#removeReferenceAction").classList.toggle("hidden",!has);
 }
 function syncViewControls(){
-  $(".side-button").forEach(b=>b.classList.toggle("active",b.dataset.side===state.activeView));
+  Array.from(document.querySelectorAll(".side-button")).forEach(b=>b.classList.toggle("active",b.dataset.side===state.activeView));
   $("#overlayBtn").classList.toggle("active",state.overlayOther);
   $("#overlayBtn").setAttribute("aria-pressed",state.overlayOther?"true":"false");
 }
@@ -1293,7 +1293,7 @@ $("#croquisAction").onclick=()=>{closePanels();$("#croquisPanel").classList.remo
 $("#fitCanvasAction").onclick=()=>{closePanels();fitCanvas()};
 $("#exportAction").onclick=openExportModal;
 $("#cancelExportBtn").onclick=closeExportModal;
-$("[data-export-mode]").forEach(b=>b.onclick=()=>{const mode=b.dataset.exportMode,include=$("#exportIncludeMannequin").checked;closeExportModal();exportCurrent(mode,include)});
+Array.from(document.querySelectorAll("[data-export-mode]")).forEach(b=>b.onclick=()=>{const mode=b.dataset.exportMode,include=$("#exportIncludeMannequin").checked;closeExportModal();exportCurrent(mode,include)});
 $("#clearLayerAction").onclick=()=>{const l=activeLayer();if(!l)return;if(confirm("Clear active layer?")){l.canvas.getContext("2d").clearRect(0,0,W,H);render();renderLayers();resetHistory();scheduleSave()}};
 $("#addLayerBtn").onclick=addLayer;
 $("#createBrushBtn").onclick=()=>openBrushStudio();
