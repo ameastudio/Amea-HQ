@@ -9,6 +9,7 @@ const FAV_KEY="design_studio_brush_favourites_v3";
 const RECENT_BRUSH_KEY="design_studio_recent_brushes_v3";
 const RECENT_COLOUR_KEY="design_studio_recent_colours_v3";
 const COLOUR_PALETTE_KEY="design_studio_colour_palettes_v1";
+const CUSTOM_BRUSH_KEY="design_studio_custom_brushes_v1";
 
 const galleryScreen=$("#galleryScreen");
 const editorScreen=$("#editorScreen");
@@ -27,6 +28,7 @@ const CATEGORIES=[
   ["sketching","Sketching"],
   ["inking","Inking"],
   ["markers","Markers"],
+  ["custom","My Brushes"],
   ["favourites","Favorites"]
 ];
 
@@ -66,6 +68,9 @@ const state={
   opacity:1,
   favourites:new Set(loadJSON(FAV_KEY,[])),
   recentBrushes:loadJSON(RECENT_BRUSH_KEY,[]),
+  customBrushes:loadJSON(CUSTOM_BRUSH_KEY,[]),
+  editingCustomBrushId:null,
+  brushDraft:null,
   recentColours:loadJSON(RECENT_COLOUR_KEY,["#111111"]),
   colourPalettes:loadJSON(COLOUR_PALETTE_KEY,[{name:"My Palette",colours:[]}]),
   activePalette:0,
