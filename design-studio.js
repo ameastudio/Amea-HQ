@@ -95,7 +95,8 @@ const state={
   historyIndex:-1,
   selectedGalleryId:null,
   selectMode:false,
-  selectedGallery:new Set()
+  selectedGallery:new Set(),
+  layerDrag:null
 };
 
 function loadJSON(key,fallback){
@@ -560,60 +561,132 @@ function sampleCanvasColour(e){
 }
 function renderLayers(){
   const root=$("#layersList");root.innerHTML="";
-  state.layers.forEach((layer,index)=>{
-    const row=document.createElement("div");row.className="layer-row"+(layer.id===state.activeLayerId?" active":"");row.draggable=true;row.dataset.layerId=layer.id;
+  $("#layersSideLabel").textContent=state.designKind==="blank"?"Canvas":(state.activeView==="front"?"Front":"Back");
 
-    const eye=document.createElement("button");eye.className="layer-eye";eye.textContent=layer.visible?"◉":"○";eye.title=layer.visible?"Hide layer":"Show layer";
+  state.layers.forEach((layer,index)=>{
+    const row=document.createElement("div");
+    row.className="layer-row"+(layer.id===state.activeLayerId?" active":"");
+    row.dataset.layerId=layer.id;
+
+    const eye=document.createElement("button");
+    eye.className="layer-eye";eye.type="button";eye.textContent=layer.visible?"◉":"○";
+    eye.title=layer.visible?"Hide layer":"Show layer";
     eye.onclick=e=>{e.stopPropagation();layer.visible=!layer.visible;render();renderLayers();scheduleSave()};
 
-    const thumb=document.createElement("img");thumb.className="layer-thumb";thumb.alt="";thumb.src=layerThumbnail(layer);
+    const thumb=document.createElement("img");
+    thumb.className="layer-thumb";thumb.alt="";thumb.src=layerThumbnail(layer);
 
-    const name=document.createElement("button");name.className="layer-name";name.innerHTML=escapeHtml(layer.name)+"<span class=\"layer-sub\">"+Math.round(layer.opacity*100)+"% · "+blendLabel(layer.blend)+"</span>";
+    const name=document.createElement("button");
+    name.className="layer-name";name.type="button";
+    name.innerHTML=escapeHtml(layer.name)+"<span class=\"layer-sub\">"+Math.round(layer.opacity*100)+"% · "+blendLabel(layer.blend)+"</span>";
     name.onclick=e=>{e.stopPropagation();renameLayer(layer)};
 
-    const more=document.createElement("button");more.className="layer-more";more.textContent="•••";
-    more.onclick=e=>{e.stopPropagation();row.classList.toggle("expanded")};
+    const more=document.createElement("button");
+    more.className="layer-more";more.type="button";more.textContent="•••";more.title="Layer options";
+
+    const grab=document.createElement("button");
+    grab.className="layer-grab";grab.type="button";grab.textContent="≡";grab.title="Drag to reorder";
 
     const menu=document.createElement("div");menu.className="layer-menu hidden";
-    if(row.classList.contains("expanded"))menu.classList.remove("hidden");
-    const dup=document.createElement("button");dup.textContent="Duplicate";dup.onclick=e=>{e.stopPropagation();duplicateLayer(layer)};
-    const up=document.createElement("button");up.textContent="Move Up";up.disabled=index===0;up.onclick=e=>{e.stopPropagation();moveLayer(index,-1)};
-    const down=document.createElement("button");down.textContent="Move Down";down.disabled=index===state.layers.length-1;down.onclick=e=>{e.stopPropagation();moveLayer(index,1)};
-    const del=document.createElement("button");del.textContent="Delete";del.onclick=e=>{e.stopPropagation();deleteLayer(layer)};
-    const rename=document.createElement("button");rename.textContent="Rename";rename.onclick=e=>{e.stopPropagation();renameLayer(layer)};
+    const dup=document.createElement("button");dup.type="button";dup.textContent="Duplicate";dup.onclick=e=>{e.stopPropagation();duplicateLayer(layer)};
+    const rename=document.createElement("button");rename.type="button";rename.textContent="Rename";rename.onclick=e=>{e.stopPropagation();renameLayer(layer)};
+    const del=document.createElement("button");del.type="button";del.textContent="Delete";del.className="danger";del.onclick=e=>{e.stopPropagation();deleteLayer(layer)};
+    menu.append(dup,rename,del);
+
+    const blendRow=document.createElement("label");blendRow.className="layer-blend-row hidden";
+    const blendText=document.createElement("span");blendText.textContent="Blend";
     const blend=document.createElement("select");
-    [["source-over","Normal"],["multiply","Multiply"],["screen","Screen"],["overlay","Overlay"]].forEach(([v,l])=>{const o=document.createElement("option");o.value=v;o.textContent=l;if(layer.blend===v)o.selected=true;blend.appendChild(o)});
-    blend.onchange=e=>{layer.blend=e.target.value;render();renderLayers();scheduleSave()};
-    menu.append(dup,rename,up,down,del,blend);
+    [
+      ["source-over","Normal"],["multiply","Multiply"],["screen","Screen"],["overlay","Overlay"],
+      ["soft-light","Soft Light"],["hard-light","Hard Light"],["color-dodge","Color Dodge"],["color-burn","Color Burn"],
+      ["darken","Darken"],["lighten","Lighten"],["difference","Difference"],["hue","Hue"],
+      ["saturation","Saturation"],["color","Color"],["luminosity","Luminosity"]
+    ].forEach(([v,l])=>{const o=document.createElement("option");o.value=v;o.textContent=l;if(layer.blend===v)o.selected=true;blend.appendChild(o)});
+    blend.onchange=e=>{layer.blend=e.target.value;render();name.querySelector(".layer-sub").textContent=Math.round(layer.opacity*100)+"% · "+blendLabel(layer.blend);scheduleSave()};
+    blendRow.append(blendText,blend);
 
     const opacity=document.createElement("label");opacity.className="layer-opacity hidden";
     const opText=document.createElement("span");opText.textContent="Opacity";
     const range=document.createElement("input");range.type="range";range.min="0";range.max="100";range.value=Math.round(layer.opacity*100);
     const out=document.createElement("span");out.textContent=Math.round(layer.opacity*100)+"%";
-    range.oninput=e=>{layer.opacity=+e.target.value/100;out.textContent=e.target.value+"%";render()};
-    range.onchange=()=>{renderLayers();scheduleSave()};
+    range.oninput=e=>{
+      layer.opacity=+e.target.value/100;out.textContent=e.target.value+"%";
+      const sub=name.querySelector(".layer-sub");if(sub)sub.textContent=e.target.value+"% · "+blendLabel(layer.blend);
+      render();
+    };
+    range.onchange=()=>scheduleSave();
     opacity.append(opText,range,out);
 
-    more.onclick=e=>{e.stopPropagation();const expanded=menu.classList.toggle("hidden");opacity.classList.toggle("hidden",expanded)};
+    more.onclick=e=>{
+      e.stopPropagation();
+      const opening=menu.classList.contains("hidden");
+      $$(".layer-menu",root).forEach(x=>x.classList.add("hidden"));
+      $$(".layer-blend-row",root).forEach(x=>x.classList.add("hidden"));
+      $$(".layer-opacity",root).forEach(x=>x.classList.add("hidden"));
+      if(opening){menu.classList.remove("hidden");blendRow.classList.remove("hidden");opacity.classList.remove("hidden")}
+    };
 
     row.onclick=()=>setActiveLayer(layer.id);
-    row.ondragstart=e=>{e.dataTransfer.setData("text/plain",layer.id);e.dataTransfer.effectAllowed="move"};
-    row.ondragover=e=>{e.preventDefault();e.dataTransfer.dropEffect="move"};
-    row.ondrop=e=>{e.preventDefault();const fromId=e.dataTransfer.getData("text/plain");reorderLayer(fromId,layer.id)};
 
-    row.append(eye,thumb,name,more,menu,opacity);root.appendChild(row);
+    grab.onpointerdown=e=>{
+      e.preventDefault();e.stopPropagation();
+      setActiveLayer(layer.id);
+      state.layerDrag={pointerId:e.pointerId,fromId:layer.id,toId:layer.id,moved:false};
+      row.classList.add("dragging");
+      try{grab.setPointerCapture(e.pointerId)}catch(_){}
+    };
+    grab.onpointermove=e=>{
+      const drag=state.layerDrag;if(!drag||drag.pointerId!==e.pointerId)return;
+      const target=document.elementFromPoint?document.elementFromPoint(e.clientX,e.clientY):null;
+      const targetRow=target&&target.closest?target.closest(".layer-row"):null;
+      if(!targetRow||!root.contains(targetRow))return;
+      const toId=targetRow.dataset.layerId;if(!toId||toId===drag.toId)return;
+      drag.toId=toId;drag.moved=true;
+      $$(".layer-row",root).forEach(x=>x.classList.remove("drop-target"));
+      targetRow.classList.add("drop-target");
+    };
+    const finishDrag=e=>{
+      const drag=state.layerDrag;if(!drag||drag.pointerId!==e.pointerId)return;
+      state.layerDrag=null;
+      $$(".layer-row",root).forEach(x=>x.classList.remove("dragging","drop-target"));
+      if(drag.fromId!==drag.toId)reorderLayer(drag.fromId,drag.toId);
+    };
+    grab.onpointerup=finishDrag;grab.onpointercancel=finishDrag;
+
+    // Desktop drag fallback.
+    grab.draggable=true;
+    grab.ondragstart=e=>{e.stopPropagation();e.dataTransfer.setData("text/plain",layer.id);e.dataTransfer.effectAllowed="move";row.classList.add("dragging")};
+    row.ondragover=e=>{e.preventDefault();e.dataTransfer.dropEffect="move";row.classList.add("drop-target")};
+    row.ondragleave=()=>row.classList.remove("drop-target");
+    row.ondrop=e=>{e.preventDefault();e.stopPropagation();row.classList.remove("drop-target");const fromId=e.dataTransfer.getData("text/plain");reorderLayer(fromId,layer.id)};
+    grab.ondragend=()=>$$(".layer-row",root).forEach(x=>x.classList.remove("dragging","drop-target"));
+
+    row.append(eye,thumb,name,more,grab,menu,blendRow,opacity);
+    root.appendChild(row);
   });
 }
-function blendLabel(v){return {"source-over":"Normal",multiply:"Multiply",screen:"Screen",overlay:"Overlay"}[v]||"Normal"}
+function blendLabel(v){
+  return {
+    "source-over":"Normal",multiply:"Multiply",screen:"Screen",overlay:"Overlay","soft-light":"Soft Light",
+    "hard-light":"Hard Light","color-dodge":"Color Dodge","color-burn":"Color Burn",darken:"Darken",
+    lighten:"Lighten",difference:"Difference",hue:"Hue",saturation:"Saturation",color:"Color",luminosity:"Luminosity"
+  }[v]||"Normal";
+}
 function layerThumbnail(layer){
-  const c=document.createElement("canvas");c.width=48;c.height=48;const x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,48,48);x.globalAlpha=layer.opacity;x.drawImage(layer.canvas,0,0,48,48);return c.toDataURL("image/jpeg",.72);
+  const c=document.createElement("canvas");c.width=48;c.height=48;const x=c.getContext("2d");
+  x.fillStyle="#fff";x.fillRect(0,0,48,48);x.globalAlpha=layer.opacity;x.drawImage(layer.canvas,0,0,48,48);
+  return c.toDataURL("image/jpeg",.72);
 }
 function renameLayer(layer){
-  const v=prompt("Layer name",layer.name);if(v===null)return;const n=v.trim();if(n)layer.name=n;renderLayers();scheduleSave();
+  const v=prompt("Layer name",layer.name);if(v===null)return;const n=v.trim();if(n)layer.name=n;
+  renderLayers();scheduleSave();
 }
 function duplicateLayer(layer){
-  const copy=newLayer(layer.name+" copy");copy.visible=layer.visible;copy.opacity=layer.opacity;copy.blend=layer.blend;copy.canvas.getContext("2d").drawImage(layer.canvas,0,0);
-  const i=state.layers.indexOf(layer);state.layers.splice(i,0,copy);state.activeLayerId=copy.id;state.activeLayerByView[state.activeView]=copy.id;render();renderLayers();resetHistory();scheduleSave();
+  const copy=newLayer(layer.name+" copy");copy.visible=layer.visible;copy.opacity=layer.opacity;copy.blend=layer.blend;
+  copy.canvas.getContext("2d").drawImage(layer.canvas,0,0);
+  const i=state.layers.indexOf(layer);state.layers.splice(i,0,copy);
+  state.activeLayerId=copy.id;state.activeLayerByView[state.activeView]=copy.id;
+  render();renderLayers();resetHistory();scheduleSave();
 }
 function deleteLayer(layer){
   if(state.layers.length<=1){toast("Keep at least one layer");return}
@@ -622,20 +695,19 @@ function deleteLayer(layer){
   state.activeLayerByView[state.activeView]=state.activeLayerId;
   render();renderLayers();resetHistory();scheduleSave();
 }
-function moveLayer(index,delta){
-  const ni=clamp(index+delta,0,state.layers.length-1);if(ni===index)return;
-  const [l]=state.layers.splice(index,1);state.layers.splice(ni,0,l);render();renderLayers();scheduleSave();
-}
 function reorderLayer(fromId,toId){
   const from=state.layers.findIndex(l=>l.id===fromId),to=state.layers.findIndex(l=>l.id===toId);
-  if(from<0||to<0||from===to)return;const [l]=state.layers.splice(from,1);state.layers.splice(to,0,l);render();renderLayers();scheduleSave();
+  if(from<0||to<0||from===to)return;
+  const [layer]=state.layers.splice(from,1);
+  const adjusted=state.layers.findIndex(l=>l.id===toId);
+  state.layers.splice(adjusted<0?state.layers.length:adjusted,0,layer);
+  render();renderLayers();scheduleSave();
 }
 function addLayer(){
   const layer=newLayer("Layer "+(state.layers.length+1));
   state.layers.unshift(layer);state.activeLayerId=layer.id;state.activeLayerByView[state.activeView]=layer.id;
   renderLayers();resetHistory();scheduleSave();
 }
-
 function closePanels(){$$(".floating-panel").forEach(p=>p.classList.add("hidden"))}
 function togglePanel(panel){
   const was=panel.classList.contains("hidden");closePanels();if(was)panel.classList.remove("hidden");
