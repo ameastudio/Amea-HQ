@@ -805,7 +805,7 @@ function exportCurrent(){
 }
 
 function syncViewControls(){
-  $$(".side-button").forEach(b=>b.classList.toggle("active",b.dataset.side===state.activeView));
+  $$$(".side-button").forEach(b=>b.classList.toggle("active",b.dataset.side===state.activeView));
   $("#overlayBtn").classList.toggle("active",state.overlayOther);
   $("#overlayBtn").setAttribute("aria-pressed",state.overlayOther?"true":"false");
 }
@@ -822,9 +822,9 @@ function switchView(side){
 $("#newDesignBtn").onclick=()=>createModal.classList.remove("hidden");
 $("#emptyCreateBtn").onclick=()=>createModal.classList.remove("hidden");
 $("#cancelCreateBtn").onclick=()=>createModal.classList.add("hidden");
-$("[data-new-kind]").forEach(b=>b.onclick=()=>createDesign(b.dataset.newKind));
+$$("[data-new-kind]").forEach(b=>b.onclick=()=>createDesign(b.dataset.newKind));
 $("#backToGalleryBtn").onclick=returnToGallery;
-$(".side-button").forEach(b=>b.onclick=()=>switchView(b.dataset.side));
+$$(".side-button").forEach(b=>b.onclick=()=>switchView(b.dataset.side));
 $("#overlayBtn").onclick=()=>{state.overlayOther=!state.overlayOther;syncViewControls();render()};
 
 $("#selectGalleryBtn").onclick=()=>{
