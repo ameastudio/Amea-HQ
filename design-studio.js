@@ -592,7 +592,7 @@ function continueStroke(p){
 
   if((state.tool==="brush"&&!isTexture(state.brush.mode))||state.tool==="eraser"){
     const prev=state.strokePoints[state.strokePoints.length-1]||p;
-    const factor=state.brush.mode==="pen"?.58:state.brush.mode==="marker"?.50:state.brush.mode==="chisel"?.48:.46;
+    const factor=state.brush.mode==="custom"?clamp(.78-(Number(state.brush.smoothing)||0)*.0058,.20,.78):state.brush.mode==="pen"?.58:state.brush.mode==="marker"?.50:state.brush.mode==="chisel"?.48:.46;
     const smooth={
       x:prev.x+(p.x-prev.x)*factor,
       y:prev.y+(p.y-prev.y)*factor,
@@ -643,7 +643,8 @@ function redrawContinuousStroke(layer){
   }
 
   const b=state.brush;
-  drawSmoothPathToMask(sctx,pts,state.colour,state.size,b.mode==="chisel"?"round":"round",true);
+  if(b.mode==="custom")drawCustomBrushStroke(sctx,pts,{...b,size:state.size},state.colour,1);
+  else drawSmoothPathToMask(sctx,pts,state.colour,state.size,"round",true);
 
   if(b.mode==="rough"&&pts.length>1){
     sctx.save();sctx.globalAlpha=.36;sctx.translate(1.5,-1.5);
@@ -693,6 +694,93 @@ function drawSmoothPathToMask(ctx,pts,colour,size,lineCap,usePressure){
   ctx.lineTo(last.x,last.y);
   ctx.stroke();
   ctx.restore();
+}
+const customAssetCache=new Map();
+const customStampCache=new Map();
+
+function customAsset(brush,key){
+  const src=brush&&brush[key];if(!src)return null;
+  const cacheKey=brush.id+":"+key;
+  const found=customAssetCache.get(cacheKey);
+  if(found&&found.src===src)return found.img.complete?found.img:null;
+  const img=new Image();
+  customAssetCache.set(cacheKey,{src,img});
+  img.onload=()=>{customStampCache.clear();if(state.brushDraft)renderBrushStudioPreview();renderBrushList()};
+  img.src=src;
+  return img.complete&&img.naturalWidth?img:null;
+}
+function customStamp(brush,colour){
+  const key=[brush.id,brush.shapeData||"",brush.grainData||"",colour].join("|");
+  if(customStampCache.has(key))return customStampCache.get(key);
+  const cv=document.createElement("canvas");cv.width=128;cv.height=128;const c=cv.getContext("2d");
+  const shape=customAsset(brush,"shapeData"),grain=customAsset(brush,"grainData");
+  c.clearRect(0,0,128,128);
+  if(shape)c.drawImage(shape,0,0,128,128);
+  else{c.fillStyle="#fff";c.beginPath();c.arc(64,64,61,0,Math.PI*2);c.fill()}
+  if(grain){
+    c.globalCompositeOperation="destination-in";
+    c.drawImage(grain,0,0,128,128);
+  }
+  c.globalCompositeOperation="source-in";c.fillStyle=colour;c.fillRect(0,0,128,128);
+  c.globalCompositeOperation="source-over";
+  customStampCache.set(key,cv);return cv;
+}
+function drawCustomBrushStroke(ctx,pts,brush,colour,scale=1){
+  if(!pts||!pts.length)return;
+  const base=Math.max(1,(Number(brush.size)||22)*scale);
+  const spacing=Math.max(1.2,base*clamp((Number(brush.spacing)||12)/100,.01,1));
+  const pressureStrength=clamp((Number(brush.pressure)||0)/100,0,1);
+  const taperStrength=clamp((Number(brush.taper)||0)/100,0,1);
+  const stamp=customStamp(brush,colour);
+
+  if(pts.length===1){
+    const p=pts[0],ps=1-pressureStrength+pressureStrength*(.35+(p.pressure||.55)*.9);
+    const sz=base*ps*(1-taperStrength*.65);
+    ctx.drawImage(stamp,p.x-sz/2,p.y-sz/2,sz,sz);return;
+  }
+
+  const segs=[];let total=0;
+  for(let i=1;i<pts.length;i++){
+    const a=pts[i-1],b=pts[i],len=Math.hypot(b.x-a.x,b.y-a.y);
+    if(len>0){segs.push({a,b,len,start:total});total+=len}
+  }
+  if(!total)return;
+
+  for(let d=0;d<=total;d+=spacing){
+    let seg=segs[segs.length-1];
+    for(let i=0;i<segs.length;i++){if(d<=segs[i].start+segs[i].len){seg=segs[i];break}}
+    const local=clamp((d-seg.start)/seg.len,0,1);
+    const x=seg.a.x+(seg.b.x-seg.a.x)*local,y=seg.a.y+(seg.b.y-seg.a.y)*local;
+    const pressure=(seg.a.pressure||.55)+((seg.b.pressure||.55)-(seg.a.pressure||.55))*local;
+    const progress=d/total,edge=Math.min(1,progress*7,(1-progress)*7);
+    const taperScale=(1-taperStrength)+taperStrength*Math.max(.08,edge);
+    const pressureScale=(1-pressureStrength)+pressureStrength*(.35+pressure*.9);
+    const sz=Math.max(.8,base*taperScale*pressureScale);
+    const angle=Math.atan2(seg.b.y-seg.a.y,seg.b.x-seg.a.x);
+    ctx.save();ctx.translate(x,y);ctx.rotate(angle);ctx.drawImage(stamp,-sz/2,-sz/2,sz,sz);ctx.restore();
+  }
+}
+function renderBrushStudioPreview(){
+  const cv=$("#brushStudioPreview");if(!cv||!state.brushDraft)return;
+  const c=cv.getContext("2d"),w=cv.width,h=cv.height;c.clearRect(0,0,w,h);
+  c.fillStyle="#fff";c.fillRect(0,0,w,h);
+  const pts=[];
+  for(let i=0;i<=70;i++){
+    const t=i/70;
+    pts.push({x:30+t*(w-60),y:h*.52+Math.sin(t*Math.PI*2.1)*h*.13,pressure:.25+.75*Math.sin(t*Math.PI)});
+  }
+  c.save();c.globalAlpha=state.brushDraft.opacity||1;
+  drawCustomBrushStroke(c,pts,state.brushDraft,"#3B2730",1);
+  c.restore();
+}
+function normaliseCustomBrushes(){
+  if(!Array.isArray(state.customBrushes))state.customBrushes=[];
+  state.customBrushes=state.customBrushes.filter(Boolean).map((b,i)=>({
+    id:b.id||("cb"+Date.now().toString(36)+i),name:String(b.name||"Custom Brush"),category:"custom",note:"Custom Brush",mode:"custom",
+    size:clamp(Number(b.size)||22,1,120),opacity:clamp(Number(b.opacity)||1,.05,1),spacing:clamp(Number(b.spacing)||12,1,100),
+    taper:clamp(Number(b.taper)||0,0,100),smoothing:clamp(Number(b.smoothing)||55,0,100),pressure:clamp(Number(b.pressure)||65,0,100),
+    shapeData:b.shapeData||null,grainData:b.grainData||null
+  }));
 }
 function smudgeLine(canvas,a,b){
   const c=canvas.getContext("2d"),r=Math.max(8,state.size*.7),x=clamp(a.x-r,0,W-r*2),y=clamp(a.y-r,0,H-r*2),size=Math.max(4,Math.round(r*2));
