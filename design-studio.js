@@ -402,7 +402,7 @@ function commitCurrentColour(){
   saveJSON(RECENT_COLOUR_KEY,state.recentColours);renderRecentColours();renderPalettes();
 }
 function setColourTab(tab){
-  $$(".colour-tab").forEach(b=>b.classList.toggle("active",b.dataset.colourTab===tab));
+  $(".colour-tab").forEach(b=>b.classList.toggle("active",b.dataset.colourTab===tab));
   $$(".colour-view").forEach(v=>v.classList.toggle("hidden",v.dataset.colourView!==tab));
   if(tab==="disc")drawColourDisc();if(tab==="classic")drawClassicPicker();if(tab==="palettes")renderPalettes();
 }
