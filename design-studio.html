@@ -67,6 +67,7 @@
     <section id="canvasViewport" class="canvas-viewport">
       <div id="canvasStage" class="canvas-stage">
         <canvas id="displayCanvas" width="900" height="1100"></canvas>
+        <div id="canvasObjectLayer" class="canvas-object-layer" aria-label="Canvas images and text"></div>
       </div>
 
       <div class="edge-controls">
@@ -189,11 +190,46 @@
         <button class="close-panel" data-close-panel>×</button>
       </div>
       <button class="action-row" id="croquisAction">Mannequin <span>›</span></button>
-      <label class="action-row file-row">Reference image <span id="referenceStatus">Add ›</span><input id="referenceInput" type="file" accept="image/*" /></label>
-      <button class="action-row subtle-danger hidden" id="removeReferenceAction">Remove reference image <span>×</span></button>
+      <label class="action-row file-row">Add image <span>＋</span><input id="canvasImageInput" type="file" accept="image/*" /></label>
+      <button class="action-row" id="addTextAction">Add text <span>T</span></button>
       <button class="action-row" id="fitCanvasAction">Fit canvas <span>⌗</span></button>
       <button class="action-row" id="exportAction">Export <span>↥</span></button>
       <button class="action-row danger" id="clearLayerAction">Clear active layer <span>×</span></button>
+    </aside>
+
+    <aside id="objectPanel" class="floating-panel object-panel hidden" aria-label="Canvas object">
+      <div class="panel-titlebar">
+        <strong id="objectPanelTitle">Edit</strong>
+        <button class="close-panel" data-close-panel>×</button>
+      </div>
+      <div id="textObjectControls" class="object-controls hidden">
+        <label>Text<textarea id="objectTextInput" rows="3"></textarea></label>
+        <div class="object-control-grid">
+          <label>Font
+            <select id="objectFontSelect">
+              <option value="Arial">Arial</option>
+              <option value="Georgia">Georgia</option>
+              <option value="Times New Roman">Times New Roman</option>
+              <option value="Trebuchet MS">Trebuchet</option>
+              <option value="Courier New">Courier</option>
+            </select>
+          </label>
+          <label>Colour <input id="objectTextColour" type="color" value="#111111" /></label>
+        </div>
+        <label class="object-range">Font size <output id="objectFontSizeOut">64</output><input id="objectFontSize" type="range" min="12" max="160" value="64" /></label>
+        <div class="text-style-buttons">
+          <button id="objectBoldBtn" type="button"><b>B</b></button>
+          <button id="objectItalicBtn" type="button"><i>I</i></button>
+        </div>
+      </div>
+      <div class="object-controls">
+        <label class="object-range">Scale <output id="objectScaleOut">100%</output><input id="objectScale" type="range" min="25" max="250" value="100" /></label>
+        <label class="object-range">Rotation <output id="objectRotationOut">0°</output><input id="objectRotation" type="range" min="-180" max="180" value="0" /></label>
+        <div class="object-actions">
+          <button id="duplicateObjectBtn" type="button">Duplicate</button>
+          <button id="deleteObjectBtn" class="danger" type="button">Delete</button>
+        </div>
+      </div>
     </aside>
 
     <aside id="croquisPanel" class="floating-panel croquis-panel hidden" aria-label="Mannequin">

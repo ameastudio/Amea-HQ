@@ -646,7 +646,7 @@ function studioDefaultPattern(){
     knit:{machine:"",mode:"Panel",rowCount:"",tension:"",notes:""},
     materials:[{text:""}],materialNotes:"",sizes:["S"],linkedModelId:"",
     measurements:[{name:"Bust",value:"",unit:"in"}],
-    instructions:[{name:"Main Piece",photo:"",yarnOverride:"",hookOverride:"",measurementNotes:"",steps:[]}],
+    instructions:[{name:"Main Pattern",isMain:true,photo:"",notes:"",steps:[{id:crypto.randomUUID(),rowNumber:1,text:""}]}],
     notes:"",costing:{enabled:false,yarn:"",labor:"",other:""}
   };
 }
@@ -775,21 +775,28 @@ function studioSegmentPhrase(seg={}){
   return `${count}${stitch.toLowerCase()}`.trim();
 }
 function studioStepReadable(st={}){
-  const segs=studioStepSegments(st);
-  const parts=[];
+  if(st.kind==="repeat"){
+    const from=+st.repeatFrom||1,to=+st.repeatTo||from,times=Math.max(1,+st.repeatTimes||1);
+    return `Repeat Rows ${from}–${to} ×${times}`;
+  }
+  const direct=String(st.text||"").trim();
+  if(direct)return direct;
+  const segs=studioStepSegments(st),parts=[];
   segs.forEach(seg=>{
-    const phrase=studioSegmentPhrase(seg);
-    if(!phrase)return;
-    if((seg.kind==="action"||seg.action)&&phrase==="in magic ring"){
-      if(parts.length)parts[parts.length-1]+=" in magic ring";
-      else parts.push("magic ring");
-      return;
-    }
+    const phrase=studioSegmentPhrase(seg);if(!phrase)return;
+    if((seg.kind==="action"||seg.action)&&phrase==="in magic ring"){if(parts.length)parts[parts.length-1]+=" in magic ring";else parts.push("magic ring");return}
     parts.push(phrase);
   });
-  const note=String(st.note||(!segs.length?st.text||"":"")).trim();
-  if(note)parts.push(note);
+  const note=String(st.note||"").trim();if(note)parts.push(note);
   return parts.join(", ")||"No row instructions";
+}
+function studioStepLabel(st={},fallback=1){
+  if(st.kind==="repeat"){
+    const from=+st.repeatFrom||1,to=+st.repeatTo||from,times=Math.max(1,+st.repeatTimes||1);
+    return `Repeat Rows ${from}–${to} ×${times}`;
+  }
+  const start=studioStepRowNumber(st,fallback),end=+st.rowEnd||start;
+  return end>start?`Rows ${start}–${end}`:`Row ${start}`;
 }
 function studioPiecePhoto(s={}){return s.photo||""}
 function openStudioInstructions(id){
@@ -819,11 +826,11 @@ function renderStudioWorkPage(){
     const secRows=rows.filter(r=>r.sectionIndex===si);
     const photo=studioPiecePhoto(sec);
     return `<section class=studio-work-piece>
-      <div class=studio-work-piece-head>${photo?`<img src="${photo}" alt="${esc(sec.name||"Pattern piece")}">`:""}<div><span>PIECE ${String(si+1).padStart(2,"0")}</span><h3>${esc(sec.name||`Piece ${si+1}`)}</h3>${secRows.length?`<small>${secRows.length} row${secRows.length===1?"":"s"}</small>`:""}</div></div>
+      <div class=studio-work-piece-head>${photo?`<img src="${photo}" alt="${esc(sec.name||"Pattern piece")}">`:""}<div><span>${si===0?"MAIN PATTERN":`PIECE ${String(si).padStart(2,"0")}`}</span><h3>${esc(sec.name||`Piece ${si+1}`)}</h3>${secRows.length?`<small>${secRows.length} row${secRows.length===1?"":"s"}</small>`:""}</div></div>
       <div class=studio-work-rows>${secRows.map(r=>{
         const checked=!!progress[r.key];
         const isNext=!!order&&!checked&&next?.key===r.key;
-        const body=`<div class=studio-work-row-copy><b>Row ${r.row}:</b><span>${studioStepReadable(r.st)}</span></div>`;
+        const body=r.st.kind==="repeat"?`<div class="studio-work-row-copy repeat"><b>${esc(r.label)}</b></div>`:`<div class=studio-work-row-copy><b>${esc(r.label)}:</b><span>${esc(studioStepReadable(r.st))}</span></div>`;
         return order?`<label class="studio-work-row ${checked?"done":""} ${isNext?"next":""}"><input type=checkbox ${checked?"checked":""} onchange="toggleOrderPatternRow('${order.id}','${c.lineId}','${encodeURIComponent(r.key)}',this.checked)">${body}</label>`:`<div class=studio-work-row>${body}</div>`;
       }).join("")||'<div class=empty>No rows saved for this piece yet.</div>'}</div>
     </section>`;
@@ -832,7 +839,7 @@ function renderStudioWorkPage(){
   v.innerHTML=`<div class=studio-work-page>
     <div class=studio-work-nav><button onclick=studioWorkBack()>← Back</button>${studioLogoBlock("Making Mode")}</div>
     <div class=studio-work-hero>${p.mainPhoto?`<img src="${p.mainPhoto}" alt="${esc(p.name)}">`:""}<div><span>${esc(p.technique)} • ${esc(p.category)} • ${esc(p.status)}</span><h2>${esc(p.name)}</h2>${order&&item?`<p>Order ${esc(order.no)} · ${esc(orderItemLabel(item))}</p>`:'<p>Instructions only</p>'}</div></div>
-    ${order?`<div class=studio-work-progress><div><b>${done} of ${rows.length} rows done</b><strong>${pct}%</strong></div><div class=studio-work-progress-track><i style="width:${pct}%"></i></div><p>${next?`Next: <b>${esc(next.section)}</b> · Row ${next.row}`:'Pattern complete 🎉'}</p></div>`:""}
+    ${order?`<div class=studio-work-progress><div><b>${done} of ${rows.length} rows done</b><strong>${pct}%</strong></div><div class=studio-work-progress-track><i style="width:${pct}%"></i></div><p>${next?`Next: <b>${esc(next.section)}</b> · ${esc(next.label)}`:'Pattern complete 🎉'}</p></div>`:""}
     <div class=studio-work-pieces>${sections||'<div class=empty>No pattern instructions yet.</div>'}</div>
   </div>`;
 }
@@ -880,9 +887,9 @@ function renderStudioPattern(id){
 
     <section class=studio-detail-section><div class=studio-editor-row-head><h3>Pattern Instructions</h3><button onclick="openStudioInstructions('${x.id}')">Open Full Page →</button></div>
       ${(x.instructions||[]).map((s,si)=>`<div class=studio-instruction-section>
-        <div class=studio-piece-summary>${studioPiecePhoto(s)?`<img src="${studioPiecePhoto(s)}" alt="${esc(s.name||"Piece")}">`:""}<div class=studio-instruction-title><span>${String(si+1).padStart(2,"0")}</span><h4>${esc(s.name||"Piece")}</h4></div></div>
+        <div class=studio-piece-summary>${studioPiecePhoto(s)?`<img src="${studioPiecePhoto(s)}" alt="${esc(s.name||"Piece")}">`:""}<div class=studio-instruction-title><span>${si===0?"MAIN":String(si).padStart(2,"0")}</span><h4>${esc(s.name||"Piece")}</h4></div></div>
         ${(s.yarnOverride||s.hookOverride||s.measurementNotes)?`<div class=studio-section-overrides>${s.yarnOverride?`<span><b>Yarn:</b> ${esc(s.yarnOverride)}</span>`:""}${s.hookOverride?`<span><b>${x.technique==="Knit"?"Machine/settings":"Hook"}:</b> ${esc(s.hookOverride)}</span>`:""}${s.measurementNotes?`<span><b>Measurements:</b> ${esc(s.measurementNotes)}</span>`:""}</div>`:""}
-        ${(s.steps||[]).slice().sort((a,b)=>studioStepRowNumber(a,1)-studioStepRowNumber(b,1)).filter(st=>st.label||st.text||st.rowNumber||studioStepSegments(st).length).map((st,i)=>`<div class=studio-step><b>Row ${studioStepRowNumber(st,i+1)}:</b><p>${studioStepReadable(st)}</p></div>`).join("")||'<div class=meta>No rows yet.</div>'}
+        ${(s.steps||[]).filter(st=>st.kind==="repeat"||st.label||st.text||st.rowNumber||studioStepSegments(st).length).map((st,i)=>st.kind==="repeat"?`<div class="studio-step studio-step-repeat"><b>${esc(studioStepLabel(st,i+1))}</b></div>`:`<div class=studio-step><b>${esc(studioStepLabel(st,i+1))}:</b><p>${esc(studioStepReadable(st))}</p></div>`).join("")||'<div class=meta>No rows yet.</div>'}
       </div>`).join("")||'<div class=meta>No instructions added.</div>'}
     </section>
 
@@ -956,25 +963,6 @@ function studioMeasurementRow(m={}){
   return `<div class="studio-measure-edit" data-measure-row><input data-measure-name placeholder="Measurement" value="${esc(m.name||"")}"><input data-measure-value placeholder="Value" value="${esc(m.value||"")}"><select data-measure-unit><option ${m.unit==="in"?"selected":""}>in</option><option ${m.unit==="cm"?"selected":""}>cm</option><option ${m.unit==="st"?"selected":""}>st</option><option ${m.unit==="rows"?"selected":""}>rows</option></select><button type=button onclick="this.parentElement.remove()">×</button></div>`;
 }
 
-function studioNumberOptions(selected="",max=300){
-  const n=Number(selected)||1;
-  let out="";
-  for(let i=1;i<=max;i++)out+=`<option value="${i}" ${i===n?"selected":""}>${i}</option>`;
-  return out;
-}
-function studioStitchOptions(selected=""){
-  const stitches=[
-    ["SC","Single Crochet (SC)"],["HDC","Half Double Crochet (HDC)"],["DC","Double Crochet (DC)"],
-    ["TR","Treble Crochet (TR)"],["SL ST","Slip Stitch (SL ST)"],["CH","Chain (CH)"],
-    ["INC","Increase (INC)"],["DEC","Decrease (DEC)"],["BLO","Back Loop Only (BLO)"],
-    ["FLO","Front Loop Only (FLO)"],["OTHER","Other"]
-  ];
-  return stitches.map(([v,l])=>`<option value="${v}" ${selected===v?"selected":""}>${l}</option>`).join("");
-}
-function studioActionOptions(selected="turn work"){
-  const actions=["magic ring","in magic ring","turn work","join","fasten off","place marker","skip stitch","repeat","continue around","do not turn"];
-  return actions.map(v=>`<option value="${v}" ${selected===v?"selected":""}>${v.replace(/\b\w/g,c=>c.toUpperCase())}</option>`).join("");
-}
 function studioStepRowNumber(st={},fallback=1){
   if(+st.rowNumber)return +st.rowNumber;
   const m=String(st.label||"").match(/row\s*(\d+)/i);
@@ -984,138 +972,134 @@ function studioStepSegments(st={}){
   if(Array.isArray(st.segments)&&st.segments.length)return st.segments;
   return [];
 }
-function studioSegmentEdit(seg={}){
-  const action=seg.kind==="action"||seg.action;
-  if(action)return `<span class="studio-saved-part action" data-segment-row data-kind="action"><select data-segment-action onchange=studioRefreshSavedRow(this)>${studioActionOptions(seg.action||"turn work")}</select><button type=button onclick="studioRemoveSavedPart(this)">×</button></span>`;
-  return `<span class=studio-saved-part data-segment-row data-kind="stitch"><select data-segment-count onchange=studioRefreshSavedRow(this)>${studioNumberOptions(seg.count||1,500)}</select><select data-segment-stitch onchange=studioRefreshSavedRow(this)>${studioStitchOptions(seg.stitch||"SC")}</select><button type=button onclick="studioRemoveSavedPart(this)">×</button></span>`;
+const STUDIO_CROCHET_SHORTCUTS=["ch","sl st","sc","hdc","dc","tr","st","sp","ch-sp","sk","inc","dec","BLO","FLO","rep","x2","x3","( )","[ ]","*"];
+let studioActiveRowInput=null;
+function studioPatternShortcutBar(){
+  return `<div class=studio-shortcut-wrap><span>US CROCHET SHORTCUTS</span><div class=studio-shortcut-bar>${STUDIO_CROCHET_SHORTCUTS.map(x=>`<button type=button data-shortcut="${esc(x)}" onclick="studioInsertShortcut(this.dataset.shortcut)">${esc(x)}</button>`).join("")}</div></div>`;
 }
-function studioStepRow(st={},fallback=1){
-  const rowNumber=studioStepRowNumber(st,fallback);
-  const segments=studioStepSegments(st);
-  return `<div class=studio-step-edit data-step-row data-step-id="${esc(st.id||crypto.randomUUID())}">
-    <div class=studio-step-edit-head><div class=studio-saved-row-title><span>Row</span><select data-step-rownum onchange=studioRefreshSavedRow(this)>${studioNumberOptions(rowNumber,300)}</select><b data-saved-row-preview>Row ${rowNumber}: ${studioStepReadable(st)}</b></div><button type=button onclick="this.closest('[data-step-row]').remove()">Remove</button></div>
-    <div class=studio-saved-parts data-segment-list>${(segments.length?segments:[{stitch:"SC",count:1}]).map(studioSegmentEdit).join("")}</div>
-    <div class=studio-saved-row-actions><button type=button onclick=studioAddSegmentToSavedRow(this)>＋ Stitch</button><button type=button onclick=studioAddActionToSavedRow(this)>＋ Action</button></div>
-    <input data-step-note oninput=studioRefreshSavedRow(this) placeholder="Extra row note (optional)" value="${esc(st.note||(!segments.length?st.text||"":""))}">
+function studioInsertShortcut(token){
+  const input=studioActiveRowInput;if(!input||!document.body.contains(input))return;
+  const start=input.selectionStart??input.value.length,end=input.selectionEnd??start;
+  let text=token,cursorOffset=token.length;
+  if(token==="( )"){text="()";cursorOffset=1}
+  if(token==="[ ]"){text="[]";cursorOffset=1}
+  const before=input.value.slice(0,start),after=input.value.slice(end);
+  const needsSpace=before&&!/\s$/.test(before)&&!["*",")","]"].includes(text.charAt(0));
+  const insert=(needsSpace?" ":"")+text;
+  input.value=before+insert+after;
+  const pos=start+insert.length-(text.length-cursorOffset);
+  input.setSelectionRange(pos,pos);input.focus();input.dispatchEvent(new Event("input",{bubbles:true}));
+}
+function studioAutoGrowRow(el){if(!el)return;el.style.height="auto";el.style.height=Math.min(150,Math.max(38,el.scrollHeight))+"px"}
+function studioPatternRowLabel(row){
+  const start=+(row.dataset.rowStart||1),endInput=row.querySelector("[data-row-end]"),end=endInput?Math.max(start+1,+endInput.value||start+1):start;
+  const label=row.querySelector("[data-row-label]");if(label)label.textContent=end>start?`Rows ${start}–${end}`:`Row ${start}`;
+}
+function studioRenumberPatternRows(sec){
+  if(!sec)return;let next=1;
+  [...sec.querySelectorAll("[data-pattern-row]")].forEach(row=>{
+    if(row.dataset.rowKind==="repeat")return;
+    const oldStart=+(row.dataset.rowStart||next),endInput=row.querySelector("[data-row-end]");
+    let span=1;if(endInput)span=Math.max(2,(+endInput.value||oldStart+1)-oldStart+1);
+    row.dataset.rowStart=String(next);
+    if(endInput){endInput.min=String(next+1);endInput.value=String(next+span-1)}
+    studioPatternRowLabel(row);next+=span;
+  });
+}
+function studioNextRowNumber(sec){
+  let next=1;
+  [...sec.querySelectorAll("[data-pattern-row]")].forEach(row=>{
+    if(row.dataset.rowKind==="repeat")return;
+    const start=+(row.dataset.rowStart||next),end=+(row.querySelector("[data-row-end]")?.value||start);
+    next=Math.max(next,Math.max(start,end)+1);
+  });
+  return next;
+}
+function studioPatternStepRow(st={},fallback=1){
+  if(st.kind==="repeat"){
+    const from=+st.repeatFrom||1,to=+st.repeatTo||from,times=Math.max(1,+st.repeatTimes||2);
+    return `<div class="studio-pattern-row repeat" data-pattern-row data-row-kind="repeat" data-step-id="${esc(st.id||crypto.randomUUID())}">
+      <span class=studio-row-grab title="Drag to reorder">⋮⋮</span>
+      <div class=studio-repeat-row><b>Repeat</b><label>Rows <input data-repeat-from type=number min=1 value="${from}"></label><span>–</span><input data-repeat-to type=number min=1 value="${to}"><label>× <input data-repeat-times type=number min=1 value="${times}"></label></div>
+      <button type=button class=studio-row-trash onclick=studioRemovePatternRow(this)>×</button>
+    </div>`;
+  }
+  const start=studioStepRowNumber(st,fallback),end=+st.rowEnd||start;
+  const legacy=studioStepReadable(st),text=st.text!=null?st.text:(legacy==="No row instructions"?"":legacy),photo=st.photo||"";
+  return `<div class=studio-pattern-row data-pattern-row data-row-kind="row" data-row-start="${start}" data-step-id="${esc(st.id||crypto.randomUUID())}" data-row-photo="${photo}" draggable=true ondragstart="studioPatternDragStart(event,this)" ondragover="event.preventDefault()" ondrop="studioPatternDrop(event,this)">
+    <span class=studio-row-grab title="Drag to reorder">⋮⋮</span>
+    <div class=studio-row-main>
+      <div class=studio-row-heading><b data-row-label>${end>start?`Rows ${start}–${end}`:`Row ${start}`}</b>${end>start?`<label class=studio-row-end-label>to <input data-row-end type=number min="${start+1}" value="${end}" onchange="studioRenumberPatternRows(this.closest('[data-section-row]'))"></label>`:""}</div>
+      <textarea rows=1 data-row-text placeholder="Type this row…" onfocus="studioActiveRowInput=this" oninput="studioAutoGrowRow(this)" onkeydown="studioPatternRowKeydown(event,this)">${esc(text)}</textarea>
+      <div class=studio-row-extras hidden><input data-row-note placeholder="Optional note" value="${esc(st.note||"")}"><div class=studio-row-photo-line>${photo?`<img data-row-photo-preview src="${photo}" alt="">`:`<img data-row-photo-preview style="display:none" alt="">`}<label>Optional photo<input type=file accept="image/*" onchange=studioRowPhotoChanged(this)></label></div></div>
+    </div>
+    <div class=studio-row-tools><button type=button title="More" onclick=studioToggleRowExtras(this)>＋</button><button type=button title="Duplicate" onclick=studioDuplicatePatternRow(this)>⧉</button><button type=button title="Delete" onclick=studioRemovePatternRow(this)>×</button></div>
   </div>`;
 }
-function studioBuilderPart(seg={kind:"stitch",stitch:"SC",count:1}){
-  if(seg.kind==="action"||seg.action)return `<span class="studio-builder-part action" data-builder-part data-kind="action"><select data-builder-action onchange=studioUpdateLiveRow(this)>${studioActionOptions(seg.action||"turn work")}</select><button type=button onclick=studioRemoveBuilderPart(this)>×</button></span>`;
-  return `<span class=studio-builder-part data-builder-part data-kind="stitch"><select data-builder-count onchange=studioUpdateLiveRow(this)>${studioNumberOptions(seg.count||1,500)}</select><select data-builder-stitch onchange=studioUpdateLiveRow(this)>${studioStitchOptions(seg.stitch||"SC")}</select><button type=button onclick=studioRemoveBuilderPart(this)>×</button></span>`;
+function studioPatternRowKeydown(e,input){
+  if(e.key!=="Enter"||e.shiftKey)return;e.preventDefault();
+  const row=input.closest("[data-pattern-row]"),sec=input.closest("[data-section-row]");if(!row||!sec)return;
+  row.insertAdjacentHTML("afterend",studioPatternStepRow({id:crypto.randomUUID(),text:""},1));studioRenumberPatternRows(sec);
+  const next=row.nextElementSibling?.querySelector("[data-row-text]");if(next){studioActiveRowInput=next;next.focus();studioAutoGrowRow(next)}
 }
+function studioAddPatternRow(btn,range=false){
+  const sec=btn.closest("[data-section-row]");if(!sec)return;
+  const next=studioNextRowNumber(sec),list=sec.querySelector("[data-step-list]");
+  list?.insertAdjacentHTML("beforeend",studioPatternStepRow({id:crypto.randomUUID(),rowNumber:next,rowEnd:range?next+1:next,text:""},next));studioRenumberPatternRows(sec);
+  const input=list?.lastElementChild?.querySelector("[data-row-text]");if(input){studioActiveRowInput=input;input.focus();studioAutoGrowRow(input)}
+}
+function studioAddRepeatBlock(btn){
+  const sec=btn.closest("[data-section-row]");if(!sec)return;
+  const next=Math.max(1,studioNextRowNumber(sec)-1);
+  sec.querySelector("[data-step-list]")?.insertAdjacentHTML("beforeend",studioPatternStepRow({kind:"repeat",repeatFrom:Math.max(1,next-1),repeatTo:next,repeatTimes:2}));
+}
+function studioToggleRowExtras(btn){const extras=btn.closest("[data-pattern-row]")?.querySelector(".studio-row-extras");if(extras)extras.hidden=!extras.hidden}
+function studioRemovePatternRow(btn){
+  const sec=btn.closest("[data-section-row]");btn.closest("[data-pattern-row]")?.remove();
+  if(sec){if(!sec.querySelector('[data-pattern-row][data-row-kind="row"]'))sec.querySelector("[data-step-list]")?.insertAdjacentHTML("beforeend",studioPatternStepRow({text:""},1));studioRenumberPatternRows(sec)}
+}
+function studioDuplicatePatternRow(btn){
+  const row=btn.closest("[data-pattern-row]"),sec=btn.closest("[data-section-row]");if(!row||!sec)return;
+  if(row.dataset.rowKind==="repeat"){
+    row.insertAdjacentHTML("afterend",studioPatternStepRow({kind:"repeat",repeatFrom:+row.querySelector("[data-repeat-from]")?.value||1,repeatTo:+row.querySelector("[data-repeat-to]")?.value||1,repeatTimes:+row.querySelector("[data-repeat-times]")?.value||2}));
+  }else{
+    row.insertAdjacentHTML("afterend",studioPatternStepRow({text:row.querySelector("[data-row-text]")?.value||"",note:row.querySelector("[data-row-note]")?.value||"",photo:row.dataset.rowPhoto||""},1));
+  }
+  studioRenumberPatternRows(sec);
+}
+let studioDraggedPatternRow=null;
+function studioPatternDragStart(e,row){studioDraggedPatternRow=row;e.dataTransfer?.setData("text/plain",row.dataset.stepId||"row")}
+function studioPatternDrop(e,target){
+  e.preventDefault();const src=studioDraggedPatternRow,sec=target.closest("[data-section-row]");
+  if(!src||src===target||!sec||src.closest("[data-section-row]")!==sec)return;
+  const rect=target.getBoundingClientRect();target.parentElement.insertBefore(src,e.clientY<rect.top+rect.height/2?target:target.nextSibling);studioRenumberPatternRows(sec);studioDraggedPatternRow=null;
+}
+async function studioRowPhotoChanged(input){
+  const f=input.files?.[0],row=input.closest("[data-pattern-row]");if(!f||!row)return;
+  try{const url=await imageToSmallDataUrl(f);row.dataset.rowPhoto=url;const img=row.querySelector("[data-row-photo-preview]");if(img){img.src=url;img.style.display="block"}}catch(e){alert("I couldn't process that photo. Try another image.")}
+  input.value="";
+}
+function studioRemoveSection(btn){const sec=btn.closest("[data-section-row]");if(sec)sec.remove()}
 function studioSectionEditor(s={},index=0){
-  const steps=(s.steps||[]).slice().sort((a,b)=>studioStepRowNumber(a,1)-studioStepRowNumber(b,1));
-  const next=Math.max(0,...steps.map((st,i)=>studioStepRowNumber(st,i+1)))+1;
-  const photo=studioPiecePhoto(s);
-  return `<div class=studio-section-edit data-section-row data-piece-photo="${photo||""}">
-    <div class=studio-editor-row-head><b>Piece / Section ${index+1}</b><button type=button onclick="this.closest('[data-section-row]').remove()">×</button></div>
-    <input data-section-name placeholder="e.g. TOP, SKIRT, HAT, BODY" value="${esc(s.name||"")}">
-    <div class=studio-piece-photo-editor>${photo?`<img data-piece-preview src="${photo}" alt="">`:`<img data-piece-preview style="display:none" alt="">`}<div><label>Photo for this piece <span class=meta>(optional)</span></label><input type=file accept="image/*" onchange=studioPiecePhotoChanged(this)><button type=button class=studio-piece-photo-remove onclick=studioRemovePiecePhoto(this)>Remove photo</button></div></div>
-    <details><summary>Piece-specific details (optional)</summary>
-      <input data-section-yarn placeholder="Different yarn/colour for this piece" value="${esc(s.yarnOverride||"")}">
-      <input data-section-hook placeholder="Different hook / machine settings" value="${esc(s.hookOverride||"")}">
-      <input data-section-measure placeholder="Measurement notes for this piece" value="${esc(s.measurementNotes||"")}">
-    </details>
-
-    <div class=studio-quick-row-builder>
-      <div class=studio-live-row-box><span>LIVE ROW PREVIEW</span><b data-live-row-preview>Row ${next}: 1sc</b></div>
-      <div class=studio-builder-title><div><b>Add Row</b><span>Build the row straight across. Commas are added automatically.</span></div><button type=button class=studio-mic-btn onclick=studioVoiceRow(this) title="Speak a row">🎙</button></div>
-      <div class=studio-inline-builder>
-        <label class=studio-row-number-label>Row<select data-builder-row onchange=studioUpdateLiveRow(this)>${studioNumberOptions(next,300)}</select></label>
-        <div class=studio-builder-parts data-builder-parts>${studioBuilderPart({kind:"stitch",stitch:"SC",count:1})}</div>
-      </div>
-      <div class=studio-builder-actions>
-        <button type=button onclick="studioBuilderAddPart(this,'stitch')">＋ Stitch</button>
-        <button type=button onclick="studioBuilderAddPart(this,'action')">＋ Action</button>
-        <button type=button class=studio-row-add onclick=studioBuilderAddRow(this)>Save Row</button>
-      </div>
-      <div class=studio-builder-shortcuts>
-        <button type=button onclick=studioSameAsPrevious(this)>↻ Same as Previous</button>
-        <details><summary>Repeat Multiple Rows</summary>
-          <div class=studio-repeat-grid>
-            <label>From<select data-repeat-from>${studioNumberOptions(Math.max(1,next-1),300)}</select></label>
-            <label>To<select data-repeat-to>${studioNumberOptions(Math.min(300,next+4),300)}</select></label>
-            <label>Use same as<select data-repeat-source>${studioNumberOptions(Math.max(1,next-1),300)}</select></label>
-          </div>
-          <button type=button class=studio-repeat-add onclick=studioRepeatMultipleRows(this)>Add Repeated Rows</button>
-        </details>
-      </div>
-    </div>
-    <div class=studio-saved-rows-title><b>Saved Rows</b><span>Row 1 downward</span></div>
-    <div data-step-list>${steps.map((st,i)=>studioStepRow(st,i+1)).join("")}</div>
+  const isMain=index===0||s.isMain===true,rawSteps=(s.steps||[]).length?s.steps:[{id:crypto.randomUUID(),rowNumber:1,text:""}],photo=studioPiecePhoto(s);
+  return `<div class="studio-section-edit studio-pattern-writer-section ${isMain?"main-pattern":""}" data-section-row data-section-main="${isMain?"1":"0"}" data-piece-photo="${photo||""}">
+    <div class=studio-editor-row-head><div><span class=studio-writer-kicker>${isMain?"MAIN PATTERN":"OPTIONAL PIECE"}</span><input data-section-name class=studio-section-name value="${esc(isMain?(s.name||"Main Pattern"):(s.name||`Piece ${index}`))}" ${isMain?"readonly":""}></div>${isMain?"":`<button type=button class=studio-remove-piece onclick=studioRemoveSection(this)>Remove</button>`}</div>
+    ${isMain?"":`<div class=studio-piece-options>${photo?`<img data-piece-preview src="${photo}" alt="">`:`<img data-piece-preview style="display:none" alt="">`}<label>Piece photo <span class=meta>(optional)</span><input type=file accept="image/*" onchange=studioPiecePhotoChanged(this)></label><textarea data-section-note rows=2 placeholder="Notes for this piece (optional)">${esc(s.notes||s.measurementNotes||"")}</textarea></div>`}
+    <div class=studio-row-writer-head><span>Press <b>Enter</b> to start the next row.</span><div><button type=button onclick="studioAddPatternRow(this,true)">＋ Row Range</button><button type=button onclick=studioAddRepeatBlock(this)>↻ Repeat Rows</button></div></div>
+    <div class=studio-document-rows data-step-list>${rawSteps.map((st,i)=>studioPatternStepRow(st,i+1)).join("")}</div>
+    <button type=button class=studio-add-row-button onclick=studioAddPatternRow(this,false)>＋ Add Row</button>
+    ${studioPatternShortcutBar()}
   </div>`;
 }
 function studioPiecePhotoChanged(input){
   const f=input.files?.[0],sec=input.closest("[data-section-row]");if(!f||!sec)return;
   imageToSmallDataUrl(f).then(url=>{sec.dataset.piecePhoto=url;const img=sec.querySelector("[data-piece-preview]");if(img){img.src=url;img.style.display="block"}}).catch(()=>alert("I couldn't process that photo. Try another image."));
 }
-function studioRemovePiecePhoto(btn){
-  const sec=btn.closest("[data-section-row]");if(!sec)return;
-  sec.dataset.piecePhoto="";const img=sec.querySelector("[data-piece-preview]");if(img){img.removeAttribute("src");img.style.display="none"}
-}
-function studioBuilderParts(sec){
-  return [...sec.querySelectorAll("[data-builder-part]")].map(el=>{
-    if(el.dataset.kind==="action")return {kind:"action",action:el.querySelector("[data-builder-action]")?.value||"turn work"};
-    return {kind:"stitch",stitch:el.querySelector("[data-builder-stitch]")?.value||"SC",count:+(el.querySelector("[data-builder-count]")?.value||1)};
-  });
-}
-function studioUpdateLiveRow(el){
-  const sec=el.closest("[data-section-row]");if(!sec)return;
-  const row=+(sec.querySelector("[data-builder-row]")?.value||1);
-  const parts=studioBuilderParts(sec);
-  const text=parts.map(studioSegmentPhrase).filter(Boolean).join(", ")||"—";
-  const out=sec.querySelector("[data-live-row-preview]");if(out)out.textContent=`Row ${row}: ${text}`;
-}
-function studioBuilderAddPart(btn,kind="stitch"){
-  const sec=btn.closest("[data-section-row]"),box=sec?.querySelector("[data-builder-parts]");if(!box)return;
-  box.insertAdjacentHTML("beforeend",studioBuilderPart(kind==="action"?{kind:"action",action:"turn work"}:{kind:"stitch",stitch:"SC",count:1}));studioUpdateLiveRow(sec);
-}
-function studioRemoveBuilderPart(btn){const sec=btn.closest("[data-section-row]");btn.closest("[data-builder-part]")?.remove();studioUpdateLiveRow(sec)}
-function studioAddSegmentToSavedRow(btn){const list=btn.closest("[data-step-row]")?.querySelector("[data-segment-list]");if(list){list.insertAdjacentHTML("beforeend",studioSegmentEdit({kind:"stitch",stitch:"SC",count:1}));studioRefreshSavedRow(btn)}}
-function studioAddActionToSavedRow(btn){const list=btn.closest("[data-step-row]")?.querySelector("[data-segment-list]");if(list){list.insertAdjacentHTML("beforeend",studioSegmentEdit({kind:"action",action:"turn work"}));studioRefreshSavedRow(btn)}}
-function studioRemoveSavedPart(btn){const row=btn.closest("[data-step-row]");btn.closest("[data-segment-row]")?.remove();studioRefreshSavedRow(row)}
-function studioCollectSavedSegments(row){
-  return [...row.querySelectorAll("[data-segment-row]")].map(el=>el.dataset.kind==="action"?{kind:"action",action:el.querySelector("[data-segment-action]")?.value||"turn work"}:{kind:"stitch",stitch:el.querySelector("[data-segment-stitch]")?.value||"SC",count:+(el.querySelector("[data-segment-count]")?.value||1)});
-}
-function studioRefreshSavedRow(el){
-  const row=el.closest?.("[data-step-row]")||el;if(!row?.querySelector)return;
-  const n=+(row.querySelector("[data-step-rownum]")?.value||1),note=row.querySelector("[data-step-note]")?.value.trim()||"";
-  const st={segments:studioCollectSavedSegments(row),note};
-  const out=row.querySelector("[data-saved-row-preview]");if(out)out.textContent=`Row ${n}: ${studioStepReadable(st)}`;
-}
-function studioBuilderAddRow(btn){
-  const sec=btn.closest("[data-section-row]");if(!sec)return;
-  const row=+(sec.querySelector("[data-builder-row]")?.value||1),segments=studioBuilderParts(sec);
-  if(!segments.length)return alert("Add at least one stitch or action to the row.");
-  const list=sec.querySelector("[data-step-list]");
-  const existing=[...sec.querySelectorAll("[data-step-row]")].find(r=>+(r.querySelector("[data-step-rownum]")?.value||0)===row);
-  if(existing&&!confirm(`Row ${row} already exists. Add another Row ${row}?`))return;
-  list?.insertAdjacentHTML("beforeend",studioStepRow({id:crypto.randomUUID(),rowNumber:row,segments,note:""},row));
-  const parts=sec.querySelector("[data-builder-parts]");if(parts)parts.innerHTML=studioBuilderPart({kind:"stitch",stitch:"SC",count:1});
-  const rowSelect=sec.querySelector("[data-builder-row]");if(rowSelect)rowSelect.value=String(Math.min(300,row+1));
-  studioUpdateLiveRow(sec);
-}
-function studioSameAsPrevious(btn){
-  const sec=btn.closest("[data-section-row]");if(!sec)return;
-  const rows=[...sec.querySelectorAll("[data-step-row]")];if(!rows.length)return alert("Add a row first.");
-  const last=rows[rows.length-1],lastNum=+(last.querySelector("[data-step-rownum]")?.value||rows.length);
-  const segs=studioCollectSavedSegments(last),note=last.querySelector("[data-step-note]")?.value||"";
-  sec.querySelector("[data-step-list]")?.insertAdjacentHTML("beforeend",studioStepRow({id:crypto.randomUUID(),rowNumber:lastNum+1,segments:segs,note},lastNum+1));
-  const rowSelect=sec.querySelector("[data-builder-row]");if(rowSelect)rowSelect.value=String(Math.min(300,lastNum+2));studioUpdateLiveRow(sec);
-}
-function studioRepeatMultipleRows(btn){
-  const sec=btn.closest("[data-section-row]");if(!sec)return;
-  const box=btn.closest("details"),from=+(box.querySelector("[data-repeat-from]")?.value||1),to=+(box.querySelector("[data-repeat-to]")?.value||from),source=+(box.querySelector("[data-repeat-source]")?.value||from);
-  if(to<from)return alert("The To row needs to be the same or higher than From.");
-  const sourceRow=[...sec.querySelectorAll("[data-step-row]")].find(r=>+(r.querySelector("[data-step-rownum]")?.value||0)===source);if(!sourceRow)return alert("That source row is not in this piece yet.");
-  const segs=studioCollectSavedSegments(sourceRow),note=sourceRow.querySelector("[data-step-note]")?.value||"",list=sec.querySelector("[data-step-list]");
-  for(let n=from;n<=to;n++){if([...sec.querySelectorAll("[data-step-row]")].some(r=>+(r.querySelector("[data-step-rownum]")?.value||0)===n))continue;list?.insertAdjacentHTML("beforeend",studioStepRow({id:crypto.randomUUID(),rowNumber:n,segments:segs,note},n))}
-  const rowSelect=sec.querySelector("[data-builder-row]");if(rowSelect)rowSelect.value=String(Math.min(300,to+1));box.open=false;studioUpdateLiveRow(sec);
-}
-function studioVoiceRow(btn){
-  const Recognition=window.SpeechRecognition||window.webkitSpeechRecognition;if(!Recognition)return alert("Voice row entry is not available in this browser yet. The dropdowns will still work.");
-  const sec=btn.closest("[data-section-row]"),r=new Recognition();r.lang="en-US";r.interimResults=false;r.maxAlternatives=1;btn.textContent="…";r.onend=()=>btn.textContent="🎙";r.onerror=()=>alert("I couldn't catch that. Try again or use the dropdowns.");
-  r.onresult=e=>{const heard=e.results?.[0]?.[0]?.transcript||"";const rowMatch=heard.match(/row\s+(\d+)/i);if(rowMatch)sec.querySelector("[data-builder-row]").value=rowMatch[1];const parts=[];const rx=/(\d+)\s*(single crochet|half double crochet|double crochet|treble crochet|slip stitch|chain|increase|decrease)/gi;let m;const map={"single crochet":"SC","half double crochet":"HDC","double crochet":"DC","treble crochet":"TR","slip stitch":"SL ST","chain":"CH","increase":"INC","decrease":"DEC"};while((m=rx.exec(heard)))parts.push({kind:"stitch",count:+m[1],stitch:map[m[2].toLowerCase()]});if(/magic ring/i.test(heard))parts.push({kind:"action",action:parts.length?"in magic ring":"magic ring"});if(/turn work|turn/i.test(heard))parts.push({kind:"action",action:"turn work"});if(parts.length){const box=sec.querySelector("[data-builder-parts]");box.innerHTML=parts.map(studioBuilderPart).join("")}else alert(`I heard: "${heard}". Check the row before saving.`);studioUpdateLiveRow(sec)};r.start();
+function studioPatternEditorTab(tab){
+  const info=tab==="info",a=$("#studioPatternInfoPane"),b=$("#studioPatternWriterPane");
+  if(a)a.hidden=!info;if(b)b.hidden=info;
+  document.querySelectorAll(".studio-pattern-editor-tabs button").forEach(x=>x.classList.toggle("active",x.dataset.tab===tab));
+  if(!info)setTimeout(()=>document.querySelectorAll("[data-row-text]").forEach(studioAutoGrowRow),0);
 }
 function studioFillYarnFromLibrary(sel){
   const y=studioYarnById(sel.value),row=sel.closest("[data-yarn-row]");if(!y||!row)return;
@@ -1189,40 +1173,24 @@ function editStudioPattern(id=""){
   const saved=!id?readStudioPatternDraft():null;
   const x=id?JSON.parse(JSON.stringify(studioPatternById(id)||studioDefaultPattern())):(saved?{...studioDefaultPattern(),...saved}:studioDefaultPattern());
   studioMainPhoto=x.mainPhoto||"";studioExtraPhotos=[...(x.extraPhotos||[])];
+  if(!Array.isArray(x.instructions)||!x.instructions.length)x.instructions=studioDefaultPattern().instructions;
+  if(!x.instructions[0].isMain)x.instructions[0]={...x.instructions[0],isMain:true,name:x.instructions[0].name||"Main Pattern"};
   const sizes=["XS","S","M","L","XL"];
-  openF(`<div class=studio-editor-title><div>${studioLogoBlock(id?"Edit Pattern":"New Pattern")}${!id&&saved?'<span class=draft-restored>Autosaved draft restored ✓</span>':""}</div>${!id?'<button type=button class=draft-clear-btn onclick=clearStudioPatternDraftAndRestart()>Start Fresh</button>':""}</div>
-    <label>Pattern name</label><input id=studioPatternName value="${esc(x.name||"")}" placeholder="e.g. Flora Dress">
-    <div class=studio-three><div><label>Technique</label><select id=studioTechniqueEdit onchange=studioToggleTechnique()><option ${x.technique==="Crochet"?"selected":""}>Crochet</option><option ${x.technique==="Knit"?"selected":""}>Knit</option></select></div>
-    <div><label>Category</label><select id=studioCategoryEdit>${studioCategories().map(z=>`<option ${x.category===z?"selected":""}>${z}</option>`).join("")}</select></div>
-    <div><label>Status</label><select id=studioStatusEdit>${["Draft","Testing","Final"].map(z=>`<option ${x.status===z?"selected":""}>${z}</option>`).join("")}</select></div></div>
-    <div class=studio-two><div><label>Collection <span class=meta>(optional)</span></label><input id=studioCollectionEdit value="${esc(x.collection||"")}" placeholder="e.g. Eden"></div><div><label>Tags</label><input id=studioTags value="${esc((x.tags||[]).join(", "))}" placeholder="floral, summer, fitted"></div></div>
-
-    <div class=studio-editor-block><h3>Photos</h3>
-      ${studioMainPhoto?`<img id=studioMainPreview class=studio-main-preview src="${studioMainPhoto}" alt="">`:`<img id=studioMainPreview class=studio-main-preview style="display:none" alt="">`}
-      <label>Main finished-piece photo</label><input type=file accept="image/*" onchange=studioMainPhotoChanged(this)>
-      <label>Extra / reference photos <span class=meta>(up to 6)</span></label><input type=file accept="image/*" multiple onchange=studioExtraPhotosChanged(this)>
-      <div id=studioExtraPreview class=studio-extra-preview></div>
+  openF(`<div class="studio-editor-title studio-pattern-editor-title"><div>${studioLogoBlock(id?"Edit Pattern":"New Pattern")}${!id&&saved?'<span class=draft-restored>Autosaved draft restored ✓</span>':""}</div><div class=studio-pattern-top-actions>${!id?'<button type=button class=draft-clear-btn onclick=clearStudioPatternDraftAndRestart()>Start Fresh</button>':""}<button type=button class=studio-top-save onclick="saveStudioPattern('${id}')">Save</button></div></div>
+    <div class=studio-pattern-editor-tabs><button type=button class=active data-tab=info onclick="studioPatternEditorTab('info')">▧ Pattern Info</button><button type=button data-tab=pattern onclick="studioPatternEditorTab('pattern')">☷ Pattern</button></div>
+    <div id=studioPatternInfoPane class=studio-pattern-pane>
+      <div class=studio-editor-block><h3>Basic Details</h3><label>Pattern name</label><input id=studioPatternName value="${esc(x.name||"")}" placeholder="e.g. Flora Dress"><div class=studio-three><div><label>Technique</label><select id=studioTechniqueEdit onchange=studioToggleTechnique()><option ${x.technique==="Crochet"?"selected":""}>Crochet</option><option ${x.technique==="Knit"?"selected":""}>Knit</option></select></div><div><label>Category</label><select id=studioCategoryEdit>${studioCategories().map(z=>`<option ${x.category===z?"selected":""}>${z}</option>`).join("")}</select></div><div><label>Status</label><select id=studioStatusEdit>${["Draft","Testing","Final"].map(z=>`<option ${x.status===z?"selected":""}>${z}</option>`).join("")}</select></div></div><div class=studio-two><div><label>Collection <span class=meta>(optional)</span></label><input id=studioCollectionEdit value="${esc(x.collection||"")}" placeholder="e.g. Eden"></div><div><label>Tags</label><input id=studioTags value="${esc((x.tags||[]).join(", "))}" placeholder="floral, summer, fitted"></div></div></div>
+      <div class=studio-editor-block><h3>Photos</h3>${studioMainPhoto?`<img id=studioMainPreview class=studio-main-preview src="${studioMainPhoto}" alt="">`:`<img id=studioMainPreview class=studio-main-preview style="display:none" alt="">`}<label>Main finished-piece photo</label><input type=file accept="image/*" onchange=studioMainPhotoChanged(this)><label>Gallery <span class=meta>(optional, up to 6)</span></label><input type=file accept="image/*" multiple onchange=studioExtraPhotosChanged(this)><div id=studioExtraPreview class=studio-extra-preview></div></div>
+      <div class=studio-editor-block><div class=studio-editor-row-head><h3>Yarn & Hook</h3><button type=button onclick=studioAddYarn()>＋ Add Yarn</button></div><div id=studioYarnList>${(x.yarns?.length?x.yarns:[{}]).map((y,i)=>studioYarnRow(y,i)).join("")}</div><div id=studioCrochetFields><label>Hook size</label><input id=studioHook value="${esc(x.hookSize||"")}" placeholder="e.g. 4 mm"></div><div id=studioKnitFields><h3>Knit Machine Details</h3><div class=studio-two><input id=studioMachine value="${esc(x.knit?.machine||"")}" placeholder="Machine / size, e.g. Sentro 48"><select id=studioMachineMode><option ${x.knit?.mode==="Panel"?"selected":""}>Panel</option><option ${x.knit?.mode==="Tube"?"selected":""}>Tube</option></select></div><div class=studio-two><input id=studioRowCount value="${esc(x.knit?.rowCount||"")}" placeholder="Row count"><input id=studioTension value="${esc(x.knit?.tension||"")}" placeholder="Tension / settings"></div><textarea id=studioMachineNotes placeholder="Machine notes">${esc(x.knit?.notes||"")}</textarea></div></div>
+      <div class=studio-editor-block><div class=studio-editor-row-head><h3>Materials</h3><button type=button onclick=studioAddMaterial()>＋ Add</button></div><div id=studioMaterialList>${(x.materials?.length?x.materials:[{}]).map(studioMaterialRow).join("")}</div><textarea id=studioMaterialNotes placeholder="Extra materials notes">${esc(x.materialNotes||"")}</textarea></div>
+      <div class=studio-editor-block><h3>Sizes & Measurements</h3><div class=studio-size-checks>${sizes.map(s=>`<label><input type=checkbox value="${s}" ${x.sizes?.includes(s)?"checked":""}> ${s}</label>`).join("")}<label><input id=studioCustomSizeCheck type=checkbox ${x.sizes?.some(s=>!sizes.includes(s))?"checked":""}> Custom</label></div><input id=studioCustomSize value="${esc((x.sizes||[]).filter(s=>!sizes.includes(s)).join(", "))}" placeholder="Custom size name(s), optional"><label>Saved model <span class=meta>(optional)</span></label><select id=studioModel><option value="">No saved model</option>${MODELS().map(m=>`<option value="${m.id}" ${x.linkedModelId===m.id?"selected":""}>${esc(m.name)}${m.usualSize?" · "+esc(m.usualSize):""}</option>`).join("")}</select><div class=studio-editor-row-head><label>Measurements</label><button type=button onclick=studioAddMeasurement()>＋ Add Measurement</button></div><div id=studioMeasurementList>${(x.measurements?.length?x.measurements:[{name:"Bust",unit:"in"}]).map(studioMeasurementRow).join("")}</div></div>
+      <div class=studio-editor-block><h3>Notes</h3><textarea id=studioPatternNotes placeholder="Anything else you want to remember…">${esc(x.notes||"")}</textarea></div>
+      <div class=studio-editor-block><h3>Costing</h3><label class=studio-cost-toggle><input id=studioCostEnabled type=checkbox ${x.costing?.enabled?"checked":""} onchange=studioToggleCost()> Track cost for this pattern</label><div id=studioCostFields class=studio-cost-fields><input id=studioCostYarn type=number placeholder="Yarn cost" value="${esc(x.costing?.yarn||"")}"><input id=studioCostLabor type=number placeholder="Labour" value="${esc(x.costing?.labor||"")}"><input id=studioCostOther type=number placeholder="Other cost" value="${esc(x.costing?.other||"")}"></div></div>
     </div>
-
-    <div class=studio-editor-block><div class=studio-editor-row-head><h3>Yarn</h3><button type=button onclick=studioAddYarn()>＋ Add Yarn</button></div><div id=studioYarnList>${(x.yarns?.length?x.yarns:[{}]).map((y,i)=>studioYarnRow(y,i)).join("")}</div></div>
-
-    <div id=studioCrochetFields class=studio-editor-block><h3>Hook</h3><input id=studioHook value="${esc(x.hookSize||"")}" placeholder="e.g. 4 mm"></div>
-    <div id=studioKnitFields class=studio-editor-block><h3>Knit Machine Details</h3><div class=studio-two><input id=studioMachine value="${esc(x.knit?.machine||"")}" placeholder="Machine / size, e.g. Sentro 48"><select id=studioMachineMode><option ${x.knit?.mode==="Panel"?"selected":""}>Panel</option><option ${x.knit?.mode==="Tube"?"selected":""}>Tube</option></select></div><div class=studio-two><input id=studioRowCount value="${esc(x.knit?.rowCount||"")}" placeholder="Row count"><input id=studioTension value="${esc(x.knit?.tension||"")}" placeholder="Tension / settings"></div><textarea id=studioMachineNotes placeholder="Machine notes">${esc(x.knit?.notes||"")}</textarea></div>
-
-    <div class=studio-editor-block><div class=studio-editor-row-head><h3>Materials</h3><button type=button onclick=studioAddMaterial()>＋ Add</button></div><div id=studioMaterialList>${(x.materials?.length?x.materials:[{}]).map(studioMaterialRow).join("")}</div><textarea id=studioMaterialNotes placeholder="Extra materials notes">${esc(x.materialNotes||"")}</textarea></div>
-
-    <div class=studio-editor-block><h3>Sizing & Model</h3><div class=studio-size-checks>${sizes.map(s=>`<label><input type=checkbox value="${s}" ${x.sizes?.includes(s)?"checked":""}> ${s}</label>`).join("")}<label><input id=studioCustomSizeCheck type=checkbox ${x.sizes?.some(s=>!sizes.includes(s))?"checked":""}> Custom</label></div><input id=studioCustomSize value="${esc((x.sizes||[]).filter(s=>!sizes.includes(s)).join(", "))}" placeholder="Custom size name(s), optional"><label>Saved model <span class=meta>(optional)</span></label><select id=studioModel><option value="">No saved model</option>${MODELS().map(m=>`<option value="${m.id}" ${x.linkedModelId===m.id?"selected":""}>${esc(m.name)}${m.usualSize?" · "+esc(m.usualSize):""}</option>`).join("")}</select></div>
-
-    <div class=studio-editor-block><div class=studio-editor-row-head><h3>Measurements</h3><button type=button onclick=studioAddMeasurement()>＋ Add Measurement</button></div><div id=studioMeasurementList>${(x.measurements?.length?x.measurements:[{name:"Bust",unit:"in"}]).map(studioMeasurementRow).join("")}</div></div>
-
-    <div class=studio-editor-block><div class=studio-editor-row-head><div><h3>Pattern Pieces & Rows</h3><div class=meta>For sets, add each piece here so every piece can have its own photo and rows.</div></div><button type=button onclick=studioAddSection()>＋ Piece</button></div><div id=studioSectionList>${(x.instructions?.length?x.instructions:[{name:"Main Piece",photo:"",steps:[]}]).map(studioSectionEditor).join("")}</div></div>
-
-    <div class=studio-editor-block><h3>Notes</h3><textarea id=studioPatternNotes placeholder="Anything else you want to remember…">${esc(x.notes||"")}</textarea></div>
-
-    <div class=studio-editor-block><label class=studio-cost-toggle><input id=studioCostEnabled type=checkbox ${x.costing?.enabled?"checked":""} onchange=studioToggleCost()> Track cost for this pattern</label><div id=studioCostFields class=studio-cost-fields><input id=studioCostYarn type=number placeholder="Yarn cost" value="${esc(x.costing?.yarn||"")}"><input id=studioCostLabor type=number placeholder="Labour" value="${esc(x.costing?.labor||"")}"><input id=studioCostOther type=number placeholder="Other cost" value="${esc(x.costing?.other||"")}"></div></div>
-
-    <button class=primary onclick="saveStudioPattern('${id}')">${id?"Save Pattern":"Create Pattern"}</button>`);
+    <div id=studioPatternWriterPane class="studio-pattern-pane studio-pattern-writer-pane" hidden><div class=studio-writer-intro><div><span>ACTUAL PATTERN</span><h3>Write it row by row</h3><p>Type naturally. Press Enter and the next row appears automatically.</p></div><button type=button onclick=studioAddSection()>＋ Add Piece</button></div><div id=studioSectionList>${x.instructions.map((sec,i)=>studioSectionEditor(sec,i)).join("")}</div><button type=button class=studio-add-piece-bottom onclick=studioAddSection()>＋ Add Optional Piece</button></div>
+    <button class="primary studio-pattern-save-bottom" onclick="saveStudioPattern('${id}')">${id?"Save Pattern":"Create Pattern"}</button>`);
   studioToggleTechnique();studioToggleCost();studioRenderExtraPreviews();if(!id)installStudioPatternDraftAutosave();
+  setTimeout(()=>document.querySelectorAll("[data-row-text]").forEach(studioAutoGrowRow),0);
 }
 function collectStudioYarns(){
   return [...document.querySelectorAll("[data-yarn-row]")].map(row=>({
@@ -1247,18 +1215,14 @@ function collectStudioMeasurements(){
   })).filter(x=>x.name||x.value);
 }
 function collectStudioInstructions(){
-  return [...document.querySelectorAll("[data-section-row]")].map(sec=>({
-    name:sec.querySelector("[data-section-name]")?.value.trim()||"Piece",
-    photo:sec.dataset.piecePhoto||"",
-    yarnOverride:sec.querySelector("[data-section-yarn]")?.value.trim()||"",
-    hookOverride:sec.querySelector("[data-section-hook]")?.value.trim()||"",
-    measurementNotes:sec.querySelector("[data-section-measure]")?.value.trim()||"",
-    steps:[...sec.querySelectorAll("[data-step-row]")].map((st,i)=>({
-      id:st.dataset.stepId||crypto.randomUUID(),
-      rowNumber:+(st.querySelector("[data-step-rownum]")?.value||i+1),
-      segments:studioCollectSavedSegments(st),
-      note:st.querySelector("[data-step-note]")?.value.trim()||""
-    })).sort((a,b)=>a.rowNumber-b.rowNumber)
+  return [...document.querySelectorAll("[data-section-row]")].map((sec,si)=>({
+    name:sec.querySelector("[data-section-name]")?.value.trim()||(si===0?"Main Pattern":"Piece"),
+    isMain:sec.dataset.sectionMain==="1",photo:sec.dataset.piecePhoto||"",notes:sec.querySelector("[data-section-note]")?.value.trim()||"",
+    steps:[...sec.querySelectorAll("[data-pattern-row]")].map((row,i)=>{
+      if(row.dataset.rowKind==="repeat")return {id:row.dataset.stepId||crypto.randomUUID(),kind:"repeat",repeatFrom:+(row.querySelector("[data-repeat-from]")?.value||1),repeatTo:+(row.querySelector("[data-repeat-to]")?.value||1),repeatTimes:+(row.querySelector("[data-repeat-times]")?.value||2)};
+      const start=+(row.dataset.rowStart||i+1),end=+(row.querySelector("[data-row-end]")?.value||start);
+      return {id:row.dataset.stepId||crypto.randomUUID(),kind:"row",rowNumber:start,rowEnd:end>start?end:null,text:row.querySelector("[data-row-text]")?.value.trim()||"",note:row.querySelector("[data-row-note]")?.value.trim()||"",photo:row.dataset.rowPhoto||""};
+    })
   }));
 }
 function saveStudioPattern(id=""){
@@ -1410,7 +1374,7 @@ function calculateStudioGauge(){
 function exportStudioPatternPDF(id){
   const x=studioPatternById(id);if(!x||x.status!=="Final")return alert("Only Final patterns can be exported.");
   const model=studioModelById(x.linkedModelId);
-  const rows=(x.instructions||[]).map((s,i)=>`<section>${studioPiecePhoto(s)?`<img class=piecephoto src="${studioPiecePhoto(s)}">`:""}<h2>${String(i+1).padStart(2,"0")} · ${esc(s.name||"Piece")}</h2>${(s.yarnOverride||s.hookOverride||s.measurementNotes)?`<div class=over>${s.yarnOverride?`<b>Yarn:</b> ${esc(s.yarnOverride)} `:""}${s.hookOverride?`<b>Hook/settings:</b> ${esc(s.hookOverride)} `:""}${s.measurementNotes?`<b>Measurements:</b> ${esc(s.measurementNotes)}`:""}</div>`:""}${(s.steps||[]).slice().sort((a,b)=>studioStepRowNumber(a,1)-studioStepRowNumber(b,1)).map((st,i)=>`<div class=step><b>Row ${studioStepRowNumber(st,i+1)}:</b><p>${studioStepReadable(st)}</p></div>`).join("")}</section>`).join("");
+  const rows=(x.instructions||[]).map((s,i)=>`<section>${studioPiecePhoto(s)?`<img class=piecephoto src="${studioPiecePhoto(s)}">`:""}<h2>${String(i+1).padStart(2,"0")} · ${esc(s.name||"Piece")}</h2>${(s.yarnOverride||s.hookOverride||s.measurementNotes)?`<div class=over>${s.yarnOverride?`<b>Yarn:</b> ${esc(s.yarnOverride)} `:""}${s.hookOverride?`<b>Hook/settings:</b> ${esc(s.hookOverride)} `:""}${s.measurementNotes?`<b>Measurements:</b> ${esc(s.measurementNotes)}`:""}</div>`:""}${(s.steps||[]).map((st,i)=>st.kind==="repeat"?`<div class=step><b>${esc(studioStepLabel(st,i+1))}</b></div>`:`<div class=step><b>${esc(studioStepLabel(st,i+1))}:</b><p>${esc(studioStepReadable(st))}</p></div>`).join("")}</section>`).join("");
   const win=window.open("","_blank");if(!win)return alert("Allow pop-ups so I can open the PDF layout.");
   win.document.write(`<!doctype html><html><head><meta charset=utf-8><title>${esc(x.name)} · Améa Pattern</title><style>
     @page{margin:16mm}*{box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#5a2440;line-height:1.5;margin:0}.head{border-bottom:2px solid #b88935;padding-bottom:18px;margin-bottom:24px;display:flex;justify-content:space-between;align-items:end}.logo{height:46px;max-width:170px;object-fit:contain}.hq{color:#b88935;font-size:11px;font-weight:800;letter-spacing:2px}.eyebrow{font-size:9px;letter-spacing:2px;color:#b88935;font-weight:800}h1{font-family:Georgia,serif;color:#f52578;margin:3px 0 5px;font-size:30px}h2{font-family:Georgia,serif;color:#f52578;font-size:18px;margin:24px 0 8px}.meta{color:#93677c;font-size:11px}.hero{display:grid;grid-template-columns:145px 1fr;gap:20px;align-items:start}.hero img.photo{width:145px;height:145px;object-fit:cover;border-radius:18px}.box{background:#fff8fc;border:1px solid #f1d7e3;border-radius:14px;padding:12px;margin:12px 0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.line{padding:5px 0;border-bottom:1px solid #f5e5ec}.step{padding:9px 0;border-bottom:1px solid #f2dde6}.step p{margin:3px 0 0;white-space:pre-wrap}.piecephoto{width:150px;height:150px;object-fit:cover;border-radius:16px;float:right;margin:0 0 12px 18px}.over{background:#fff6fa;padding:9px;border-radius:10px;font-size:10px}.extra{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.extra img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:12px}.footer{margin-top:30px;border-top:1px solid #e9d4dc;padding-top:10px;color:#93677c;font-size:9px;text-align:center}@media print{button{display:none}}</style></head><body>
@@ -1449,11 +1413,13 @@ function renderCalendarPage(){
     else if(i>=startDay+daysInMonth){day=i-(startDay+daysInMonth)+1;cm=m+1;muted=true;if(cm>11){cm=0;cy++}}
     else day=i-startDay+1;
     const key=calendarDayKey(cy,cm,day),orders=byDue[key]||[];
-    const name=orders[0]?esc(orders[0].customer||"Order"):"";
-    const extra=orders.length>1?`<span class=calendar-more>+${orders.length-1}</span>`:"";
+    const names=orders.map(o=>{
+      const customer=esc(o.customer||"Order");
+      return `<span class=calendar-name title="${customer}">${customer}</span>`;
+    }).join("");
     cells.push(`<div class="calendar-cell ${muted?"muted":""} ${key===todayKey?"today":""} ${orders.length?"has-orders":""}">
       <div class=calendar-date>${day}</div>
-      ${orders.length?`<div class=calendar-due-list><span class=calendar-name title="${name}">${name}</span>${extra}</div>`:""}
+      ${orders.length?`<div class=calendar-due-list>${names}</div>`:""}
     </div>`);
   }
 
@@ -2068,9 +2034,9 @@ function patternProgressFor(o,lineId){return (o.patternProgress&&o.patternProgre
 function patternRowsForTracker(pattern){
   const out=[];
   (pattern?.instructions||[]).forEach((sec,si)=>{
-    (sec.steps||[]).slice().sort((a,b)=>studioStepRowNumber(a,1)-studioStepRowNumber(b,1)).forEach((st,i)=>{
-      const row=studioStepRowNumber(st,i+1);
-      out.push({key:`${si}:${st.id||row+":"+i}`,section:sec.name||`Piece ${si+1}`,sectionIndex:si,row,st});
+    (sec.steps||[]).forEach((st,i)=>{
+      const row=studioStepRowNumber(st,i+1),label=studioStepLabel(st,i+1);
+      out.push({key:`${si}:${st.id||row+":"+i}`,section:sec.name||`Piece ${si+1}`,sectionIndex:si,row,label,st});
     });
   });
   return out;
