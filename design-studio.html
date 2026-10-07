@@ -115,17 +115,50 @@
         <strong>Colours</strong>
         <button class="close-panel" data-close-panel>×</button>
       </div>
-      <div class="colour-picker-wrap">
-        <input id="colourPicker" type="color" value="#111111" />
+
+      <div class="colour-tabs" role="tablist">
+        <button class="colour-tab active" data-colour-tab="disc">Disc</button>
+        <button class="colour-tab" data-colour-tab="classic">Classic</button>
+        <button class="colour-tab" data-colour-tab="palettes">Palettes</button>
       </div>
+
+      <section class="colour-view" data-colour-view="disc">
+        <div class="disc-picker-wrap">
+          <canvas id="colourDisc" width="240" height="240" aria-label="Colour wheel"></canvas>
+          <div id="discMarker" class="disc-marker"></div>
+        </div>
+      </section>
+
+      <section class="colour-view hidden" data-colour-view="classic">
+        <div class="classic-picker-wrap">
+          <canvas id="classicSquare" width="260" height="180" aria-label="Saturation and brightness picker"></canvas>
+          <div id="classicMarker" class="classic-marker"></div>
+        </div>
+        <input id="hueSlider" class="hue-slider" type="range" min="0" max="360" value="0" aria-label="Hue" />
+      </section>
+
+      <section class="colour-view hidden" data-colour-view="palettes">
+        <div class="palette-toolbar">
+          <select id="paletteSelect" aria-label="Saved palettes"></select>
+          <button id="newPaletteBtn" class="mini-action">＋ Palette</button>
+        </div>
+        <div id="savedPalette" class="saved-palette"></div>
+        <button id="addColourToPaletteBtn" class="palette-add-current">＋ Add current colour</button>
+      </section>
+
+      <div class="colour-current-row">
+        <button id="eyedropperBtn" class="eyedropper-button" type="button">⌾ Eyedropper</button>
+        <div class="current-colour-preview"><span id="currentColourChip"></span><span id="currentColourText">#111111</span></div>
+      </div>
+
       <div class="colour-row">
         <label>Hex</label>
-        <input id="hexInput" value="#111111" maxlength="7" />
+        <input id="hexInput" value="#111111" maxlength="7" inputmode="text" />
+        <input id="colourPicker" class="native-colour-input" type="color" value="#111111" aria-label="System colour picker" />
       </div>
-      <div class="section-label">Recent</div>
+
+      <div class="section-label">Recent <span class="section-hint">hold to remove</span></div>
       <div id="recentColours" class="recent-colours"></div>
-      <div class="section-label">Palette</div>
-      <div id="defaultPalette" class="default-palette"></div>
     </aside>
 
     <aside id="actionsPanel" class="floating-panel actions-panel hidden" aria-label="Actions">
