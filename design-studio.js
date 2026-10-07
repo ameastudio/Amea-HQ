@@ -972,7 +972,7 @@ function updateSliderLabels(){
 }
 $("#colourPicker").oninput=e=>setColour(e.target.value);
 $("#hexInput").onchange=e=>{if(!setColour(e.target.value)){$("#hexInput").value=state.colour;toast("Use a 6-digit hex colour")}};
-$(".colour-tab").forEach(b=>b.onclick=()=>setColourTab(b.dataset.colourTab));
+Array.from(document.querySelectorAll(".colour-tab")).forEach(b=>b.onclick=()=>setColourTab(b.dataset.colourTab));
 $("#paletteSelect").onchange=e=>{state.activePalette=+e.target.value;renderPalettes()};
 $("#newPaletteBtn").onclick=createPalette;
 $("#addColourToPaletteBtn").onclick=addCurrentToPalette;
