@@ -301,6 +301,105 @@ function deleteCustomBrush(id){
   if(state.brush.id===id)state.brush=BRUSHES[0];
   renderBrushList();toast("Brush deleted");
 }
+function defaultBrushDraft(){
+  return {id:"draft-brush",name:"Untitled Brush",category:"custom",note:"Custom Brush",mode:"custom",size:22,opacity:1,spacing:12,taper:0,smoothing:55,pressure:65,shapeData:null,grainData:null};
+}
+function openBrushStudio(brush=null){
+  state.editingCustomBrushId=brush&&brush.mode==="custom"?brush.id:null;
+  state.brushDraft=brush&&brush.mode==="custom"?{...brush}:{...defaultBrushDraft(),id:"draft-"+Date.now().toString(36)};
+  syncBrushStudioUI();
+  $("#brushStudioModal").classList.remove("hidden");
+  requestAnimationFrame(renderBrushStudioPreview);
+}
+function closeBrushStudio(){
+  $("#brushStudioModal").classList.add("hidden");
+  state.editingCustomBrushId=null;state.brushDraft=null;
+}
+function syncBrushStudioUI(){
+  const b=state.brushDraft;if(!b)return;
+  $("#brushNameInput").value=b.name||"Untitled Brush";
+  $("#brushSpacing").value=b.spacing;$("#brushSize").value=b.size;$("#brushOpacity").value=Math.round(b.opacity*100);
+  $("#brushTaper").value=b.taper;$("#brushSmoothing").value=b.smoothing;$("#brushPressure").value=b.pressure;
+  updateBrushStudioOutputs();renderBrushSourcePreview("shape");renderBrushSourcePreview("grain");
+}
+function updateBrushStudioOutputs(){
+  const b=state.brushDraft;if(!b)return;
+  $("#brushSpacingOut").textContent=Math.round(b.spacing)+"%";
+  $("#brushSizeOut").textContent=Math.round(b.size/120*100)+"%";
+  $("#brushOpacityOut").textContent=Math.round(b.opacity*100)+"%";
+  $("#brushTaperOut").textContent=Math.round(b.taper)+"%";
+  $("#brushSmoothingOut").textContent=Math.round(b.smoothing)+"%";
+  $("#brushPressureOut").textContent=Math.round(b.pressure)+"%";
+}
+function renderBrushSourcePreview(kind){
+  const b=state.brushDraft;if(!b)return;
+  const prop=kind==="shape"?"shapeData":"grainData",root=$("#"+kind+"Preview");root.innerHTML="";
+  if(b[prop]){
+    const img=document.createElement("img");img.src=b[prop];img.alt=kind==="shape"?"Brush shape":"Brush grain";root.appendChild(img);
+  }else{
+    const span=document.createElement("span");span.textContent=kind==="shape"?"Round":"None";root.appendChild(span);
+  }
+}
+function processBrushAsset(file){
+  return new Promise((resolve,reject)=>{
+    if(!file){reject(new Error("No file"));return}
+    const reader=new FileReader();
+    reader.onerror=()=>reject(new Error("Could not read image"));
+    reader.onload=()=>{
+      const img=new Image();
+      img.onerror=()=>reject(new Error("Could not load image"));
+      img.onload=()=>{
+        const size=256,cv=document.createElement("canvas");cv.width=size;cv.height=size;const c=cv.getContext("2d");
+        const scale=Math.max(size/img.width,size/img.height),dw=img.width*scale,dh=img.height*scale;
+        c.clearRect(0,0,size,size);c.drawImage(img,(size-dw)/2,(size-dh)/2,dw,dh);
+        const im=c.getImageData(0,0,size,size),d=im.data;
+        let transparent=false;for(let i=3;i<d.length;i+=4){if(d[i]<245){transparent=true;break}}
+        if(transparent){
+          for(let i=0;i<d.length;i+=4){d[i]=255;d[i+1]=255;d[i+2]=255}
+        }else{
+          let sum=0,count=0;
+          for(let y=0;y<size;y+=4)for(let x=0;x<size;x+=4){
+            if(x<16||x>size-17||y<16||y>size-17){const i=(y*size+x)*4;sum+=(d[i]+d[i+1]+d[i+2])/3;count++}
+          }
+          const invert=sum/Math.max(1,count)>140;
+          for(let i=0;i<d.length;i+=4){
+            const lum=.2126*d[i]+.7152*d[i+1]+.0722*d[i+2],alpha=invert?255-lum:lum;
+            d[i]=255;d[i+1]=255;d[i+2]=255;d[i+3]=Math.round(alpha);
+          }
+        }
+        c.putImageData(im,0,0);resolve(cv.toDataURL("image/png"));
+      };
+      img.src=reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+async function importBrushAsset(kind,file){
+  if(!state.brushDraft||!file)return;
+  try{
+    const data=await processBrushAsset(file);
+    if(kind==="shape")state.brushDraft.shapeData=data;else state.brushDraft.grainData=data;
+    customAssetCache.clear();customStampCache.clear();renderBrushSourcePreview(kind);renderBrushStudioPreview();
+  }catch(_){toast("Could not import that image")}
+}
+function saveBrushDraft(){
+  const b=state.brushDraft;if(!b)return;
+  const name=$("#brushNameInput").value.trim()||"Untitled Brush";
+  const saved={...b,name,category:"custom",note:"Custom Brush",mode:"custom"};
+  if(state.editingCustomBrushId){
+    const i=state.customBrushes.findIndex(x=>x.id===state.editingCustomBrushId);
+    if(i>=0){saved.id=state.editingCustomBrushId;state.customBrushes[i]=saved}
+  }else{
+    saved.id="cb"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+    state.customBrushes.push(saved);
+  }
+  if(!saveJSON(CUSTOM_BRUSH_KEY,state.customBrushes))return;
+  customAssetCache.clear();customStampCache.clear();
+  state.brushCategory="custom";state.brush=saved;state.size=saved.size;state.opacity=saved.opacity;
+  $("#sizeSlider").value=saved.size;$("#opacitySlider").value=Math.round(saved.opacity*100);updateSliderLabels();
+  closeBrushStudio();renderBrushCategories();renderBrushList();toast("Brush saved");
+}
+
 function syncToolButtons(){
   $("#brushBtn").classList.toggle("active",state.tool==="brush");
   $("#smudgeBtn").classList.toggle("active",state.tool==="smudge");
@@ -652,7 +751,7 @@ function redrawContinuousStroke(layer){
     sctx.restore();
   }
 
-  let modeOpacity=b.opacity;
+  let modeOpacity=b.mode==="custom"?1:b.opacity;
   if(b.mode==="pencil")modeOpacity*=.88;
   if(b.mode==="soft")modeOpacity*=.72;
   if(b.mode==="rough")modeOpacity*=.78;
@@ -1097,6 +1196,20 @@ $("#fitCanvasAction").onclick=()=>{closePanels();fitCanvas()};
 $("#exportAction").onclick=()=>{closePanels();exportCurrent()};
 $("#clearLayerAction").onclick=()=>{const l=activeLayer();if(!l)return;if(confirm("Clear active layer?")){l.canvas.getContext("2d").clearRect(0,0,W,H);render();renderLayers();resetHistory();scheduleSave()}};
 $("#addLayerBtn").onclick=addLayer;
+$("#createBrushBtn").onclick=()=>openBrushStudio();
+$("#cancelBrushStudioBtn").onclick=closeBrushStudio;
+$("#saveBrushBtn").onclick=saveBrushDraft;
+$("#brushNameInput").oninput=e=>{if(state.brushDraft)state.brushDraft.name=e.target.value};
+$("#shapeInput").onchange=e=>{const f=e.target.files&&e.target.files[0];if(f)importBrushAsset("shape",f);e.target.value=""};
+$("#grainInput").onchange=e=>{const f=e.target.files&&e.target.files[0];if(f)importBrushAsset("grain",f);e.target.value=""};
+$("#clearShapeBtn").onclick=()=>{if(state.brushDraft){state.brushDraft.shapeData=null;customAssetCache.clear();customStampCache.clear();renderBrushSourcePreview("shape");renderBrushStudioPreview()}};
+$("#clearGrainBtn").onclick=()=>{if(state.brushDraft){state.brushDraft.grainData=null;customAssetCache.clear();customStampCache.clear();renderBrushSourcePreview("grain");renderBrushStudioPreview()}};
+[
+  ["brushSpacing","spacing",v=>+v],["brushSize","size",v=>+v],["brushOpacity","opacity",v=>+v/100],
+  ["brushTaper","taper",v=>+v],["brushSmoothing","smoothing",v=>+v],["brushPressure","pressure",v=>+v]
+].forEach(([id,key,convert])=>{
+  $("#"+id).oninput=e=>{if(!state.brushDraft)return;state.brushDraft[key]=convert(e.target.value);updateBrushStudioOutputs();customStampCache.clear();renderBrushStudioPreview()};
+});
 $("#undoBtn").onclick=undo;$("#redoBtn").onclick=redo;
 
 $("#designNameInput").onchange=scheduleSave;
@@ -1179,7 +1292,7 @@ window.addEventListener("keydown",e=>{
 });
 
 function init(){
-  renderGallery();renderBrushCategories();renderBrushList();normalizePalettes();renderRecentColours();renderPalettes();setColour(state.colour,false);setColourTab("disc");updateSliderLabels();syncToolButtons();syncHistoryButtons();
+  normaliseCustomBrushes();renderGallery();renderBrushCategories();renderBrushList();normalizePalettes();renderRecentColours();renderPalettes();setColour(state.colour,false);setColourTab("disc");updateSliderLabels();syncToolButtons();syncHistoryButtons();
   croquisImages.front.onload=()=>{render();};
   croquisImages.back.onload=()=>{render();};
 }
