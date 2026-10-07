@@ -96,7 +96,9 @@ const state={
   selectedGalleryId:null,
   selectMode:false,
   selectedGallery:new Set(),
-  layerDrag:null
+  layerDrag:null,
+  touchPan:null,
+  pendingDraw:null
 };
 
 function loadJSON(key,fallback){
@@ -1362,34 +1364,87 @@ viewport.addEventListener("wheel",e=>{e.preventDefault();zoomAt(e.deltaY<0?1.08:
 viewport.addEventListener("pointerdown",e=>{
   if(state.eyedropper&&e.target===display){sampleCanvasColour(e);closePanels();return}
   closePanels();
+
+  // Finger touches are navigation only: one finger pans, two fingers pinch-zoom.
   if(e.pointerType==="touch"){
     state.pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
-    if(state.pointers.size===2){
-      state.drawing=false;const p=Array.from(state.pointers.values()),a=p[0],b=p[1];
-      state.gesture={dist:Math.hypot(a.x-b.x,a.y-b.y),scale:state.viewScale,x:state.viewX,y:state.viewY,midX:(a.x+b.x)/2,midY:(a.y+b.y)/2};return;
+    if(state.pointers.size===1){
+      state.touchPan={pointerId:e.pointerId,lastX:e.clientX,lastY:e.clientY};
+    }else if(state.pointers.size===2){
+      state.touchPan=null;
+      const p=Array.from(state.pointers.values()),a=p[0],b=p[1];
+      state.gesture={dist:Math.hypot(a.x-b.x,a.y-b.y),scale:state.viewScale,x:state.viewX,y:state.viewY,midX:(a.x+b.x)/2,midY:(a.y+b.y)/2};
     }
+    try{viewport.setPointerCapture(e.pointerId)}catch(_){}
+    return;
   }
-  if(e.target===display){
-    state.drawingPointer=e.pointerId;beginStroke(pointFromEvent(e));try{viewport.setPointerCapture(e.pointerId)}catch(_){}
+
+  if(e.target!==display)return;
+
+  // Apple Pencil / stylus draws immediately.
+  if(e.pointerType==="pen"){
+    state.drawingPointer=e.pointerId;beginStroke(pointFromEvent(e));
+    try{viewport.setPointerCapture(e.pointerId)}catch(_){}
+    return;
+  }
+
+  // Mouse clicks do not drop a dot. Drawing starts only after a small drag.
+  if(e.pointerType==="mouse"&&e.button===0){
+    state.pendingDraw={pointerId:e.pointerId,startEvent:{clientX:e.clientX,clientY:e.clientY,pointerType:e.pointerType,pressure:e.pressure},startX:e.clientX,startY:e.clientY};
+    try{viewport.setPointerCapture(e.pointerId)}catch(_){}
   }
 });
 viewport.addEventListener("pointermove",e=>{
   if(e.pointerType==="touch"&&state.pointers.has(e.pointerId)){
     state.pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+
     if(state.pointers.size>=2&&state.gesture){
       const p=Array.from(state.pointers.values()),a=p[0],b=p[1],dist=Math.hypot(a.x-b.x,a.y-b.y),midX=(a.x+b.x)/2,midY=(a.y+b.y)/2,r=viewport.getBoundingClientRect();
       const startX=state.gesture.midX-r.left,startY=state.gesture.midY-r.top,cx=(startX-state.gesture.x)/state.gesture.scale,cy=(startY-state.gesture.y)/state.gesture.scale;
-      state.viewScale=clamp(state.gesture.scale*(dist/state.gesture.dist),.2,5);state.viewX=midX-r.left-cx*state.viewScale;state.viewY=midY-r.top-cy*state.viewScale;applyView();return;
+      state.viewScale=clamp(state.gesture.scale*(dist/state.gesture.dist),.2,5);
+      state.viewX=midX-r.left-cx*state.viewScale;state.viewY=midY-r.top-cy*state.viewScale;applyView();
+      return;
+    }
+
+    if(state.pointers.size===1&&state.touchPan&&state.touchPan.pointerId===e.pointerId){
+      state.viewX+=e.clientX-state.touchPan.lastX;
+      state.viewY+=e.clientY-state.touchPan.lastY;
+      state.touchPan.lastX=e.clientX;state.touchPan.lastY=e.clientY;applyView();
+      return;
     }
   }
+
+  if(state.pendingDraw&&state.pendingDraw.pointerId===e.pointerId&&!state.drawing){
+    const moved=Math.hypot(e.clientX-state.pendingDraw.startX,e.clientY-state.pendingDraw.startY);
+    if(moved>=3&&(e.buttons&1)){
+      const start=state.pendingDraw.startEvent;
+      state.pendingDraw=null;
+      state.drawingPointer=e.pointerId;
+      beginStroke(pointFromEvent(start));
+      continueStroke(pointFromEvent(e));
+    }
+    return;
+  }
+
   if(state.drawing&&e.pointerId===state.drawingPointer){
     const samples=typeof e.getCoalescedEvents==="function"?e.getCoalescedEvents():[e];
     for(const sample of samples)continueStroke(pointFromEvent(sample));
   }
 });
 function pointerEnd(e){
-  if(state.pointers.has(e.pointerId))state.pointers.delete(e.pointerId);
-  if(state.pointers.size<2)state.gesture=null;
+  if(state.pendingDraw&&state.pendingDraw.pointerId===e.pointerId)state.pendingDraw=null;
+
+  if(state.pointers.has(e.pointerId)){
+    state.pointers.delete(e.pointerId);
+    if(state.pointers.size<2)state.gesture=null;
+    if(state.pointers.size===1){
+      const [id,p]=state.pointers.entries().next().value;
+      state.touchPan={pointerId:id,lastX:p.x,lastY:p.y};
+    }else if(state.pointers.size===0){
+      state.touchPan=null;
+    }
+  }
+
   if(state.drawing&&e.pointerId===state.drawingPointer){endStroke();state.drawingPointer=null}
 }
 viewport.addEventListener("pointerup",pointerEnd);viewport.addEventListener("pointercancel",pointerEnd);
