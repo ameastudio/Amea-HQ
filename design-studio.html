@@ -190,6 +190,21 @@
   </div>
 
   <div id="toast" class="toast"></div>
-  <script src="design-studio.js"></script>
+  <script>
+fetch("design-studio.js",{cache:"no-store"})
+  .then(r=>{if(!r.ok)throw new Error("runtime");return r.text()})
+  .then(src=>{
+    src=src.split("\n").map(line=>{
+      const t=line.trimStart();
+      if(line.includes(".forEach")&&t.startsWith('$(\"')){
+        const pad=line.slice(0,line.length-t.length);
+        return pad+"$"+t;
+      }
+      return line;
+    }).join("\n");
+    (0,eval)(src);
+  })
+  .catch(()=>{const t=document.getElementById("toast");if(t){t.textContent="Design Studio could not start";t.classList.add("show")}});
+</script>
 </body>
 </html>
