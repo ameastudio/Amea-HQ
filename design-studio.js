@@ -157,18 +157,18 @@ function renderLayerArray(ctx,layers,alpha=1){
     ctx.drawImage(l.canvas,0,0);
   }
 }
-function compositeTo(ctx,includeReference=true,view=state.activeView,includeOverlay=state.overlayOther){
+function compositeTo(ctx,includeReference=true,view=state.activeView,includeOverlay=state.overlayOther,includeMannequin=true){
   ctx.save();
   ctx.setTransform(1,0,0,1,0,0);
   ctx.clearRect(0,0,W,H);
   ctx.fillStyle="#fff";ctx.fillRect(0,0,W,H);
 
   const croquisType=state.designKind==="blank"?"blank":view;
-  drawCroquis(ctx,croquisType,state.croquisOpacity);
+  if(includeMannequin)drawCroquis(ctx,croquisType,state.croquisOpacity);
 
   if(includeOverlay&&state.designKind!=="blank"){
     const other=view==="front"?"back":"front";
-    drawCroquis(ctx,other,.09);
+    if(includeMannequin)drawCroquis(ctx,other,.09);
     renderLayerArray(ctx,state.views[other]||[],.16);
   }
 
@@ -1210,17 +1210,43 @@ async function exportStoredDesign(d){
 function downloadCanvas(canvas,name){
   const a=document.createElement("a");a.download=(name||"Artwork").replace(/[^a-z0-9-_]+/gi,"-")+".png";a.href=canvas.toDataURL("image/png");a.click();
 }
-function exportCurrent(){
-  const c=document.createElement("canvas");c.width=W*2;c.height=H;const x=c.getContext("2d");
-  const left=document.createElement("canvas"),right=document.createElement("canvas");left.width=right.width=W;left.height=right.height=H;
-  compositeTo(left.getContext("2d"),false,"front",false);
-  compositeTo(right.getContext("2d"),false,"back",false);
-  x.drawImage(left,0,0);x.drawImage(right,W,0);
-  downloadCanvas(c,$("#designNameInput").value);toast("Front + Back exported");
+function makeExportCanvas(view,includeMannequin){
+  const c=document.createElement("canvas");c.width=W;c.height=H;
+  compositeTo(c.getContext("2d"),false,view,false,includeMannequin);
+  return c;
 }
-
+function exportCurrent(mode="current",includeMannequin=true){
+  const name=$("#designNameInput").value||"Artwork";
+  if(state.designKind==="blank"){
+    const c=makeExportCanvas(state.activeView,false);
+    downloadCanvas(c,name);toast("Canvas exported");return;
+  }
+  const chosen=mode==="current"?state.activeView:mode;
+  if(chosen==="both"){
+    const c=document.createElement("canvas");c.width=W*2;c.height=H;const x=c.getContext("2d");
+    const front=makeExportCanvas("front",includeMannequin),back=makeExportCanvas("back",includeMannequin);
+    x.drawImage(front,0,0);x.drawImage(back,W,0);
+    downloadCanvas(c,name+"-front-back");toast("Front + Back exported");return;
+  }
+  const c=makeExportCanvas(chosen,includeMannequin);
+  downloadCanvas(c,name+"-"+chosen);toast((chosen==="front"?"Front":"Back")+" exported");
+}
+function openExportModal(){
+  closePanels();
+  const blank=state.designKind==="blank";
+  $("#fashionExportOptions").classList.toggle("hidden",blank);
+  $("#blankExportOptions").classList.toggle("hidden",!blank);
+  $("#includeMannequinRow").classList.toggle("hidden",blank);
+  $("#exportModal").classList.remove("hidden");
+}
+function closeExportModal(){$("#exportModal").classList.add("hidden")}
+function syncReferenceActions(){
+  const has=!!state.referenceImage;
+  $("#referenceStatus").textContent=has?"Replace ›":"Add ›";
+  $("#removeReferenceAction").classList.toggle("hidden",!has);
+}
 function syncViewControls(){
-  $$$(".side-button").forEach(b=>b.classList.toggle("active",b.dataset.side===state.activeView));
+  $(".side-button").forEach(b=>b.classList.toggle("active",b.dataset.side===state.activeView));
   $("#overlayBtn").classList.toggle("active",state.overlayOther);
   $("#overlayBtn").setAttribute("aria-pressed",state.overlayOther?"true":"false");
 }
@@ -1265,7 +1291,9 @@ $("#colourBtn").onclick=()=>togglePanel($("#colourPanel"));
 $("#actionsBtn").onclick=()=>togglePanel($("#actionsPanel"));
 $("#croquisAction").onclick=()=>{closePanels();$("#croquisPanel").classList.remove("hidden")};
 $("#fitCanvasAction").onclick=()=>{closePanels();fitCanvas()};
-$("#exportAction").onclick=()=>{closePanels();exportCurrent()};
+$("#exportAction").onclick=openExportModal;
+$("#cancelExportBtn").onclick=closeExportModal;
+$("[data-export-mode]").forEach(b=>b.onclick=()=>{const mode=b.dataset.exportMode,include=$("#exportIncludeMannequin").checked;closeExportModal();exportCurrent(mode,include)});
 $("#clearLayerAction").onclick=()=>{const l=activeLayer();if(!l)return;if(confirm("Clear active layer?")){l.canvas.getContext("2d").clearRect(0,0,W,H);render();renderLayers();resetHistory();scheduleSave()}};
 $("#addLayerBtn").onclick=addLayer;
 $("#createBrushBtn").onclick=()=>openBrushStudio();
@@ -1320,8 +1348,15 @@ $("#croquisOpacitySlider").onchange=scheduleSave;
 
 $("#referenceInput").onchange=e=>{
   const file=e.target.files&&e.target.files[0];if(!file)return;
-  const reader=new FileReader();reader.onload=()=>{const img=new Image();img.onload=()=>{state.referenceImage=img;closePanels();render();toast("Reference added")};img.src=reader.result};reader.readAsDataURL(file);
+  const reader=new FileReader();
+  reader.onload=()=>{
+    const img=new Image();
+    img.onload=()=>{state.referenceImage=img;syncReferenceActions();closePanels();render();toast("Reference added")};
+    img.src=reader.result;
+  };
+  reader.readAsDataURL(file);e.target.value="";
 };
+$("#removeReferenceAction").onclick=()=>{state.referenceImage=null;syncReferenceActions();render();toast("Reference removed")};
 
 viewport.addEventListener("wheel",e=>{e.preventDefault();zoomAt(e.deltaY<0?1.08:.92,e.clientX,e.clientY)},{passive:false});
 viewport.addEventListener("pointerdown",e=>{
@@ -1364,7 +1399,7 @@ window.addEventListener("keydown",e=>{
 });
 
 function init(){
-  normaliseCustomBrushes();renderGallery();renderBrushCategories();renderBrushList();normalizePalettes();renderRecentColours();renderPalettes();setColour(state.colour,false);setColourTab("disc");updateSliderLabels();syncToolButtons();syncHistoryButtons();
+  normaliseCustomBrushes();renderGallery();renderBrushCategories();renderBrushList();normalizePalettes();renderRecentColours();renderPalettes();setColour(state.colour,false);setColourTab("disc");syncReferenceActions();updateSliderLabels();syncToolButtons();syncHistoryButtons();
   croquisImages.front.onload=()=>{render();};
   croquisImages.back.onload=()=>{render();};
 }
