@@ -188,10 +188,16 @@ function fitImage(img,w,h){
 
 function drawBrushPreview(canvas,brush){
   const c=canvas.getContext("2d"),w=canvas.width,h=canvas.height;
-  c.clearRect(0,0,w,h);
-  c.save();
+  c.clearRect(0,0,w,h);c.save();
   const mid=h/2;
-  if(isTexture(brush.mode)){
+  if(brush.mode==="custom"){
+    const pts=[];
+    for(let i=0;i<=36;i++){
+      const t=i/36;
+      pts.push({x:8+t*(w-16),y:mid+Math.sin(t*Math.PI*2)*8,pressure:.35+.65*Math.sin(t*Math.PI)});
+    }
+    drawCustomBrushStroke(c,pts,brush,"#202024",.24);
+  }else if(isTexture(brush.mode)){
     const step=previewTextureSpacing(brush.mode);
     let index=0;
     for(let x=12;x<w-8;x+=step){
@@ -218,8 +224,10 @@ function previewTextureSpacing(mode){
   return 12;
 }
 function isTexture(mode){
-  return !["pencil","soft","rough","pen","marker","chisel"].includes(mode);
+  return !["pencil","soft","rough","pen","marker","chisel","custom"].includes(mode);
 }
+function allBrushes(){return BRUSHES.concat(state.customBrushes||[])}
+function getBrushById(id){return allBrushes().find(b=>b.id===id)||null}
 function renderBrushCategories(){
   const root=$("#brushCategories");root.innerHTML="";
   CATEGORIES.forEach(([id,label])=>{
@@ -229,24 +237,44 @@ function renderBrushCategories(){
   });
 }
 function brushesForCategory(){
-  if(state.brushCategory==="favourites")return BRUSHES.filter(b=>state.favourites.has(b.id));
-  if(state.brushCategory==="recent")return state.recentBrushes.map(id=>BRUSHES.find(b=>b.id===id)).filter(Boolean);
+  if(state.brushCategory==="favourites")return allBrushes().filter(b=>state.favourites.has(b.id));
+  if(state.brushCategory==="recent")return state.recentBrushes.map(id=>getBrushById(id)).filter(Boolean);
+  if(state.brushCategory==="custom")return state.customBrushes;
   return BRUSHES.filter(b=>b.category===state.brushCategory);
 }
 function renderBrushList(){
   const root=$("#brushList");root.innerHTML="";
+  if(state.brushCategory==="custom"){
+    const head=document.createElement("div");head.className="custom-brush-header";
+    const label=document.createElement("strong");label.textContent="My Brushes";
+    const add=document.createElement("button");add.textContent="＋ New Brush";add.onclick=()=>openBrushStudio();
+    head.append(label,add);root.appendChild(head);
+  }
   const list=brushesForCategory();
   if(!list.length){
-    const d=document.createElement("div");d.className="brush-empty";d.textContent=state.brushCategory==="favourites"?"No favorites yet":"No recent brushes yet";root.appendChild(d);return;
+    const d=document.createElement("div");d.className="brush-empty";
+    d.textContent=state.brushCategory==="custom"?"No custom brushes yet":state.brushCategory==="favourites"?"No favorites yet":"No recent brushes yet";
+    root.appendChild(d);return;
   }
   list.forEach(brush=>{
-    const row=document.createElement("button");row.className="brush-row"+(state.brush.id===brush.id?" active":"");
+    const row=document.createElement("div");row.className="brush-row"+(brush.mode==="custom"?" custom":"")+(state.brush.id===brush.id?" active":"");
+    row.tabIndex=0;row.setAttribute("role","button");
     const cv=document.createElement("canvas");cv.width=150;cv.height=52;
-    const copy=document.createElement("span");copy.innerHTML="<strong>"+escapeHtml(brush.name)+"</strong><small>"+escapeHtml(brush.note)+"</small>";
-    const fav=document.createElement("span");fav.className="favourite-btn";fav.textContent=state.favourites.has(brush.id)?"♥":"♡";
-    fav.onclick=e=>{e.stopPropagation();toggleFavourite(brush.id)};
+    const copy=document.createElement("span");copy.innerHTML="<strong>"+escapeHtml(brush.name)+"</strong><small>"+escapeHtml(brush.note||"Custom Brush")+"</small>";
+    if(brush.mode==="custom"){
+      const actions=document.createElement("span");actions.className="custom-brush-actions";
+      const edit=document.createElement("button");edit.textContent="Edit";edit.onclick=e=>{e.stopPropagation();openBrushStudio(brush)};
+      const dup=document.createElement("button");dup.textContent="Copy";dup.onclick=e=>{e.stopPropagation();duplicateCustomBrush(brush.id)};
+      const del=document.createElement("button");del.textContent="Delete";del.className="danger";del.onclick=e=>{e.stopPropagation();deleteCustomBrush(brush.id)};
+      actions.append(edit,dup,del);row.append(cv,copy,actions);
+    }else{
+      const fav=document.createElement("span");fav.className="favourite-btn";fav.textContent=state.favourites.has(brush.id)?"♥":"♡";
+      fav.onclick=e=>{e.stopPropagation();toggleFavourite(brush.id)};
+      row.append(cv,copy,fav);
+    }
     row.onclick=()=>selectBrush(brush);
-    row.append(cv,copy,fav);root.appendChild(row);drawBrushPreview(cv,brush);
+    row.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();selectBrush(brush)}};
+    root.appendChild(row);drawBrushPreview(cv,brush);
   });
 }
 function selectBrush(brush){
@@ -258,6 +286,20 @@ function selectBrush(brush){
 function toggleFavourite(id){
   state.favourites.has(id)?state.favourites.delete(id):state.favourites.add(id);
   saveJSON(FAV_KEY,Array.from(state.favourites));renderBrushList();
+}
+function duplicateCustomBrush(id){
+  const src=state.customBrushes.find(b=>b.id===id);if(!src)return;
+  const copy={...src,id:"cb"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),name:(src.name||"Brush")+" Copy"};
+  state.customBrushes.push(copy);saveJSON(CUSTOM_BRUSH_KEY,state.customBrushes);renderBrushList();toast("Brush duplicated");
+}
+function deleteCustomBrush(id){
+  const brush=state.customBrushes.find(b=>b.id===id);if(!brush)return;
+  if(!confirm("Delete "+brush.name+"?"))return;
+  state.customBrushes=state.customBrushes.filter(b=>b.id!==id);
+  state.recentBrushes=state.recentBrushes.filter(x=>x!==id);state.favourites.delete(id);
+  saveJSON(CUSTOM_BRUSH_KEY,state.customBrushes);saveJSON(RECENT_BRUSH_KEY,state.recentBrushes);saveJSON(FAV_KEY,Array.from(state.favourites));
+  if(state.brush.id===id)state.brush=BRUSHES[0];
+  renderBrushList();toast("Brush deleted");
 }
 function syncToolButtons(){
   $("#brushBtn").classList.toggle("active",state.tool==="brush");
