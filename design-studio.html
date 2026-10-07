@@ -105,6 +105,25 @@
       </div>
     </aside>
 
+    <aside id="eraserPanel" class="floating-panel eraser-panel hidden" aria-label="Eraser">
+      <div class="panel-titlebar">
+        <strong>Eraser</strong>
+        <button class="close-panel" data-close-panel>×</button>
+      </div>
+      <div class="eraser-mode-list">
+        <button class="eraser-mode active" data-eraser-mode="partial">
+          <span class="eraser-mode-icon">◒</span>
+          <span><strong>Partial Erase</strong><small>Erase only the area you rub over</small></span>
+          <b>✓</b>
+        </button>
+        <button class="eraser-mode" data-eraser-mode="stroke">
+          <span class="eraser-mode-icon">⌁</span>
+          <span><strong>Stroke Erase</strong><small>Touch a line to remove the whole connected stroke</small></span>
+          <b>✓</b>
+        </button>
+      </div>
+    </aside>
+
     <aside id="layersPanel" class="floating-panel layers-panel hidden" aria-label="Layers">
       <div class="panel-titlebar">
         <div class="layer-title-wrap"><strong>Layers</strong><span id="layersSideLabel">Front</span></div>
