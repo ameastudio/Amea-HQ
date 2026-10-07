@@ -8,6 +8,7 @@ const STORAGE_KEY="design_studio_gallery_v3";
 const FAV_KEY="design_studio_brush_favourites_v3";
 const RECENT_BRUSH_KEY="design_studio_recent_brushes_v3";
 const RECENT_COLOUR_KEY="design_studio_recent_colours_v3";
+const COLOUR_PALETTE_KEY="design_studio_colour_palettes_v1";
 
 const galleryScreen=$("#galleryScreen");
 const editorScreen=$("#editorScreen");
@@ -66,6 +67,12 @@ const state={
   favourites:new Set(loadJSON(FAV_KEY,[])),
   recentBrushes:loadJSON(RECENT_BRUSH_KEY,[]),
   recentColours:loadJSON(RECENT_COLOUR_KEY,["#111111"]),
+  colourPalettes:loadJSON(COLOUR_PALETTE_KEY,[{name:"My Palette",colours:[]}]),
+  activePalette:0,
+  colourHue:0,
+  colourSat:0,
+  colourVal:.067,
+  eyedropper:false,
   drawing:false,
   drawingPointer:null,
   lastPoint:null,
@@ -258,29 +265,153 @@ function setTool(tool){
   updateSliderLabels();
 }
 
-function renderDefaultPalette(){
-  const root=$("#defaultPalette");root.innerHTML="";
-  PALETTE.forEach(colour=>root.appendChild(makeSwatch(colour)));
-  renderRecentColours();
+function hsvToRgb(h,s,v){
+  h=((h%360)+360)%360;s=clamp(s,0,1);v=clamp(v,0,1);
+  const c=v*s,x=c*(1-Math.abs((h/60)%2-1)),m=v-c;
+  let r=0,g=0,b=0;
+  if(h<60){r=c;g=x}else if(h<120){r=x;g=c}else if(h<180){g=c;b=x}else if(h<240){g=x;b=c}else if(h<300){r=x;b=c}else{r=c;b=x}
+  return [Math.round((r+m)*255),Math.round((g+m)*255),Math.round((b+m)*255)];
 }
-function makeSwatch(colour){
-  const b=document.createElement("button");b.className="colour-swatch";b.style.background=colour;b.title=colour;b.onclick=()=>setColour(colour);return b;
+function rgbToHsv(r,g,b){
+  r/=255;g/=255;b/=255;const max=Math.max(r,g,b),min=Math.min(r,g,b),d=max-min;
+  let h=0;if(d){if(max===r)h=60*(((g-b)/d)%6);else if(max===g)h=60*((b-r)/d+2);else h=60*((r-g)/d+4)}
+  if(h<0)h+=360;
+  return [h,max===0?0:d/max,max];
+}
+function rgbToHex(r,g,b){return "#"+[r,g,b].map(v=>Math.round(v).toString(16).padStart(2,"0")).join("").toUpperCase()}
+function hexToRgb(hex){const m=/^#([0-9a-f]{6})$/i.exec(hex);return m?[parseInt(m[1].slice(0,2),16),parseInt(m[1].slice(2,4),16),parseInt(m[1].slice(4,6),16)]:null}
+
+function drawColourDisc(){
+  const cv=$("#colourDisc");if(!cv)return;
+  const c=cv.getContext("2d"),w=cv.width,h=cv.height,cx=w/2,cy=h/2,r=Math.min(w,h)/2-3;
+  const im=c.createImageData(w,h),data=im.data;
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+    const dx=x-cx,dy=y-cy,dist=Math.hypot(dx,dy),i=(y*w+x)*4;
+    if(dist>r){data[i+3]=0;continue}
+    const sat=clamp(dist/r,0,1),hue=(Math.atan2(dy,dx)*180/Math.PI+360)%360;
+    const [rr,gg,bb]=hsvToRgb(hue,sat,1);
+    data[i]=rr;data[i+1]=gg;data[i+2]=bb;data[i+3]=255;
+  }
+  c.putImageData(im,0,0);
+  const radius=state.colourSat*r,ang=state.colourHue*Math.PI/180;
+  $("#discMarker").style.left=(cx+Math.cos(ang)*radius)+"px";
+  $("#discMarker").style.top=(cy+Math.sin(ang)*radius)+"px";
+  $("#discMarker").style.background=state.colour;
+}
+function drawClassicPicker(){
+  const cv=$("#classicSquare");if(!cv)return;
+  const c=cv.getContext("2d"),w=cv.width,h=cv.height;
+  const im=c.createImageData(w,h),data=im.data;
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+    const sat=x/(w-1),val=1-y/(h-1),[rr,gg,bb]=hsvToRgb(state.colourHue,sat,val),i=(y*w+x)*4;
+    data[i]=rr;data[i+1]=gg;data[i+2]=bb;data[i+3]=255;
+  }
+  c.putImageData(im,0,0);
+  $("#classicMarker").style.left=(state.colourSat*w)+"px";
+  $("#classicMarker").style.top=((1-state.colourVal)*h)+"px";
+  $("#classicMarker").style.background=state.colour;
+  $("#hueSlider").value=Math.round(state.colourHue);
+}
+function refreshColourPickers(){
+  drawColourDisc();drawClassicPicker();
+  $("#currentColourChip").style.background=state.colour;
+  $("#currentColourText").textContent=state.colour;
+  $("#eyedropperBtn").classList.toggle("active",state.eyedropper);
+}
+function makeSwatch(colour,opts={}){
+  const b=document.createElement("button");
+  b.className="colour-swatch"+(colour.toUpperCase()===state.colour?" selected":"");
+  b.style.background=colour;b.title=colour;b.type="button";
+  b.onclick=()=>setColour(colour);
+  if(opts.holdToRemove){
+    let timer=null,moved=false;
+    const clear=()=>{if(timer)clearTimeout(timer);timer=null};
+    b.addEventListener("pointerdown",()=>{moved=false;timer=setTimeout(()=>{timer=null;removeRecentColour(colour)},550)});
+    b.addEventListener("pointermove",()=>{moved=true;clear()});
+    b.addEventListener("pointerup",clear);b.addEventListener("pointercancel",clear);b.addEventListener("pointerleave",clear);
+  }
+  return b;
 }
 function renderRecentColours(){
   const root=$("#recentColours");root.innerHTML="";
-  state.recentColours.slice(0,12).forEach(c=>root.appendChild(makeSwatch(c)));
+  state.recentColours.slice(0,12).forEach(c=>root.appendChild(makeSwatch(c,{holdToRemove:true})));
+}
+function removeRecentColour(colour){
+  state.recentColours=state.recentColours.filter(c=>c!==colour);
+  saveJSON(RECENT_COLOUR_KEY,state.recentColours);renderRecentColours();toast("Removed from Recent");
+}
+function normalizePalettes(){
+  if(!Array.isArray(state.colourPalettes)||!state.colourPalettes.length)state.colourPalettes=[{name:"My Palette",colours:[]}];
+  state.colourPalettes=state.colourPalettes.map((p,i)=>({name:String(p&&p.name||("Palette "+(i+1))),colours:Array.isArray(p&&p.colours)?p.colours.filter(c=>/^#[0-9a-f]{6}$/i.test(c)).slice(0,36):[]}));
+  state.activePalette=clamp(state.activePalette,0,state.colourPalettes.length-1);
+}
+function renderPalettes(){
+  normalizePalettes();
+  const sel=$("#paletteSelect");sel.innerHTML="";
+  state.colourPalettes.forEach((p,i)=>{const o=document.createElement("option");o.value=i;o.textContent=p.name;if(i===state.activePalette)o.selected=true;sel.appendChild(o)});
+  const root=$("#savedPalette");root.innerHTML="";
+  state.colourPalettes[state.activePalette].colours.forEach(c=>root.appendChild(makeSwatch(c)));
+}
+function createPalette(){
+  const name=prompt("Palette name","My Palette");if(!name||!name.trim())return;
+  state.colourPalettes.push({name:name.trim(),colours:[]});state.activePalette=state.colourPalettes.length-1;
+  saveJSON(COLOUR_PALETTE_KEY,state.colourPalettes);renderPalettes();
+}
+function addCurrentToPalette(){
+  normalizePalettes();const p=state.colourPalettes[state.activePalette];
+  if(!p.colours.includes(state.colour))p.colours.push(state.colour);
+  saveJSON(COLOUR_PALETTE_KEY,state.colourPalettes);renderPalettes();toast("Added to "+p.name);
 }
 function setColour(value,record=true){
   let c=String(value||"").trim();
   if(!/^#[0-9a-f]{6}$/i.test(c))return false;
-  c=c.toUpperCase();state.colour=c;$("#colourPicker").value=c;$("#hexInput").value=c;$("#colourDot").style.background=c;
+  c=c.toUpperCase();state.colour=c;
+  const rgb=hexToRgb(c),hsv=rgbToHsv(rgb[0],rgb[1],rgb[2]);
+  state.colourHue=hsv[0];state.colourSat=hsv[1];state.colourVal=hsv[2];
+  $("#colourPicker").value=c;$("#hexInput").value=c;$("#colourDot").style.background=c;
   if(record){
     state.recentColours=[c].concat(state.recentColours.filter(x=>x!==c)).slice(0,12);
     saveJSON(RECENT_COLOUR_KEY,state.recentColours);renderRecentColours();
   }
+  refreshColourPickers();renderPalettes();
   return true;
 }
-
+function setColourFromHsv(h,s,v,record=false){
+  state.colourHue=((h%360)+360)%360;state.colourSat=clamp(s,0,1);state.colourVal=clamp(v,0,1);
+  const rgb=hsvToRgb(state.colourHue,state.colourSat,state.colourVal),hex=rgbToHex(...rgb);
+  state.colour=hex;$("#colourPicker").value=hex;$("#hexInput").value=hex;$("#colourDot").style.background=hex;
+  $("#currentColourChip").style.background=hex;$("#currentColourText").textContent=hex;
+  if(record){
+    state.recentColours=[hex].concat(state.recentColours.filter(x=>x!==hex)).slice(0,12);
+    saveJSON(RECENT_COLOUR_KEY,state.recentColours);renderRecentColours();
+  }
+  refreshColourPickers();
+}
+function pickDiscAt(clientX,clientY,record=false){
+  const cv=$("#colourDisc"),r=cv.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,dx=clientX-cx,dy=clientY-cy,max=r.width/2;
+  const sat=clamp(Math.hypot(dx,dy)/max,0,1),h=(Math.atan2(dy,dx)*180/Math.PI+360)%360;
+  setColourFromHsv(h,sat,1,record);
+}
+function pickClassicAt(clientX,clientY,record=false){
+  const cv=$("#classicSquare"),r=cv.getBoundingClientRect();
+  const s=clamp((clientX-r.left)/r.width,0,1),v=1-clamp((clientY-r.top)/r.height,0,1);
+  setColourFromHsv(state.colourHue,s,v,record);
+}
+function commitCurrentColour(){
+  state.recentColours=[state.colour].concat(state.recentColours.filter(x=>x!==state.colour)).slice(0,12);
+  saveJSON(RECENT_COLOUR_KEY,state.recentColours);renderRecentColours();renderPalettes();
+}
+function setColourTab(tab){
+  $$(".colour-tab").forEach(b=>b.classList.toggle("active",b.dataset.colourTab===tab));
+  $$(".colour-view").forEach(v=>v.classList.toggle("hidden",v.dataset.colourView!==tab));
+  if(tab==="disc")drawColourDisc();if(tab==="classic")drawClassicPicker();if(tab==="palettes")renderPalettes();
+}
+function sampleCanvasColour(e){
+  const r=display.getBoundingClientRect(),x=clamp(Math.floor((e.clientX-r.left)*W/r.width),0,W-1),y=clamp(Math.floor((e.clientY-r.top)*H/r.height),0,H-1);
+  const p=dctx.getImageData(x,y,1,1).data;
+  setColour(rgbToHex(p[0],p[1],p[2]),true);
+  state.eyedropper=false;refreshColourPickers();toast("Colour picked");
+}
 function renderLayers(){
   const root=$("#layersList");root.innerHTML="";
   state.layers.forEach((layer,index)=>{
@@ -841,6 +972,26 @@ function updateSliderLabels(){
 }
 $("#colourPicker").oninput=e=>setColour(e.target.value);
 $("#hexInput").onchange=e=>{if(!setColour(e.target.value)){$("#hexInput").value=state.colour;toast("Use a 6-digit hex colour")}};
+$(".colour-tab").forEach(b=>b.onclick=()=>setColourTab(b.dataset.colourTab));
+$("#paletteSelect").onchange=e=>{state.activePalette=+e.target.value;renderPalettes()};
+$("#newPaletteBtn").onclick=createPalette;
+$("#addColourToPaletteBtn").onclick=addCurrentToPalette;
+$("#eyedropperBtn").onclick=()=>{state.eyedropper=!state.eyedropper;refreshColourPickers();if(state.eyedropper)toast("Tap the canvas to pick a colour")};
+$("#hueSlider").oninput=e=>{setColourFromHsv(+e.target.value,state.colourSat,state.colourVal,false);drawClassicPicker()};
+$("#hueSlider").onchange=commitCurrentColour;
+
+(function bindColourCanvases(){
+  const disc=$("#colourDisc"),classic=$("#classicSquare");
+  let discDown=false,classicDown=false;
+  disc.addEventListener("pointerdown",e=>{discDown=true;disc.setPointerCapture?.(e.pointerId);pickDiscAt(e.clientX,e.clientY,false)});
+  disc.addEventListener("pointermove",e=>{if(discDown)pickDiscAt(e.clientX,e.clientY,false)});
+  const discEnd=()=>{if(discDown){discDown=false;commitCurrentColour()}};
+  disc.addEventListener("pointerup",discEnd);disc.addEventListener("pointercancel",discEnd);
+  classic.addEventListener("pointerdown",e=>{classicDown=true;classic.setPointerCapture?.(e.pointerId);pickClassicAt(e.clientX,e.clientY,false)});
+  classic.addEventListener("pointermove",e=>{if(classicDown)pickClassicAt(e.clientX,e.clientY,false)});
+  const classicEnd=()=>{if(classicDown){classicDown=false;commitCurrentColour()}};
+  classic.addEventListener("pointerup",classicEnd);classic.addEventListener("pointercancel",classicEnd);
+})();
 
 $$(".croquis-choice").forEach(b=>b.onclick=()=>{state.currentCroquis=b.dataset.croquis;renderCroquisChoices();render();scheduleSave()});
 $("#croquisVisibleToggle").onchange=e=>{state.croquisVisible=e.target.checked;render();scheduleSave()};
@@ -854,6 +1005,7 @@ $("#referenceInput").onchange=e=>{
 
 viewport.addEventListener("wheel",e=>{e.preventDefault();zoomAt(e.deltaY<0?1.08:.92,e.clientX,e.clientY)},{passive:false});
 viewport.addEventListener("pointerdown",e=>{
+  if(state.eyedropper&&e.target===display){sampleCanvasColour(e);closePanels();return}
   closePanels();
   if(e.pointerType==="touch"){
     state.pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
@@ -892,7 +1044,7 @@ window.addEventListener("keydown",e=>{
 });
 
 function init(){
-  renderGallery();renderBrushCategories();renderBrushList();renderDefaultPalette();setColour(state.colour,false);updateSliderLabels();syncToolButtons();syncHistoryButtons();
+  renderGallery();renderBrushCategories();renderBrushList();normalizePalettes();renderRecentColours();renderPalettes();setColour(state.colour,false);setColourTab("disc");updateSliderLabels();syncToolButtons();syncHistoryButtons();
   croquisImages.front.onload=()=>{render();};
   croquisImages.back.onload=()=>{render();};
 }
