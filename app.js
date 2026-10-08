@@ -55,9 +55,6 @@ function hqDateLabel(){
 function refreshHomeGreeting(){
   const el=$("#homeGreeting");
   if(el)el.textContent=`${greeting()}, Améa Boss ✨`;
-  const headerGreeting=$("#hqHeaderGreeting"),headerDate=$("#hqHeaderDate");
-  if(headerGreeting)headerGreeting.textContent=`${greeting()}, Bri ♡`;
-  if(headerDate)headerDate.textContent=hqDateLabel();
 }
 
 const SUPABASE_URL="https://ndmrwfctiomruibiczrj.supabase.co";
@@ -590,7 +587,7 @@ function renderStudioHub(){
   const designCount=Number(localStorage.getItem("ah_design_count")||0);
   return `<div class="studio-hub-page">
     <div class="studio-hub-head">
-      <div><span class="studio-hub-eyebrow">AMÉA HQ</span><h2>Studio</h2><p>Create • Plan • Grow</p></div>
+      <div><h2>Studio</h2><p>Create • Plan • Grow</p></div>
       <span class="studio-hub-spark">✦</span>
     </div>
 
@@ -1432,7 +1429,7 @@ function renderCalendarPage(){
 
   return `<div class="calendar-page calendar-redesign">
     <div class=calendar-title-row>
-      <div><span class=calendar-eyebrow>AMÉA HQ</span><h2>Calendar</h2><p>Deadlines without the clutter.</p></div>
+      <div><h2>Calendar</h2><p>Deadlines without the clutter.</p></div>
       <button class=calendar-export onclick=ics()>Export</button>
     </div>
 
@@ -1577,7 +1574,7 @@ else if(cur=="more"){
   let last=localStorage.getItem("ah_cloud_last");
   let when=last?new Date(last).toLocaleString("en-JM",{dateStyle:"medium",timeStyle:"short"}):"Not synced yet";
   v.innerHTML=`<div class="more-page clean-more-page">
-    <div class="tool-page-head more-head"><div><span>AMÉA HQ</span><h2>More</h2><p>Secondary tools for everything else.</p></div></div>
+    <div class="tool-page-head more-head"><div><h2>More</h2><p>Secondary tools for everything else.</p></div></div>
     <section class="more-menu-list">
       <button onclick="page('items')"><span class="more-line-icon">${ameaIcon("product")}</span><span><b>Products</b><small>Manage your product catalogue</small></span><i>›</i></button>
       <button onclick="page('inventory')"><span class="more-line-icon">${ameaIcon("inventory")}</span><span><b>Inventory</b><small>Track materials and stock levels</small></span><i>›</i></button>
