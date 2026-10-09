@@ -1694,12 +1694,28 @@ function renderCustomersHubTab(){
     </section>
   </div>`;
 }
+function addInvoice(){
+  const orders=O().slice().reverse();
+  if(!orders.length){
+    return openF('<h2>Add Invoice</h2><div class="empty">No orders yet. Create an order first.</div><button class="primary" onclick="dlg.close();newOrder()">＋ New Order</button>');
+  }
+  openF(`<div class="top"><div><h2>Add Invoice</h2><div class="meta">Choose the order you want to invoice.</div></div></div>
+    <div class="orders-search-wrap"><span>⌕</span><input placeholder="Search orders…" oninput="filterOrderHubRows(this.value,'.invoice-picker-row')"></div>
+    <div class="tool-list-card hub-tool-list">
+      ${orders.map(o=>{const search=esc([o.no,o.customer,orderSummaryProduct(orderItemsFor(o))].filter(Boolean).join(" ").toLowerCase());return `<button class="invoice-modern-row invoice-picker-row" data-search="${search}" onclick="dlg.close();openInvoice('${o.id}')">
+        <span class="invoice-icon">${ameaIcon("invoice")}</span>
+        <span class="invoice-main"><b>${esc(o.no)}</b><small>${esc(o.customer||"")} · ${esc(orderSummaryProduct(orderItemsFor(o)))}</small></span>
+        <span class="invoice-value"><b>${M(o.price)}</b><small>total</small></span><i>›</i>
+      </button>`}).join("")}
+    </div>`);
+}
+
 function renderInvoicesHubTab(){
   const orders=O().slice().reverse();
   const due=orders.filter(o=>Math.max(0,(+o.price||0)-(+o.paid||0))>0);
   const dueTotal=due.reduce((a,o)=>a+Math.max(0,(+o.price||0)-(+o.paid||0)),0);
   return `<div class="orders-page orders-redesign order-hub-page">
-    ${orderHubHeader()}
+    ${orderHubHeader('<button onclick="addInvoice()">＋ Add Invoice</button>')}
     <div class="tool-summary-grid two order-hub-summary"><div><span>Balance due</span><strong>${M(dueTotal)}</strong></div><div><span>Open invoices</span><strong>${due.length}</strong></div></div>
     <section class="orders-library">
       <div class="orders-search-wrap"><span>⌕</span><input placeholder="Search invoices…" oninput="filterOrderHubRows(this.value,'.invoice-modern-row')"></div>
