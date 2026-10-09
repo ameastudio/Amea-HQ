@@ -629,6 +629,7 @@ let studioSub="patterns";
 let studioMainPhoto="";
 let studioExtraPhotos=[];
 let studioWorkContext=null;
+let studioWriterPatternId="";
 
 function studioPatternById(id){return PATTERNS().find(x=>x.id===id)}
 function studioModelById(id){return MODELS().find(x=>x.id===id)}
@@ -662,6 +663,7 @@ function studioSectionNav(active="patterns"){
 
 function renderStudio(){
   if(studioSub==="work")return renderStudioWorkPage();
+  if(studioSub==="writer")return renderStudioPatternWriterPage();
   if(studioPatternId)return renderStudioPattern(studioPatternId);
   if(studioSub==="yarns")return renderStudioYarns();
   if(studioSub==="models")return renderStudioModels();
@@ -670,12 +672,14 @@ function renderStudio(){
 }
 function studioGo(sub="patterns"){
   studioPatternId="";
+  studioWriterPatternId="";
   studioSub=sub;
   cur="crochet";
   render();
 }
 function studioBack(){
   studioPatternId="";
+  studioWriterPatternId="";
   studioSub="patterns";
   page("crochet");
 }
@@ -796,6 +800,55 @@ function studioStepLabel(st={},fallback=1){
   return end>start?`Rows ${start}–${end}`:`Row ${start}`;
 }
 function studioPiecePhoto(s={}){return s.photo||""}
+function openStudioPatternWriter(id){
+  const p=studioPatternById(id);if(!p)return;
+  studioWriterPatternId=id;
+  studioPatternId="";
+  studioSub="writer";
+  cur="crochet";
+  render();
+}
+function studioWriterBack(){
+  const id=studioWriterPatternId;
+  studioWriterPatternId="";
+  studioSub="patterns";
+  studioPatternId=id||"";
+  cur="crochet";
+  render();
+}
+function saveStudioPatternWriter(id){
+  const p=studioPatternById(id);if(!p)return;
+  const instructions=collectStudioInstructions();
+  const updated={...p,instructions,updated:new Date().toISOString()};
+  try{S("studio_patterns",PATTERNS().map(x=>x.id===id?updated:x))}
+  catch(e){return alert("This pattern is too large to save on this device. Try removing a row photo.")}
+  const btn=$("#studioWriterSave");
+  if(btn){const old=btn.textContent;btn.textContent="Saved ✓";setTimeout(()=>{if(btn)btn.textContent=old},1200)}
+}
+function renderStudioPatternWriterPage(){
+  const id=studioWriterPatternId;
+  const p=studioPatternById(id);
+  if(!p){studioWriterPatternId="";studioSub="patterns";return renderStudioLibrary()}
+  const instructions=Array.isArray(p.instructions)&&p.instructions.length?JSON.parse(JSON.stringify(p.instructions)):studioDefaultPattern().instructions;
+  if(!instructions[0].isMain)instructions[0]={...instructions[0],isMain:true,name:instructions[0].name||"Main Pattern"};
+  const v=$("#view");
+  v.innerHTML=`<div class="studio-pattern-writer-page crochet-studio-v1">
+    <div class="studio-writer-page-head">
+      <button class="crochet-back" onclick="studioWriterBack()">‹</button>
+      <div><span>PATTERN WRITER</span><h2>${esc(p.name||"Untitled Pattern")}</h2><p>Write the actual pattern row by row.</p></div>
+      <button id="studioWriterSave" class="crochet-new-pattern studio-writer-save" onclick="saveStudioPatternWriter('${id}')">Save</button>
+    </div>
+    <div class=studio-writer-intro>
+      <div><span>ACTUAL PATTERN</span><h3>Write it row by row</h3><p>Type naturally. Press Enter and the next row appears automatically.</p></div>
+      <button type=button onclick=studioAddSection()>＋ Add Piece</button>
+    </div>
+    <div id=studioSectionList>${instructions.map((sec,i)=>studioSectionEditor(sec,i)).join("")}</div>
+    <button type=button class=studio-add-piece-bottom onclick=studioAddSection()>＋ Add Optional Piece</button>
+    <button class="primary studio-writer-page-save-bottom" onclick="saveStudioPatternWriter('${id}')">Save Pattern</button>
+  </div>`;
+  setTimeout(()=>document.querySelectorAll("[data-row-text]").forEach(studioAutoGrowRow),0);
+}
+
 function openStudioInstructions(id){
   const p=studioPatternById(id);if(!p)return;
   studioWorkContext={patternId:id,orderId:"",lineId:"",from:"pattern"};
@@ -882,7 +935,7 @@ function renderStudioPattern(id){
       ${(x.measurements||[]).filter(m=>m.name||m.value).map(m=>`<div class=studio-measure-row><b>${esc(m.name||"Measurement")}</b><span>${esc(m.value||"—")} ${esc(m.unit||"")}</span></div>`).join("")||'<div class=meta>No measurements added.</div>'}
     </section>
 
-    <section class=studio-detail-section><div class=studio-editor-row-head><h3>Pattern Instructions</h3><button onclick="openStudioInstructions('${x.id}')">Open Full Page →</button></div>
+    <section class=studio-detail-section><div class=studio-editor-row-head><h3>Pattern Instructions</h3><button onclick="openStudioPatternWriter('${x.id}')">Edit Pattern →</button></div>
       ${(x.instructions||[]).map((s,si)=>`<div class=studio-instruction-section>
         <div class=studio-piece-summary>${studioPiecePhoto(s)?`<img src="${studioPiecePhoto(s)}" alt="${esc(s.name||"Piece")}">`:""}<div class=studio-instruction-title><span>${si===0?"MAIN":String(si).padStart(2,"0")}</span><h4>${esc(s.name||"Piece")}</h4></div></div>
         ${(s.yarnOverride||s.hookOverride||s.measurementNotes)?`<div class=studio-section-overrides>${s.yarnOverride?`<span><b>Yarn:</b> ${esc(s.yarnOverride)}</span>`:""}${s.hookOverride?`<span><b>${x.technique==="Knit"?"Machine/settings":"Hook"}:</b> ${esc(s.hookOverride)}</span>`:""}${s.measurementNotes?`<span><b>Measurements:</b> ${esc(s.measurementNotes)}</span>`:""}</div>`:""}
@@ -1150,7 +1203,7 @@ function captureStudioPatternDraft(){
     ...studioDefaultPattern(),name:$("#studioPatternName")?.value.trim()||"",technique:$("#studioTechniqueEdit")?.value||"Crochet",category:$("#studioCategoryEdit")?.value||"Dress",status:$("#studioStatusEdit")?.value||"Draft",collection:$("#studioCollectionEdit")?.value.trim()||"",tags:($("#studioTags")?.value||"").split(",").map(x=>x.trim()).filter(Boolean),
     mainPhoto:studioMainPhoto,extraPhotos:[...studioExtraPhotos],yarns:collectStudioYarns(),hookSize:$("#studioHook")?.value.trim()||"",
     knit:{machine:$("#studioMachine")?.value.trim()||"",mode:$("#studioMachineMode")?.value||"Panel",rowCount:$("#studioRowCount")?.value.trim()||"",tension:$("#studioTension")?.value.trim()||"",notes:$("#studioMachineNotes")?.value.trim()||""},
-    materials:collectStudioMaterials(),materialNotes:$("#studioMaterialNotes")?.value.trim()||"",sizes:[...new Set([...baseSizes,...custom])],linkedModelId:$("#studioModel")?.value||"",measurements:collectStudioMeasurements(),instructions:collectStudioInstructions(),notes:$("#studioPatternNotes")?.value.trim()||"",
+    materials:collectStudioMaterials(),materialNotes:$("#studioMaterialNotes")?.value.trim()||"",sizes:[...new Set([...baseSizes,...custom])],linkedModelId:$("#studioModel")?.value||"",measurements:collectStudioMeasurements(),instructions:studioDefaultPattern().instructions,notes:$("#studioPatternNotes")?.value.trim()||"",
     costing:{enabled:!!$("#studioCostEnabled")?.checked,yarn:+($("#studioCostYarn")?.value||0),labor:+($("#studioCostLabor")?.value||0),other:+($("#studioCostOther")?.value||0)}
   };
 }
@@ -1174,7 +1227,6 @@ function editStudioPattern(id=""){
   if(!x.instructions[0].isMain)x.instructions[0]={...x.instructions[0],isMain:true,name:x.instructions[0].name||"Main Pattern"};
   const sizes=["XS","S","M","L","XL"];
   openF(`<div class="studio-editor-title studio-pattern-editor-title"><div>${studioLogoBlock(id?"Edit Pattern":"New Pattern")}${!id&&saved?'<span class=draft-restored>Autosaved draft restored ✓</span>':""}</div><div class=studio-pattern-top-actions>${!id?'<button type=button class=draft-clear-btn onclick=clearStudioPatternDraftAndRestart()>Start Fresh</button>':""}<button type=button class=studio-top-save onclick="saveStudioPattern('${id}')">Save</button></div></div>
-    <div class=studio-pattern-editor-tabs><button type=button class=active data-tab=info onclick="studioPatternEditorTab('info')">▧ Pattern Info</button><button type=button data-tab=pattern onclick="studioPatternEditorTab('pattern')">☷ Pattern</button></div>
     <div id=studioPatternInfoPane class=studio-pattern-pane>
       <div class=studio-editor-block><h3>Basic Details</h3><label>Pattern name</label><input id=studioPatternName value="${esc(x.name||"")}" placeholder="e.g. Flora Dress"><div class=studio-three><div><label>Technique</label><select id=studioTechniqueEdit onchange=studioToggleTechnique()><option ${x.technique==="Crochet"?"selected":""}>Crochet</option><option ${x.technique==="Knit"?"selected":""}>Knit</option></select></div><div><label>Category</label><select id=studioCategoryEdit>${studioCategories().map(z=>`<option ${x.category===z?"selected":""}>${z}</option>`).join("")}</select></div><div><label>Status</label><select id=studioStatusEdit>${["Draft","Testing","Final"].map(z=>`<option ${x.status===z?"selected":""}>${z}</option>`).join("")}</select></div></div><div class=studio-two><div><label>Collection <span class=meta>(optional)</span></label><input id=studioCollectionEdit value="${esc(x.collection||"")}" placeholder="e.g. Eden"></div><div><label>Tags</label><input id=studioTags value="${esc((x.tags||[]).join(", "))}" placeholder="floral, summer, fitted"></div></div></div>
       <div class=studio-editor-block><h3>Photos</h3>${studioMainPhoto?`<img id=studioMainPreview class=studio-main-preview src="${studioMainPhoto}" alt="">`:`<img id=studioMainPreview class=studio-main-preview style="display:none" alt="">`}<label>Main finished-piece photo</label><input type=file accept="image/*" onchange=studioMainPhotoChanged(this)><label>Gallery <span class=meta>(optional, up to 6)</span></label><input type=file accept="image/*" multiple onchange=studioExtraPhotosChanged(this)><div id=studioExtraPreview class=studio-extra-preview></div></div>
@@ -1184,10 +1236,8 @@ function editStudioPattern(id=""){
       <div class=studio-editor-block><h3>Notes</h3><textarea id=studioPatternNotes placeholder="Anything else you want to remember…">${esc(x.notes||"")}</textarea></div>
       <div class=studio-editor-block><h3>Costing</h3><label class=studio-cost-toggle><input id=studioCostEnabled type=checkbox ${x.costing?.enabled?"checked":""} onchange=studioToggleCost()> Track cost for this pattern</label><div id=studioCostFields class=studio-cost-fields><input id=studioCostYarn type=number placeholder="Yarn cost" value="${esc(x.costing?.yarn||"")}"><input id=studioCostLabor type=number placeholder="Labour" value="${esc(x.costing?.labor||"")}"><input id=studioCostOther type=number placeholder="Other cost" value="${esc(x.costing?.other||"")}"></div></div>
     </div>
-    <div id=studioPatternWriterPane class="studio-pattern-pane studio-pattern-writer-pane" hidden><div class=studio-writer-intro><div><span>ACTUAL PATTERN</span><h3>Write it row by row</h3><p>Type naturally. Press Enter and the next row appears automatically.</p></div><button type=button onclick=studioAddSection()>＋ Add Piece</button></div><div id=studioSectionList>${x.instructions.map((sec,i)=>studioSectionEditor(sec,i)).join("")}</div><button type=button class=studio-add-piece-bottom onclick=studioAddSection()>＋ Add Optional Piece</button></div>
     <button class="primary studio-pattern-save-bottom" onclick="saveStudioPattern('${id}')">${id?"Save Pattern":"Create Pattern"}</button>`);
   studioToggleTechnique();studioToggleCost();studioRenderExtraPreviews();if(!id)installStudioPatternDraftAutosave();
-  setTimeout(()=>document.querySelectorAll("[data-row-text]").forEach(studioAutoGrowRow),0);
 }
 function collectStudioYarns(){
   return [...document.querySelectorAll("[data-yarn-row]")].map(row=>({
@@ -1236,7 +1286,7 @@ function saveStudioPattern(id=""){
     hookSize:$("#studioHook")?.value.trim()||"",
     knit:{machine:$("#studioMachine")?.value.trim()||"",mode:$("#studioMachineMode")?.value||"Panel",rowCount:$("#studioRowCount")?.value.trim()||"",tension:$("#studioTension")?.value.trim()||"",notes:$("#studioMachineNotes")?.value.trim()||""},
     materials:collectStudioMaterials(),materialNotes:$("#studioMaterialNotes").value.trim(),sizes,
-    linkedModelId:$("#studioModel").value,measurements:collectStudioMeasurements(),instructions:collectStudioInstructions(),
+    linkedModelId:$("#studioModel").value,measurements:collectStudioMeasurements(),instructions:id?(old?.instructions||studioDefaultPattern().instructions):studioDefaultPattern().instructions,
     notes:$("#studioPatternNotes").value.trim(),
     costing:{enabled:!!$("#studioCostEnabled")?.checked,yarn:+($("#studioCostYarn")?.value||0),labor:+($("#studioCostLabor")?.value||0),other:+($("#studioCostOther")?.value||0)},
     created:old?.created||now,updated:now
