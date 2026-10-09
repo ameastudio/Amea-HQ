@@ -983,10 +983,10 @@ function openStudioWriterInfo(id){
 }
 function studioWriterLeave(id){
   clearTimeout(studioWriterAutoSaveTimer);
-  if(!saveStudioPatternWriter(id,false))return;
+  if(!saveStudioPatternWriter(id,true))return;
   studioWriterPatternId="";
   studioSub="patterns";
-  studioPatternId=id||"";
+  studioPatternId="";
   cur="crochet";
   render();
 }
