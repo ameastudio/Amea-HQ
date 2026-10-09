@@ -671,8 +671,8 @@ function renderStudioHub(){
   const designCount=Number(localStorage.getItem("ah_design_count")||0);
   return `<div class="studio-hub-page">
     <div class="studio-hub-head">
-      <div><h2>Studio</h2><p>Create • Plan • Grow</p></div>
-      <span class="studio-hub-spark">✦</span>
+      <div><span class="studio-hub-kicker">AMÉA CREATIVE</span><h2>Studio</h2><p>Create • Plan • Grow</p></div>
+      <button class="studio-hub-add" onclick="page('crochet');setTimeout(newStudioPattern,0)">＋ Pattern</button>
     </div>
 
     <button class="studio-feature-card crochet" onclick="page('crochet')">
@@ -1664,7 +1664,7 @@ else if(cur=="customers"){
         <span class="customer-avatar">${esc((x.name||"?").trim().charAt(0).toUpperCase())}</span>
         <span class="customer-main"><b>${esc(x.name)}</b><small>${st.orders.length?st.orders.length+" order"+(st.orders.length===1?"":"s"):"No orders yet"}${last?" · Last "+last:""}</small></span>
         <span class="customer-value"><b>${M(st.paid)}</b><small>lifetime</small></span><i>›</i>
-      </button>`}).join("")||'<div class=empty>No customers yet.</div>'}
+      </button>`}).join("")||'<div class="empty-state"><span>${ameaIcon("people")}</span><b>No customers yet</b><small>Customer profiles will stay connected to their orders.</small><button onclick="newCustomer()">＋ Add Customer</button></div>'}
     </div>
   </div>`;
 }
@@ -1679,7 +1679,7 @@ else if(cur=="invoices"){
       ${orders.length?orders.map(o=>{const bal=Math.max(0,(+o.price||0)-(+o.paid||0));return `<button class="invoice-modern-row" onclick="openInvoice('${o.id}')">
         <span class="invoice-icon">${ameaIcon("invoice")}</span><span class="invoice-main"><b>${esc("INV-"+o.no)}</b><small>${esc(o.customer||"")} · ${esc(orderSummaryProduct(orderItemsFor(o)))}</small></span>
         <span class="invoice-value"><b>${bal>0?M(bal):"Paid"}</b><small>${bal>0?"balance":"complete"}</small></span><i>›</i>
-      </button>`}).join(""):'<div class=empty>No invoices yet. Create an order first.</div>'}
+      </button>`}).join(""):'<div class="empty-state"><span>${ameaIcon("invoice")}</span><b>No invoices yet</b><small>Invoices are created from your saved orders.</small><button onclick="newOrder()">＋ New Order</button></div>'}
     </div>
   </div>`;
 }
@@ -1707,7 +1707,7 @@ else if(cur=="more"){
   let state=localStorage.getItem("ah_cloud_state")||"ok";
   let last=localStorage.getItem("ah_cloud_last");
   let when=last?new Date(last).toLocaleString("en-JM",{dateStyle:"medium",timeStyle:"short"}):"Not synced yet";
-  v.innerHTML=`<div class="more-page clean-more-page">
+  v.innerHTML=`<div class="more-page clean-more-page more-tools-page">
     <div class="tool-page-head more-head"><div><h2>More</h2><p>Secondary tools for everything else.</p></div></div>
     <section class="more-menu-list">
       <button onclick="page('items')"><span class="more-line-icon">${ameaIcon("product")}</span><span><b>Products</b><small>Finished pieces you sell to customers</small></span><i>›</i></button>
@@ -1732,7 +1732,7 @@ else if(cur=="analytics"){renderAnalytics("month")}
 else if(cur=="calendar")v.innerHTML=renderCalendarPage();
 else if(cur=="settings"){
   let s=G("settings",{});
-  v.innerHTML=`<div class="tool-page settings-redesign">
+  v.innerHTML=`<div class="tool-page settings-redesign settings-page">
     <div class="tool-page-head"><div><span>BUSINESS</span><h2>Settings</h2><p>Your business details and app preferences.</p></div></div>
     <div class="settings-modern-card">
       <div class="settings-modern-title"><span>BUSINESS & INVOICES</span><h3>Améa details</h3></div>
@@ -1888,7 +1888,7 @@ function renderOrdersPage(){
     <section class="orders-library">
       <div class="orders-section-head"><div><span>ALL ORDERS</span><h3>${orders.length} total</h3></div></div>
       <div class="orders-search-wrap"><span>⌕</span><input placeholder="Search customer, order or item…" oninput="searchO(this.value)"></div>
-      <div id=ol class="orders-list">${list(orders)||'<div class=empty>No orders yet.</div>'}</div>
+      <div id=ol class="orders-list">${list(orders)||'<div class="empty-state"><span>${ameaIcon("orders")}</span><b>No orders yet</b><small>Add your first order and it’ll appear here.</small><button onclick="newOrder()">＋ New Order</button></div>'}</div>
     </section>
   </div>`;
 }
