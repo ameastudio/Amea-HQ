@@ -1389,17 +1389,19 @@ function editStudioPattern(id=""){
   if(!Array.isArray(x.instructions)||!x.instructions.length)x.instructions=studioDefaultPattern().instructions;
   if(!x.instructions[0].isMain)x.instructions[0]={...x.instructions[0],isMain:true,name:x.instructions[0].name||"Main Pattern"};
   const sizes=["XS","S","M","L","XL"];
-  openF(`<div class="studio-editor-title studio-pattern-editor-title"><div>${studioLogoBlock(id?"Edit Pattern":"New Pattern")}${!id&&saved?'<span class=draft-restored>Autosaved draft restored ✓</span>':""}</div><div class=studio-pattern-top-actions>${!id?'<button type=button class=draft-clear-btn onclick=clearStudioPatternDraftAndRestart()>Start Fresh</button>':""}<button type=button class=studio-top-save onclick="saveStudioPattern('${id}')">${id?"Save":"Next →"}</button></div></div>
+  openF(`<div class="studio-editor-title studio-pattern-editor-title"><div>${studioLogoBlock(id?"Pattern Info":"New Pattern")}${!id&&saved?'<span class=draft-restored>Autosaved draft restored ✓</span>':""}</div><div class=studio-pattern-top-actions>${!id?'<button type=button class=draft-clear-btn onclick=clearStudioPatternDraftAndRestart()>Start Fresh</button>':""}<button type=button class=studio-top-save onclick="saveStudioPattern('${id}')">${id?"Save":"Continue"}</button></div></div>
+    <div class="studio-pattern-editor-tabs"><button type=button onclick="saveStudioPattern('${id}','writer')">Pattern</button><button type=button class=active>Info</button></div>
     <div id=studioPatternInfoPane class=studio-pattern-pane>
       <div class=studio-editor-block><h3>Basic Details</h3><label>Pattern name</label><input id=studioPatternName value="${esc(x.name||"")}" placeholder="e.g. Flora Dress"><div class=studio-three><div><label>Technique</label><select id=studioTechniqueEdit onchange=studioToggleTechnique()><option ${x.technique==="Crochet"?"selected":""}>Crochet</option><option ${x.technique==="Knit"?"selected":""}>Knit</option></select></div><div><label>Category</label><select id=studioCategoryEdit>${studioCategories().map(z=>`<option ${x.category===z?"selected":""}>${z}</option>`).join("")}</select></div><div><label>Status</label><select id=studioStatusEdit>${["Draft","Testing","Final"].map(z=>`<option ${x.status===z?"selected":""}>${z}</option>`).join("")}</select></div></div><div class=studio-two><div><label>Collection <span class=meta>(optional)</span></label><input id=studioCollectionEdit value="${esc(x.collection||"")}" placeholder="e.g. Eden"></div><div><label>Tags</label><input id=studioTags value="${esc((x.tags||[]).join(", "))}" placeholder="floral, summer, fitted"></div></div></div>
       <div class=studio-editor-block><h3>Photos</h3>${studioMainPhoto?`<img id=studioMainPreview class=studio-main-preview src="${studioMainPhoto}" alt="">`:`<img id=studioMainPreview class=studio-main-preview style="display:none" alt="">`}<label>Main finished-piece photo</label><input type=file accept="image/*" onchange=studioMainPhotoChanged(this)><label>Gallery <span class=meta>(optional, up to 6)</span></label><input type=file accept="image/*" multiple onchange=studioExtraPhotosChanged(this)><div id=studioExtraPreview class=studio-extra-preview></div></div>
       <div class=studio-editor-block><div class=studio-editor-row-head><h3>Yarn & Hook</h3><button type=button onclick=studioAddYarn()>＋ Add Yarn</button></div><div id=studioYarnList>${(x.yarns?.length?x.yarns:[{}]).map((y,i)=>studioYarnRow(y,i)).join("")}</div><div id=studioCrochetFields><label>Hook size</label><input id=studioHook value="${esc(x.hookSize||"")}" placeholder="e.g. 4 mm"></div><div id=studioKnitFields><h3>Knit Machine Details</h3><div class=studio-two><input id=studioMachine value="${esc(x.knit?.machine||"")}" placeholder="Machine / size, e.g. Sentro 48"><select id=studioMachineMode><option ${x.knit?.mode==="Panel"?"selected":""}>Panel</option><option ${x.knit?.mode==="Tube"?"selected":""}>Tube</option></select></div><div class=studio-two><input id=studioRowCount value="${esc(x.knit?.rowCount||"")}" placeholder="Row count"><input id=studioTension value="${esc(x.knit?.tension||"")}" placeholder="Tension / settings"></div><textarea id=studioMachineNotes placeholder="Machine notes">${esc(x.knit?.notes||"")}</textarea></div></div>
       <div class=studio-editor-block><div class=studio-editor-row-head><h3>Materials</h3><button type=button onclick=studioAddMaterial()>＋ Add</button></div><div id=studioMaterialList>${(x.materials?.length?x.materials:[{}]).map(studioMaterialRow).join("")}</div><textarea id=studioMaterialNotes placeholder="Extra materials notes">${esc(x.materialNotes||"")}</textarea></div>
       <div class=studio-editor-block><h3>Sizes & Measurements</h3><div class=studio-size-checks>${sizes.map(s=>`<label><input type=checkbox value="${s}" ${x.sizes?.includes(s)?"checked":""}> ${s}</label>`).join("")}<label><input id=studioCustomSizeCheck type=checkbox ${x.sizes?.some(s=>!sizes.includes(s))?"checked":""}> Custom</label></div><input id=studioCustomSize value="${esc((x.sizes||[]).filter(s=>!sizes.includes(s)).join(", "))}" placeholder="Custom size name(s), optional"><label>Saved model <span class=meta>(optional)</span></label><select id=studioModel><option value="">No saved model</option>${MODELS().map(m=>`<option value="${m.id}" ${x.linkedModelId===m.id?"selected":""}>${esc(m.name)}${m.usualSize?" · "+esc(m.usualSize):""}</option>`).join("")}</select><div class=studio-editor-row-head><label>Measurements</label><button type=button onclick=studioAddMeasurement()>＋ Add Measurement</button></div><div id=studioMeasurementList>${(x.measurements?.length?x.measurements:[{name:"Bust",unit:"in"}]).map(studioMeasurementRow).join("")}</div></div>
+      <div class="studio-editor-block studio-linked-design-block"><h3>Linked Design</h3><p class=meta>Connect this pattern to a saved Design Studio artwork.</p><select id=studioLinkedDesign onchange=studioLinkedDesignChanged()>${studioDesignOptions(x.linkedDesignId||"")}</select><div id=studioLinkedDesignPreview>${studioLinkedDesignPreviewMarkup(x.linkedDesignId||"")}</div><button type=button class=studio-open-design-studio onclick="openDesignStudio()">Open Design Studio</button></div>
       <div class=studio-editor-block><h3>Notes</h3><textarea id=studioPatternNotes placeholder="Anything else you want to remember…">${esc(x.notes||"")}</textarea></div>
       <div class=studio-editor-block><h3>Costing</h3><label class=studio-cost-toggle><input id=studioCostEnabled type=checkbox ${x.costing?.enabled?"checked":""} onchange=studioToggleCost()> Track cost for this pattern</label><div id=studioCostFields class=studio-cost-fields><input id=studioCostYarn type=number placeholder="Yarn cost" value="${esc(x.costing?.yarn||"")}"><input id=studioCostLabor type=number placeholder="Labour" value="${esc(x.costing?.labor||"")}"><input id=studioCostOther type=number placeholder="Other cost" value="${esc(x.costing?.other||"")}"></div></div>
     </div>
-    <button class="primary studio-pattern-save-bottom" onclick="saveStudioPattern('${id}')">${id?"Save Pattern":"Continue to Pattern Writer →"}</button>`);
+    <button class="primary studio-pattern-save-bottom" onclick="saveStudioPattern('${id}','writer')">${id?"Save & Open Pattern":"Continue to Pattern Writer →"}</button>`);
   studioToggleTechnique();studioToggleCost();studioRenderExtraPreviews();if(!id)installStudioPatternDraftAutosave();
 }
 function collectStudioYarns(){
@@ -1435,7 +1437,7 @@ function collectStudioInstructions(){
     })
   }));
 }
-function saveStudioPattern(id=""){
+function saveStudioPattern(id="",after=""){
   const name=$("#studioPatternName")?.value.trim();if(!name)return alert("Give the pattern a name.");
   const now=new Date().toISOString(),old=id?studioPatternById(id):null;
   const baseSizes=[...document.querySelectorAll(".studio-size-checks input[type=checkbox][value]:checked")].map(x=>x.value);
@@ -1449,16 +1451,18 @@ function saveStudioPattern(id=""){
     hookSize:$("#studioHook")?.value.trim()||"",
     knit:{machine:$("#studioMachine")?.value.trim()||"",mode:$("#studioMachineMode")?.value||"Panel",rowCount:$("#studioRowCount")?.value.trim()||"",tension:$("#studioTension")?.value.trim()||"",notes:$("#studioMachineNotes")?.value.trim()||""},
     materials:collectStudioMaterials(),materialNotes:$("#studioMaterialNotes").value.trim(),sizes,
-    linkedModelId:$("#studioModel").value,measurements:collectStudioMeasurements(),instructions:id?(old?.instructions||studioDefaultPattern().instructions):studioDefaultPattern().instructions,
+    linkedModelId:$("#studioModel").value,linkedDesignId:$("#studioLinkedDesign")?.value||"",namePending:false,
+    measurements:collectStudioMeasurements(),instructions:id?(old?.instructions||studioDefaultPattern().instructions):studioDefaultPattern().instructions,
     notes:$("#studioPatternNotes").value.trim(),
     costing:{enabled:!!$("#studioCostEnabled")?.checked,yarn:+($("#studioCostYarn")?.value||0),labor:+($("#studioCostLabor")?.value||0),other:+($("#studioCostOther")?.value||0)},
     created:old?.created||now,updated:now
   };
   const a=id?PATTERNS().map(z=>z.id===id?x:z):[...PATTERNS(),x];
   try{S("studio_patterns",a)}catch(e){return alert("This pattern is too large to save on this device. Try removing an extra photo.")}
+  syncDesignPatternLink(x);
   if(!id)clearStudioPatternDraft();studioPatternDraftEnabled=false;
   dlg.close();
-  if(!id){
+  if(after==="writer"||!id){
     studioPatternId="";
     studioWriterPatternId=x.id;
     studioSub="writer";
