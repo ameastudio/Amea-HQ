@@ -125,6 +125,14 @@ function formatDate(ts){
   const d=new Date(ts);
   return d.toLocaleDateString(undefined,{month:"short",day:"numeric",year:d.getFullYear()!==new Date().getFullYear()?"numeric":undefined});
 }
+function linkedPatternLabel(design){
+  const ids=Array.isArray(design?.linkedPatternIds)?design.linkedPatternIds:[];
+  if(!ids.length)return "";
+  const patterns=loadJSON("ah_studio_patterns",[]);
+  const names=ids.map(id=>patterns.find(p=>p.id===id)?.name).filter(Boolean);
+  if(!names.length)return ids.length===1?"Linked pattern":ids.length+" linked patterns";
+  return names.length===1?"Pattern: "+names[0]:names.length+" linked patterns";
+}
 function escapeHtml(s){
   return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 }
@@ -1405,7 +1413,7 @@ function renderGallery(){
     if(d.thumbnail){const img=document.createElement("img");img.src=d.thumbnail;img.alt=d.name||"Artwork";thumb.appendChild(img)}
     thumb.onclick=()=>{if(state.selectMode){toggleGallerySelection(d.id);return}loadDesign(d)};
     const meta=document.createElement("div");meta.className="artwork-meta";
-    const copy=document.createElement("div");copy.className="artwork-copy";copy.innerHTML="<strong>"+escapeHtml(d.name||"Untitled Artwork")+"</strong><small>"+formatDate(d.updatedAt||Date.now())+"</small>";
+    const copy=document.createElement("div");copy.className="artwork-copy";const linked=linkedPatternLabel(d);copy.innerHTML="<strong>"+escapeHtml(d.name||"Untitled Artwork")+"</strong><small>"+formatDate(d.updatedAt||Date.now())+"</small>"+(linked?"<small class=\"artwork-linked-pattern\">"+escapeHtml(linked)+"</small>":"");
     const menu=document.createElement("button");menu.className="card-menu";menu.textContent="•••";menu.onclick=e=>openGalleryMenu(e,d.id);
     meta.append(copy,menu);card.append(thumb,meta);galleryGrid.appendChild(card);
   });
@@ -1708,6 +1716,12 @@ function init(){
   normaliseCustomBrushes();renderGallery();renderBrushCategories();renderBrushList();normalizePalettes();renderRecentColours();renderPalettes();setColour(state.colour,false);setColourTab("disc");syncReferenceActions();syncEraserModes();updateSliderLabels();syncToolButtons();syncHistoryButtons();
   croquisImages.front.onload=()=>{render();};
   croquisImages.back.onload=()=>{render();};
+  const requested=localStorage.getItem("amea_open_design_id");
+  if(requested){
+    localStorage.removeItem("amea_open_design_id");
+    const design=state.designs.find(x=>x.id===requested);
+    if(design)loadDesign(design);
+  }
 }
 init();
 })();
