@@ -446,12 +446,16 @@ async function enterHQ(){
     cloudReady=false;
     await initialCloudSync();
     cloudReady=true;
-    page("home");
+    const requestedPage=location.hash==="#studio"?"studio":"home";
+    page(requestedPage);
+    if(requestedPage==="studio")history.replaceState(null,"",location.pathname+location.search);
   }catch(err){
     console.error("Initial Améa HQ sync error",err);
     cloudReady=false;
     setCloudStatus("Using device data","error");
-    page("home");
+    const requestedPage=location.hash==="#studio"?"studio":"home";
+    page(requestedPage);
+    if(requestedPage==="studio")history.replaceState(null,"",location.pathname+location.search);
     setTimeout(()=>alert("Améa HQ opened, but cloud sync could not finish. Your device data is still here. Check your internet and try again."),50);
   }
 }
@@ -579,6 +583,19 @@ function applyAmeaBrandHeader(){
   refreshHomeGreeting();
 }
 
+function openDesignStudio(){
+  history.replaceState(null,"","#studio");
+  window.location.href="design-studio.html";
+}
+function goStudioHub(){
+  studioPatternId="";
+  studioWriterPatternId="";
+  studioSub="patterns";
+  cur="studio";
+  render();
+}
+
+
 let studioPatternId="";
 function renderStudioHub(){
   const patterns=PATTERNS();
@@ -606,7 +623,7 @@ function renderStudioHub(){
       </div>
     </button>
 
-    <button class="studio-feature-card design" onclick="window.location.href='design-studio.html'">
+    <button class="studio-feature-card design" onclick="openDesignStudio()">
       <div class="studio-feature-art">${ameaIcon("pencil")}<i></i></div>
       <div class="studio-feature-copy">
         <span>CREATE & PLAN</span>
@@ -694,7 +711,7 @@ function renderStudioLibrary(){
   const linked=inStudio.filter(o=>orderHasPattern(o)).length;
   v.innerHTML=`<div class="studio-page crochet-studio-v1">
     <div class="crochet-v1-head">
-      <button class="crochet-back" onclick="page('studio')">‹</button>
+      <button class="crochet-back" onclick="goStudioHub()">‹</button>
       <div><span>AMÉA STUDIO</span><h2>Crochet Studio</h2><p>Patterns, yarn and your making progress.</p></div>
       <button class="crochet-new-pattern" onclick="newStudioPattern()">＋</button>
     </div>
@@ -1301,7 +1318,7 @@ function renderStudioYarns(){
   const v=$("#view"),yarns=YARNS();
   v.innerHTML=`<div class="studio-subpage crochet-studio-v1 crochet-library-subpage">
     <div class="crochet-v1-head compact">
-      <button class="crochet-back" onclick="page('studio')">‹</button>
+      <button class="crochet-back" onclick="goStudioHub()">‹</button>
       <div><span>AMÉA STUDIO</span><h2>Yarn Library</h2><p>Save the yarns you reach for most.</p></div>
       <button class="crochet-new-pattern" onclick="newStudioYarn()">＋</button>
     </div>
@@ -1337,7 +1354,7 @@ function renderStudioModels(){
   const v=$("#view"),models=MODELS();
   v.innerHTML=`<div class="studio-subpage crochet-studio-v1 crochet-library-subpage">
     <div class="crochet-v1-head compact">
-      <button class="crochet-back" onclick="page('studio')">‹</button>
+      <button class="crochet-back" onclick="goStudioHub()">‹</button>
       <div><span>AMÉA STUDIO</span><h2>Models</h2><p>Saved measurements for repeat fittings.</p></div>
       <button class="crochet-new-pattern" onclick="newStudioModel()">＋</button>
     </div>
@@ -1380,7 +1397,7 @@ function renderStudioCalculator(){
   const v=$("#view");
   v.innerHTML=`<div class="studio-subpage crochet-studio-v1 crochet-library-subpage">
     <div class="crochet-v1-head compact">
-      <button class="crochet-back" onclick="page('studio')">‹</button>
+      <button class="crochet-back" onclick="goStudioHub()">‹</button>
       <div><span>AMÉA STUDIO</span><h2>Calculator</h2><p>Turn your swatch gauge into stitches and rows.</p></div>
       <span class="crochet-head-spacer"></span>
     </div>
