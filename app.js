@@ -1731,6 +1731,7 @@ function parseDateOnly(v){
 }
 function todayStart(){const d=new Date();return new Date(d.getFullYear(),d.getMonth(),d.getDate())}
 function orderDueOffset(o){
+  if(["Delivered","Cancelled"].includes(o?.status))return null;
   const d=parseDateOnly(o?.due);if(!d)return null;
   return Math.round((d-todayStart())/86400000);
 }
@@ -1744,6 +1745,8 @@ function sortOrdersSmart(a){
   });
 }
 function orderDueLabel(o){
+  if(o?.status==="Delivered")return "Delivered";
+  if(o?.status==="Cancelled")return "Cancelled";
   const d=orderDueOffset(o);
   if(d==null)return "No due date";
   if(d<0)return `${Math.abs(d)} day${Math.abs(d)===1?"":"s"} overdue`;
