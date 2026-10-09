@@ -2384,3 +2384,315 @@ html,body,#app,#view{max-width:100%;overflow-x:hidden}
   .hq-logo-shell img,
   .hq-brand-home .hq-logo-shell img{width:116px!important}
 }
+
+
+/* ===== Full app polish — final consistency layer ===== */
+:root{
+  --amea-page:#fffafc;
+  --amea-line:#f0dfe7;
+  --amea-soft:#fff4f8;
+  --amea-soft-2:#fdf7fa;
+}
+html,body{max-width:100%;overflow-x:hidden}
+body{background:var(--amea-page)}
+#app,#view,main{max-width:100%;min-width:0}
+#view{overflow-x:hidden}
+
+/* Shared page rhythm */
+.tool-page,.orders-page,.studio-hub-page,.more-page{
+  width:100%;
+  max-width:760px;
+  margin:0 auto;
+}
+.tool-page-head,.orders-title-row,.studio-hub-head{
+  align-items:flex-start;
+  gap:12px;
+  margin-bottom:2px;
+}
+.tool-page-head h2,.orders-title-row h2,.studio-hub-head h2{
+  letter-spacing:-1px;
+}
+.tool-page-head>div>span,.orders-kicker,.studio-hub-kicker{
+  color:#b58435!important;
+  font-size:7.5px!important;
+  letter-spacing:1.7px!important;
+  font-weight:900!important;
+}
+.tool-page-head p,.orders-title-row p,.studio-hub-head p{
+  color:#8f6e7f;
+  line-height:1.45;
+}
+.tool-page-head>button,.tool-add-btn,.orders-title-row>button,.studio-hub-add{
+  min-height:40px;
+  border-radius:13px!important;
+  padding:9px 12px!important;
+  font-size:9px!important;
+  font-weight:850!important;
+}
+
+/* Less bubble-heavy summaries and lists */
+.tool-summary-grid>div,
+.orders-status-strip>div{
+  border-radius:14px!important;
+  box-shadow:none!important;
+  border:1px solid var(--amea-line)!important;
+  background:rgba(255,255,255,.78)!important;
+}
+.tool-list-card,
+.orders-library,
+.orders-priority,
+.settings-modern-card,
+.more-menu-list{
+  border-radius:16px!important;
+  box-shadow:none!important;
+}
+.tool-list-card{
+  border:1px solid var(--amea-line)!important;
+  background:#fff!important;
+  overflow:hidden;
+}
+.customer-modern-row,.invoice-modern-row,.stock-modern-row,.expense-modern-row{
+  border-radius:0!important;
+  background:transparent!important;
+}
+
+/* Give each business area a subtle identity without making new cards */
+.products-page>.tool-page-head{
+  border-bottom:2px solid #f3c5d8;
+  padding-bottom:10px;
+}
+.inventory-page>.tool-page-head{
+  border-bottom:2px solid #ded6b9;
+  padding-bottom:10px;
+}
+.expenses-page>.tool-page-head{
+  border-bottom:2px solid #edbfd1;
+  padding-bottom:10px;
+}
+.settings-page>.tool-page-head,
+.more-tools-page>.tool-page-head{
+  border-bottom:1px solid var(--amea-line);
+  padding-bottom:10px;
+}
+.products-page .item-card{
+  border-radius:15px!important;
+  box-shadow:none!important;
+  border:1px solid #efdce5!important;
+}
+.inventory-page .stock-icon{background:#faf3e3!important;color:#a4772f!important}
+.expenses-page .expense-icon{background:#fff0f6!important}
+
+/* Studio stays creative but cleaner */
+.studio-hub-kicker{display:block;margin-bottom:3px}
+.studio-hub-add{
+  border:1px solid #efcddd!important;
+  background:#fff!important;
+  color:var(--amea-hot)!important;
+  box-shadow:none!important;
+}
+.studio-feature-card{
+  border-radius:19px!important;
+  box-shadow:none!important;
+}
+.studio-hub-note{
+  border-top:1px solid var(--amea-line);
+  padding-top:13px;
+  background:transparent!important;
+  border-radius:0!important;
+}
+
+/* Order hub */
+.order-hub-tabs{
+  border-radius:13px!important;
+  padding:3px!important;
+}
+.order-hub-tabs button{border-radius:10px!important}
+.order-list-card{
+  border-radius:14px!important;
+  box-shadow:none!important;
+}
+.orders-search-wrap{border-radius:13px!important}
+
+/* Empty states */
+.empty-state{
+  width:100%;
+  min-height:150px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  padding:24px 18px;
+  text-align:center;
+  color:var(--amea-muted);
+}
+.empty-state.wide{grid-column:1/-1}
+.empty-state>span{
+  width:42px;height:42px;
+  display:grid;place-items:center;
+  color:var(--amea-hot);
+}
+.empty-state>span svg{width:25px;height:25px}
+.empty-state>b{font-size:12px;color:var(--amea-ink)}
+.empty-state>small{max-width:270px;font-size:9px;line-height:1.45}
+.empty-state>button{
+  margin-top:5px;
+  padding:8px 11px;
+  border:0;
+  border-radius:11px;
+  background:#fff0f6;
+  color:var(--amea-hot);
+  font-size:8px;
+  font-weight:850;
+}
+
+/* View-first detail system */
+.record-detail,.expense-detail-sheet{
+  width:100%;
+  max-width:100%;
+  overflow-x:hidden;
+}
+.record-detail-hero{
+  width:calc(100% + 32px);
+  margin:-18px -16px 14px;
+  max-height:280px;
+  overflow:hidden;
+  background:#fff5f9;
+}
+.record-detail-hero img{
+  display:block;
+  width:100%;
+  max-height:280px;
+  object-fit:cover;
+}
+.product-detail-placeholder{
+  min-height:170px;
+  display:grid;
+  place-items:center;
+  color:#d18baa;
+  font-size:18px;
+  font-weight:900;
+  letter-spacing:3px;
+}
+.record-detail-title{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:12px;
+  padding:2px 0 13px;
+  border-bottom:1px solid var(--amea-line);
+}
+.record-detail-title>div{min-width:0}
+.record-detail-title span,
+.record-detail-note>span,
+.record-detail-section>span{
+  display:block;
+  color:#b58435;
+  font-size:7px;
+  font-weight:900;
+  letter-spacing:1.2px;
+}
+.record-detail-title h2{margin:3px 0 2px;font-size:22px;color:var(--amea-ink)}
+.record-detail-title p{margin:0;font-size:9px;color:var(--amea-muted)}
+.record-detail-title>strong{font-size:17px;color:var(--amea-hot);white-space:nowrap}
+.record-detail-title>strong.is-low{color:#a66b1b}
+.record-detail-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+  padding:12px 0;
+  border-bottom:1px solid var(--amea-line);
+}
+.record-detail-grid span{display:block;font-size:7px;color:var(--amea-muted)}
+.record-detail-grid b{display:block;margin-top:3px;font-size:10px;color:var(--amea-ink)}
+.record-detail-note{padding:12px 0;border-bottom:1px solid var(--amea-line)}
+.record-detail-note p{margin:4px 0 0;font-size:10px;line-height:1.5}
+.record-detail-section{padding:13px 0}
+.record-detail-muted{font-size:9px;color:var(--amea-muted)}
+.record-detail-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.record-activity{display:grid;gap:8px;margin-top:8px}
+.record-activity>div{display:grid;grid-template-columns:8px 1fr;gap:8px;align-items:start}
+.record-activity>div>span{
+  width:7px;height:7px;border-radius:50%;
+  background:#e7a6c1;
+  margin-top:5px;
+}
+.record-activity p{margin:0}
+.record-activity b,.record-activity small{display:block}
+.record-activity b{font-size:9px;color:var(--amea-ink)}
+.record-activity small{margin-top:2px;font-size:7px;color:var(--amea-muted)}
+.inventory-low-note{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin:11px 0 0;
+  padding:9px 0;
+  color:#a66b1b;
+  border-bottom:1px solid var(--amea-line);
+  font-size:9px;
+}
+.inventory-low-note svg{width:18px;height:18px;flex:0 0 auto}
+
+/* Expenses remain sheet-like rather than card-like */
+.expense-detail-meta,
+.expense-detail-yarn,
+.expense-grand-total{
+  border-color:var(--amea-line)!important;
+}
+.expense-detail-delete{margin-top:12px!important}
+.expense-yarn-line{border-radius:0!important;background:transparent!important}
+
+/* Settings + More */
+.settings-modern-card{
+  padding:4px 0 14px!important;
+  border:0!important;
+  border-bottom:1px solid var(--amea-line)!important;
+  background:transparent!important;
+}
+.settings-action-grid button{
+  border-radius:14px!important;
+  box-shadow:none!important;
+}
+.more-menu-list{
+  overflow:hidden;
+  border:1px solid var(--amea-line);
+  background:#fff;
+}
+.more-menu-list>button{
+  border-radius:0!important;
+  border-bottom:1px solid #f5e8ee!important;
+}
+.more-menu-list>button:last-child{border-bottom:0!important}
+
+/* Gold stays an accent; pink carries actions */
+.hq-section-kicker,.hq-kicker,.orders-kicker,.studio-hub-kicker,
+.tool-page-head>div>span,.settings-modern-title>span{
+  color:#b58435!important;
+}
+.primary,.tool-add-btn,.orders-title-row>button:not(.studio-hub-add){
+  background:linear-gradient(145deg,#f55498,#dc236f)!important;
+}
+.hq-mini-icon,.customer-avatar,.invoice-icon,.expense-icon{
+  box-shadow:none!important;
+}
+
+/* Mobile consistency */
+@media(max-width:560px){
+  .tool-page,.orders-page,.studio-hub-page,.more-page{padding-left:0;padding-right:0}
+  .tool-page-head,.orders-title-row,.studio-hub-head{gap:9px}
+  .tool-page-head h2,.orders-title-row h2,.studio-hub-head h2{font-size:27px!important}
+  .tool-page-head>button,.tool-add-btn,.orders-title-row>button,.studio-hub-add{
+    white-space:nowrap;
+    flex:0 0 auto;
+  }
+  .record-detail-grid{grid-template-columns:1fr}
+  .record-detail-actions{grid-template-columns:1fr}
+  .modern-item-catalog{gap:8px!important}
+  .hq-quick-grid{gap:7px!important}
+}
+@media(max-width:390px){
+  .tool-page-head{align-items:flex-start}
+  .top-actions{display:grid!important;grid-template-columns:1fr!important;gap:5px!important}
+  .expense-yarn-line{grid-template-columns:50px minmax(0,1fr) 20px!important}
+  .expense-yarn-photo{width:50px!important;height:50px!important}
+}

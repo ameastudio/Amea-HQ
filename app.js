@@ -251,7 +251,7 @@ function localToRemote(kind,x){
   if(kind==="items")return {
     id:x.id,name:x.name,category:x.category||null,price:+x.price||0,
     sizes:x.sizes||null,item_type:x.status||"Made to order",
-    photo_url:x.photo||null,notes:x.notes||null,active:true
+    photo_url:x.photo||null,notes:itemCloudNote(x),active:true
   };
   if(kind==="orders")return {
     id:x.id,order_number:x.no,customer_id:x.customerId||null,item_id:x.itemId||null,
@@ -273,7 +273,7 @@ function localToRemote(kind,x){
   };
   if(kind==="inventory")return {
     id:x.id,name:x.name,inventory_type:x.type||null,quantity:+x.qty||0,
-    low_stock_level:+x.low||0,unit:x.unit||null,notes:x.notes||null
+    low_stock_level:+x.low||0,unit:x.unit||null,notes:inventoryCloudNote(x)
   };
   if(kind==="suppliers")return {
     id:x.id,name:x.name,phone:x.phone||null,email:x.email||null,
@@ -282,27 +282,58 @@ function localToRemote(kind,x){
   return x;
 }
 
+function itemCloudNote(x={}){
+  const payload={note:String(x.notes||""),created:String(x.created||""),updated:String(x.updated||""),history:Array.isArray(x.history)?x.history:[]};
+  if(!payload.created&&!payload.updated&&!payload.history.length)return payload.note||null;
+  return "__AMEA_ITEM_V2__"+JSON.stringify(payload);
+}
+function itemFromCloudNote(raw){
+  const text=String(raw||"");
+  if(!text.startsWith("__AMEA_ITEM_V2__"))return {note:text,created:"",updated:"",history:[]};
+  try{
+    const x=JSON.parse(text.slice("__AMEA_ITEM_V2__".length));
+    return {note:String(x.note||""),created:String(x.created||""),updated:String(x.updated||""),history:Array.isArray(x.history)?x.history:[]};
+  }catch(e){return {note:text,created:"",updated:"",history:[]}}
+}
+function inventoryCloudNote(x={}){
+  const payload={note:String(x.notes||""),created:String(x.created||""),updated:String(x.updated||""),history:Array.isArray(x.history)?x.history:[]};
+  if(!payload.created&&!payload.updated&&!payload.history.length)return payload.note||null;
+  return "__AMEA_INVENTORY_V2__"+JSON.stringify(payload);
+}
+function inventoryFromCloudNote(raw){
+  const text=String(raw||"");
+  if(!text.startsWith("__AMEA_INVENTORY_V2__"))return {note:text,created:"",updated:"",history:[]};
+  try{
+    const x=JSON.parse(text.slice("__AMEA_INVENTORY_V2__".length));
+    return {note:String(x.note||""),created:String(x.created||""),updated:String(x.updated||""),history:Array.isArray(x.history)?x.history:[]};
+  }catch(e){return {note:text,created:"",updated:"",history:[]}}
+}
+
 function expenseCloudNote(x={}){
   const payload={
     note:String(x.note||""),
     yarnItems:Array.isArray(x.yarnItems)?x.yarnItems:[],
-    receiptPhoto:String(x.receiptPhoto||"")
+    receiptPhoto:String(x.receiptPhoto||""),
+    created:String(x.created||""),
+    history:Array.isArray(x.history)?x.history:[]
   };
-  if(!payload.yarnItems.length&&!payload.receiptPhoto)return payload.note||null;
+  if(!payload.yarnItems.length&&!payload.receiptPhoto&&!payload.created&&!payload.history.length)return payload.note||null;
   return "__AMEA_EXPENSE_V2__"+JSON.stringify(payload);
 }
 function expenseFromCloudNote(raw){
   const text=String(raw||"");
-  if(!text.startsWith("__AMEA_EXPENSE_V2__"))return {note:text,yarnItems:[],receiptPhoto:""};
+  if(!text.startsWith("__AMEA_EXPENSE_V2__"))return {note:text,yarnItems:[],receiptPhoto:"",created:"",history:[]};
   try{
     const x=JSON.parse(text.slice("__AMEA_EXPENSE_V2__".length));
     return {
       note:String(x.note||""),
       yarnItems:Array.isArray(x.yarnItems)?x.yarnItems:[],
-      receiptPhoto:String(x.receiptPhoto||"")
+      receiptPhoto:String(x.receiptPhoto||""),
+      created:String(x.created||""),
+      history:Array.isArray(x.history)?x.history:[]
     };
   }catch(e){
-    return {note:text,yarnItems:[],receiptPhoto:""};
+    return {note:text,yarnItems:[],receiptPhoto:"",created:"",history:[]};
   }
 }
 
@@ -311,11 +342,14 @@ function remoteToLocal(kind,x){
     id:x.id,name:x.name,phone:x.phone||"",email:x.email||"",
     instagram:x.instagram||"",measurements:x.measurements||"",notes:x.notes||""
   };
-  if(kind==="items")return {
-    id:x.id,name:x.name,category:x.category||"Other",price:+x.price||0,
-    sizes:x.sizes||"",status:x.item_type||"Made to order",
-    photo:x.photo_url||"",notes:x.notes||""
-  };
+  if(kind==="items"){
+    const extra=itemFromCloudNote(x.notes);
+    return {
+      id:x.id,name:x.name,category:x.category||"Other",price:+x.price||0,
+      sizes:x.sizes||"",status:x.item_type||"Made to order",
+      photo:x.photo_url||"",notes:extra.note,created:extra.created,updated:extra.updated,history:extra.history
+    };
+  }
   if(kind==="orders")return {
     id:x.id,no:x.order_number,customerId:x.customer_id||"",itemId:x.item_id||"",
     customer:x.customer_name||"",product:x.product_name||"",size:x.size||"",
@@ -334,13 +368,18 @@ function remoteToLocal(kind,x){
     return {
       id:x.id,category:x.category||"Other",supplier:x.description||"",
       amount:+x.amount||0,date:x.expense_date||"",note:extra.note,
-      yarnItems:extra.yarnItems,receiptPhoto:extra.receiptPhoto
+      yarnItems:extra.yarnItems,receiptPhoto:extra.receiptPhoto,
+      created:extra.created,history:extra.history
     };
   }
-  if(kind==="inventory")return {
-    id:x.id,name:x.name,type:x.inventory_type||"Material",qty:+x.quantity||0,
-    low:+x.low_stock_level||0,unit:x.unit||"",notes:x.notes||""
-  };
+  if(kind==="inventory"){
+    const extra=inventoryFromCloudNote(x.notes);
+    return {
+      id:x.id,name:x.name,type:x.inventory_type||"Yarn / Material",qty:+x.quantity||0,
+      low:+x.low_stock_level||0,unit:x.unit||"",notes:extra.note,
+      created:extra.created,updated:extra.updated,history:extra.history
+    };
+  }
   if(kind==="suppliers")return {
     id:x.id,name:x.name,phone:x.phone||"",email:x.email||"",
     website:x.website||"",instagram:x.instagram||"",notes:x.notes||""
@@ -632,8 +671,8 @@ function renderStudioHub(){
   const designCount=Number(localStorage.getItem("ah_design_count")||0);
   return `<div class="studio-hub-page">
     <div class="studio-hub-head">
-      <div><h2>Studio</h2><p>Create • Plan • Grow</p></div>
-      <span class="studio-hub-spark">✦</span>
+      <div><span class="studio-hub-kicker">AMÉA CREATIVE</span><h2>Studio</h2><p>Create • Plan • Grow</p></div>
+      <button class="studio-hub-add" onclick="page('crochet');setTimeout(newStudioPattern,0)">＋ Pattern</button>
     </div>
 
     <button class="studio-feature-card crochet" onclick="page('crochet')">
@@ -1596,8 +1635,8 @@ function page(x){
       <div class="hq-panel-head"><div><span class="hq-section-kicker">QUICK ACTIONS</span><h3>Get it done</h3></div></div>
       <div class="hq-quick-grid">
         <button onclick="newOrder()"><span>${ameaIcon("plus")}</span><b>New Order</b></button>
-        <button onclick="newCustomer()"><span>${ameaIcon("people")}</span><b>New Customer</b></button>
-        <button onclick="setOrderHubTab('invoices')"><span>${ameaIcon("invoice")}</span><b>Invoices</b></button>
+        <button onclick="newExpense()"><span>${ameaIcon("expense")}</span><b>Add Expense</b></button>
+        <button onclick="page('crochet');setTimeout(newStudioPattern,0)"><span>${ameaIcon("yarn")}</span><b>New Pattern</b></button>
         <button onclick="newItem()"><span>${ameaIcon("product")}</span><b>New Product</b></button>
       </div>
     </section>
@@ -1608,7 +1647,7 @@ function page(x){
         ${recent.length?recent.map(o=>`<button class="hq-order-row" onclick="openOrderView('${o.id}')">
           <span><b>${esc(o.no||"Order")} · ${esc(o.customer||"Customer")}</b><small>${esc(orderSummaryProduct(orderItemsFor(o))||o.product||"Order")} · ${esc(orderDueLabel(o))}</small></span>
           <span class="hq-order-side"><em class="hq-status ${String(o.status||"").toLowerCase().replaceAll(" ","-")}">${esc(o.status||"New")}</em></span>
-        </button>`).join(""):`<div class="hq-empty">No orders yet.</div>`}
+        </button>`).join(""):`<div class="empty-state"><span>${ameaIcon("orders")}</span><b>No orders yet</b><small>Your newest orders will show here.</small><button onclick="newOrder()">＋ New Order</button></div>`}
       </div>
     </section>
   </div>`;
@@ -1625,7 +1664,7 @@ else if(cur=="customers"){
         <span class="customer-avatar">${esc((x.name||"?").trim().charAt(0).toUpperCase())}</span>
         <span class="customer-main"><b>${esc(x.name)}</b><small>${st.orders.length?st.orders.length+" order"+(st.orders.length===1?"":"s"):"No orders yet"}${last?" · Last "+last:""}</small></span>
         <span class="customer-value"><b>${M(st.paid)}</b><small>lifetime</small></span><i>›</i>
-      </button>`}).join("")||'<div class=empty>No customers yet.</div>'}
+      </button>`}).join("")||'<div class="empty-state"><span>${ameaIcon("people")}</span><b>No customers yet</b><small>Customer profiles will stay connected to their orders.</small><button onclick="newCustomer()">＋ Add Customer</button></div>'}
     </div>
   </div>`;
 }
@@ -1640,27 +1679,27 @@ else if(cur=="invoices"){
       ${orders.length?orders.map(o=>{const bal=Math.max(0,(+o.price||0)-(+o.paid||0));return `<button class="invoice-modern-row" onclick="openInvoice('${o.id}')">
         <span class="invoice-icon">${ameaIcon("invoice")}</span><span class="invoice-main"><b>${esc("INV-"+o.no)}</b><small>${esc(o.customer||"")} · ${esc(orderSummaryProduct(orderItemsFor(o)))}</small></span>
         <span class="invoice-value"><b>${bal>0?M(bal):"Paid"}</b><small>${bal>0?"balance":"complete"}</small></span><i>›</i>
-      </button>`}).join(""):'<div class=empty>No invoices yet. Create an order first.</div>'}
+      </button>`}).join(""):'<div class="empty-state"><span>${ameaIcon("invoice")}</span><b>No invoices yet</b><small>Invoices are created from your saved orders.</small><button onclick="newOrder()">＋ New Order</button></div>'}
     </div>
   </div>`;
 }
 else if(cur=="crochet"){renderStudio()}
 else if(cur=="items"){
   const items=ITEMS();
-  v.innerHTML=`<div class="tool-page">
+  v.innerHTML=`<div class="tool-page products-page">
     <div class="tool-page-head"><div><span>FOR CUSTOMERS</span><h2>Products</h2><p>Finished Améa pieces you sell or add to customer orders.</p></div><button onclick=newItem()>＋ Add Product</button></div>
-    <div class="item-catalog modern-item-catalog">${items.map(x=>`<button class="item-card" onclick="newItem('${x.id}')">${x.photo?`<img src="${x.photo}" alt="${esc(x.name)}">`:`<div class=item-photo-placeholder>AMÉA</div>`}<div class=item-card-body><b>${esc(x.name)}</b><div class=meta>${esc(x.category||"Other")} · ${M(x.price)}</div><div class=meta>${x.status=="Ready-made"?"Ready-made":"Made to order"}${x.sizes?` · ${esc(x.sizes)}`:""}</div></div></button>`).join("")||'<div class=empty>No items yet.</div>'}</div>
+    <div class="item-catalog modern-item-catalog">${items.map(x=>`<button class="item-card" onclick="openProduct('${x.id}')">${x.photo?`<img src="${x.photo}" alt="${esc(x.name)}">`:`<div class=item-photo-placeholder>AMÉA</div>`}<div class=item-card-body><b>${esc(x.name)}</b><div class=meta>${esc(x.category||"Other")} · ${M(x.price)}</div><div class=meta>${x.status=="Ready-made"?"Ready-made":"Made to order"}${x.sizes?` · ${esc(x.sizes)}`:""}</div></div></button>`).join("")||`<div class="empty-state wide"><span>${ameaIcon("product")}</span><b>No products yet</b><small>Add the pieces you sell so they’re ready for orders.</small><button onclick="newItem()">＋ Add Product</button></div>`}</div>
   </div>`;
 }
 else if(cur=="inventory"){
   const stock=I(),low=stock.filter(x=>(+x.qty||0)<=(+x.low||0));
-  v.innerHTML=`<div class="tool-page">
+  v.innerHTML=`<div class="tool-page inventory-page">
     <div class="tool-page-head"><div><span>BEHIND THE SCENES</span><h2>Inventory</h2><p>Yarn, packaging, tools and supplies you keep on hand.</p></div><button onclick=newInventory()>＋ Add Stock</button></div>
     <div class="tool-summary-grid two"><div><span>Inventory items</span><strong>${stock.length}</strong></div><div class="${low.length?"alert":""}"><span>Low stock</span><strong>${low.length}</strong></div></div>
-    <div class="tool-list-card">${stock.map(x=>`<button class="stock-modern-row" onclick="newInventory('${x.id}')">
+    <div class="tool-list-card">${stock.map(x=>`<button class="stock-modern-row" onclick="openInventory('${x.id}')">
       <span class="stock-icon">${ameaIcon((+x.qty||0)<=(+x.low||0)?"warning":"inventory")}</span><span class="stock-main"><b>${esc(x.name)}</b><small>${esc(x.type||"Material")}</small></span>
       <span class="stock-count ${(+x.qty||0)<=(+x.low||0)?"low":""}"><b>${x.qty}</b><small>${esc(x.unit||"")}</small></span><i>›</i>
-    </button>`).join("")||'<div class=empty>No inventory yet.</div>'}</div>
+    </button>`).join("")||`<div class="empty-state"><span>${ameaIcon("inventory")}</span><b>No inventory yet</b><small>Add yarn, packaging, tools or supplies you want to track.</small><button onclick="newInventory()">＋ Add Stock</button></div>`}</div>
   </div>`;
 }
 else if(cur=="more"){
@@ -1668,7 +1707,7 @@ else if(cur=="more"){
   let state=localStorage.getItem("ah_cloud_state")||"ok";
   let last=localStorage.getItem("ah_cloud_last");
   let when=last?new Date(last).toLocaleString("en-JM",{dateStyle:"medium",timeStyle:"short"}):"Not synced yet";
-  v.innerHTML=`<div class="more-page clean-more-page">
+  v.innerHTML=`<div class="more-page clean-more-page more-tools-page">
     <div class="tool-page-head more-head"><div><h2>More</h2><p>Secondary tools for everything else.</p></div></div>
     <section class="more-menu-list">
       <button onclick="page('items')"><span class="more-line-icon">${ameaIcon("product")}</span><span><b>Products</b><small>Finished pieces you sell to customers</small></span><i>›</i></button>
@@ -1683,17 +1722,17 @@ else if(cur=="more"){
 else if(cur=="expenses"){
   const expenses=E().slice().reverse();
   const total=expenses.reduce((a,x)=>a+(+x.amount||0),0);
-  v.innerHTML=`<div class="tool-page">
-    <div class="tool-page-head"><div><span>STOCK & MONEY</span><h2>Expenses</h2><p>Keep track of what the business spends.</p></div><div class=top-actions><button onclick=manageSuppliers()>Suppliers</button><button class=tool-add-btn onclick=newExpense()>＋ Add</button></div></div>
+  v.innerHTML=`<div class="tool-page expenses-page">
+    <div class="tool-page-head"><div><span>BUSINESS SPENDING</span><h2>Expenses</h2><p>Keep track of what the business spends.</p></div><div class=top-actions><button onclick=manageSuppliers()>Suppliers</button><button class=tool-add-btn onclick=newExpense()>＋ Add</button></div></div>
     <div class="tool-summary-grid one"><div><span>Total recorded</span><strong>${M(total)}</strong></div></div>
-    <div class="tool-list-card">${expenses.map(x=>{const yarns=Array.isArray(x.yarnItems)?x.yarnItems:[],first=yarns[0];return `<button class="expense-modern-row expense-view-row" onclick="openExpense('${x.id}')">${first?.photo?`<img class="expense-thumb" src="${first.photo}" alt="">`:`<span class="expense-icon">${ameaIcon("expense")}</span>`}<span class=expense-main><b>${esc(x.category||"Expense")}</b><small>${esc(x.date||"")}${x.supplier?" · "+esc(x.supplier):""}${yarns.length?" · "+yarns.length+" yarn"+(yarns.length===1?"":"s"):""}${x.note?" · "+esc(x.note):""}</small></span><strong>${M(x.amount)}</strong><i>›</i></button>`}).join("")||'<div class=empty>No expenses yet.</div>'}</div>
+    <div class="tool-list-card">${expenses.map(x=>{const yarns=Array.isArray(x.yarnItems)?x.yarnItems:[],first=yarns[0];return `<button class="expense-modern-row expense-view-row" onclick="openExpense('${x.id}')">${first?.photo?`<img class="expense-thumb" src="${first.photo}" alt="">`:`<span class="expense-icon">${ameaIcon("expense")}</span>`}<span class=expense-main><b>${esc(x.category||"Expense")}</b><small>${esc(x.date||"")}${x.supplier?" · "+esc(x.supplier):""}${yarns.length?" · "+yarns.length+" yarn"+(yarns.length===1?"":"s"):""}${x.note?" · "+esc(x.note):""}</small></span><strong>${M(x.amount)}</strong><i>›</i></button>`}).join("")||`<div class="empty-state"><span>${ameaIcon("expense")}</span><b>No expenses yet</b><small>Record yarn, packaging, delivery or other business costs.</small><button onclick="newExpense()">＋ Add Expense</button></div>`}</div>
   </div>`;
 }
 else if(cur=="analytics"){renderAnalytics("month")}
 else if(cur=="calendar")v.innerHTML=renderCalendarPage();
 else if(cur=="settings"){
   let s=G("settings",{});
-  v.innerHTML=`<div class="tool-page settings-redesign">
+  v.innerHTML=`<div class="tool-page settings-redesign settings-page">
     <div class="tool-page-head"><div><span>BUSINESS</span><h2>Settings</h2><p>Your business details and app preferences.</p></div></div>
     <div class="settings-modern-card">
       <div class="settings-modern-title"><span>BUSINESS & INVOICES</span><h3>Améa details</h3></div>
@@ -1849,7 +1888,7 @@ function renderOrdersPage(){
     <section class="orders-library">
       <div class="orders-section-head"><div><span>ALL ORDERS</span><h3>${orders.length} total</h3></div></div>
       <div class="orders-search-wrap"><span>⌕</span><input placeholder="Search customer, order or item…" oninput="searchO(this.value)"></div>
-      <div id=ol class="orders-list">${list(orders)||'<div class=empty>No orders yet.</div>'}</div>
+      <div id=ol class="orders-list">${list(orders)||'<div class="empty-state"><span>${ameaIcon("orders")}</span><b>No orders yet</b><small>Add your first order and it’ll appear here.</small><button onclick="newOrder()">＋ New Order</button></div>'}</div>
     </section>
   </div>`;
 }
@@ -2009,40 +2048,72 @@ function previewItemPhoto(input){
   r.onload=()=>{let p=$("#itemPhotoPreview");if(p){p.src=r.result;p.style.display="block"}};
   r.readAsDataURL(f);
 }
+function recordTimeLabel(v){
+  if(!v)return "";
+  const d=new Date(v);if(Number.isNaN(d.getTime()))return "";
+  return d.toLocaleString("en-JM",{dateStyle:"medium",timeStyle:"short"});
+}
+function recordActivityMarkup(history=[],created="",updated=""){
+  const rows=(Array.isArray(history)?history:[]).slice(-5).reverse();
+  if(rows.length)return `<div class="record-activity">${rows.map(h=>`<div><span></span><p><b>${esc(h.text||"Updated")}</b><small>${esc(recordTimeLabel(h.at)||"")}</small></p></div>`).join("")}</div>`;
+  const fallback=updated||created;
+  return fallback?`<div class="record-activity"><div><span></span><p><b>${updated?"Last updated":"Added to Améa HQ"}</b><small>${esc(recordTimeLabel(fallback))}</small></p></div></div>`:"";
+}
+function openProduct(id){
+  const x=itemById(id);if(!x)return;
+  openF(`<div class="record-detail product-detail">
+    <div class="record-detail-hero">${x.photo?`<img src="${x.photo}" alt="${esc(x.name)}">`:`<div class="product-detail-placeholder">AMÉA</div>`}</div>
+    <div class="record-detail-title"><div><span>PRODUCT</span><h2>${esc(x.name||"Product")}</h2><p>${esc(x.category||"Other")} · ${esc(x.status||"Made to order")}</p></div><strong>${M(x.price||0)}</strong></div>
+    <div class="record-detail-grid">
+      <div><span>Sizes</span><b>${esc(x.sizes||"—")}</b></div>
+      <div><span>Type</span><b>${esc(x.status||"Made to order")}</b></div>
+    </div>
+    ${x.notes?`<div class="record-detail-note"><span>Notes</span><p>${esc(x.notes)}</p></div>`:""}
+    <div class="record-detail-section"><span>ACTIVITY</span>${recordActivityMarkup(x.history,x.created,x.updated)||'<p class="record-detail-muted">No changes recorded yet.</p>'}</div>
+    <div class="record-detail-actions"><button class=primary onclick="newItem('${x.id}')">Edit Product</button><button class=danger onclick="deleteItem('${x.id}')">Delete Product</button></div>
+  </div>`);
+}
 function newItem(id=""){
   const x=id?itemById(id):{};
-  openF(`<h2>${id?"Edit":"New"} Item</h2>
-    <label>Item name</label><input id=itemName value="${esc(x?.name||"")}" placeholder="e.g. Eve Dress">
-    <label>Category</label><select id=itemCategory>${["Dresses","Skirt Sets","Short Sets","Other"].map(z=>`<option ${x?.category==z?"selected":""}>${z}</option>`).join("")}</select>
-    <label>Default price (JMD)</label><input id=itemPrice type=number value="${x?.price||""}">
+  openF(`<h2>${id?"Edit Product":"New Product"}</h2>
+    <label>Product name</label><input id=itemName value="${esc(x?.name||"")}" placeholder="e.g. Eve Dress">
+    <label>Category</label><select id=itemCategory>${["Dresses","Skirt Sets","Short Sets","Tops","Bikinis","Accessories","Other"].map(z=>`<option ${x?.category==z?"selected":""}>${z}</option>`).join("")}</select>
+    <label>Default price (JMD)</label><input id=itemPrice type=number min=0 value="${x?.price||""}">
     <label>Sizes offered</label><input id=itemSizes value="${esc(x?.sizes||"XS, S, M, L, XL")}" placeholder="XS, S, M, L, XL">
-    <label>Item type</label><select id=itemStatus>${["Made to order","Ready-made"].map(z=>`<option ${x?.status==z?"selected":""}>${z}</option>`).join("")}</select>
+    <label>Product type</label><select id=itemStatus>${["Made to order","Ready-made"].map(z=>`<option ${x?.status==z?"selected":""}>${z}</option>`).join("")}</select>
     <label>Photo <span class=meta>(optional)</span></label>
     ${x?.photo?`<img id=itemPhotoPreview class=item-photo-preview src="${x.photo}" alt="">`:`<img id=itemPhotoPreview class=item-photo-preview style="display:none" alt="">`}
     <input id=itemPhoto type=file accept="image/*" onchange="previewItemPhoto(this)">
-    <label>Notes</label><textarea id=itemNotes>${esc(x?.notes||"")}</textarea>
-    <button class=primary onclick="saveItem('${id}')">${id?"Save Changes":"Add Item"}</button>
-    ${id?`<button class=danger onclick="deleteItem('${id}')">Delete Item</button>`:""}`)
+    <label>Notes <span class=meta>(optional)</span></label><textarea id=itemNotes>${esc(x?.notes||"")}</textarea>
+    <button class=primary onclick="saveItem('${id}')">${id?"Save Changes":"Add Product"}</button>`)
 }
 async function saveItem(id=""){
   const name=itemName.value.trim();
-  if(!name)return alert("Add an item name.");
-  const price=+itemPrice.value||0;
+  if(!name)return alert("Add a product name.");
+  const price=Math.max(0,+itemPrice.value||0);
   let a=ITEMS(),old=id?itemById(id):null,photo=old?.photo||"";
   const file=itemPhoto.files&&itemPhoto.files[0];
   if(file){
     try{photo=await imageToSmallDataUrl(file)}
     catch(e){return alert("I couldn't process that photo. Try another image.")}
   }
-  const x={id:id||crypto.randomUUID(),name,category:itemCategory.value,price,sizes:itemSizes.value.trim(),status:itemStatus.value,photo,notes:itemNotes.value.trim()};
+  const now=new Date().toISOString();
+  const history=Array.isArray(old?.history)?[...old.history]:[];
+  history.push({at:now,text:id?"Product updated":"Product created"});
+  const x={
+    id:id||crypto.randomUUID(),name,category:itemCategory.value,price,
+    sizes:itemSizes.value.trim(),status:itemStatus.value,photo,notes:itemNotes.value.trim(),
+    created:old?.created||now,updated:now,history:history.slice(-20)
+  };
   a=id?a.map(z=>z.id===id?x:z):[...a,x];
   try{S("items",a)}
   catch(e){return alert("That photo is too large for the current offline app storage. Try a smaller image.")}
   dlg.close();page("items")
 }
 function deleteItem(id){
-  if(O().some(o=>o.itemId===id))return alert("This item is already used on an order, so it can't be deleted yet.");
-  if(confirm("Delete this item?")){S("items",ITEMS().filter(x=>x.id!==id));deleteCloudRow("items",id);dlg.close();page("items")}
+  const used=O().some(o=>o.itemId===id||orderItemsFor(o).some(it=>it.itemId===id));
+  if(used)return alert("This product is already used on an order, so it can't be deleted yet.");
+  if(confirm("Delete this product?")){S("items",ITEMS().filter(x=>x.id!==id));deleteCloudRow("items",id);dlg.close();page("items")}
 }
 
 function orderItemsFor(o={}){
@@ -2715,9 +2786,11 @@ function saveExpense(){
     ? yarnItems.reduce((sum,x)=>sum+(x.qty*x.costEach),0)
     : Math.max(0,+($("#ea")?.value||0));
   if(category==="Yarn/materials"&&!yarnItems.length)return alert("Add at least one yarn.");
+  const now=new Date().toISOString();
   a.push({
     id:crypto.randomUUID(),category,supplier,amount,date:ed.value,note:en.value,
-    yarnItems,receiptPhoto:expenseReceiptPhoto
+    yarnItems,receiptPhoto:expenseReceiptPhoto,created:now,
+    history:[{at:now,text:"Expense recorded"}]
   });
   S("expenses",a);
   if(supplier&&!SUP().some(x=>x.name.toLowerCase()===supplier.toLowerCase())){
@@ -2738,6 +2811,7 @@ function openExpense(id){
     ${yarns.length?`<div class="expense-detail-yarns"><div class="expense-detail-section-title">Yarn purchased</div>${yarns.map(y=>`<div class="expense-detail-yarn">${y.photo?`<img src="${y.photo}" alt="">`:`<span class="expense-yarn-placeholder">YARN</span>`}<div><b>${esc(y.name||"Yarn")}</b><small>${esc(y.colour||"")}</small><span>${y.qty||0} × ${M(y.costEach||0)}</span></div><strong>${M((+y.qty||0)*(+y.costEach||0))}</strong></div>`).join("")}</div>`:""}
     ${x.receiptPhoto?`<div class="expense-detail-receipt"><div class="expense-detail-section-title">Receipt</div><img src="${x.receiptPhoto}" alt="Receipt"></div>`:""}
     ${x.note?`<div class="expense-detail-note"><span>Note</span><p>${esc(x.note)}</p></div>`:""}
+    <div class="record-detail-section"><span>ACTIVITY</span>${recordActivityMarkup(x.history,x.created,x.created)||'<p class="record-detail-muted">Recorded from purchase date.</p>'}</div>
     <button class="danger expense-detail-delete" onclick="deleteExpense('${x.id}');dlg.close()">Delete Expense</button>
   </div>`);
 }
@@ -2753,7 +2827,52 @@ function deleteExpense(id){
 function manageSuppliers(){let s=SUP();openF(`<div class=top><h2>Suppliers</h2><button onclick=addSupplier()>＋ Add</button></div><div id=supplierRows>${s.map(x=>`<div class=item><div class=top><b>${x.name}</b><button class=mini-danger onclick="deleteSupplier('${x.id}')">Remove</button></div></div>`).join("")||'<div class=empty>No suppliers saved yet.</div>'}</div>`)}
 function addSupplier(){let name=prompt("Supplier name");if(!name||!name.trim())return;let s=SUP();if(!s.some(x=>x.name.toLowerCase()==name.trim().toLowerCase())){s.push({id:crypto.randomUUID(),name:name.trim()});S("suppliers",s)}manageSuppliers()}
 function deleteSupplier(id){if(!confirm("Remove this supplier?"))return;S("suppliers",SUP().filter(x=>x.id!=id));deleteCloudRow("suppliers",id);manageSuppliers()}
-function newInventory(){openF(`<h2>Add Inventory</h2><p class=meta>Inventory is for materials and supplies—not finished products for sale.</p><label>Item</label><input id=ii placeholder="e.g. Pink cotton yarn"><label>Type</label><select id=it><option>Yarn / Material</option><option>Packaging</option><option>Tools / Supplies</option><option>Other</option></select><label>Quantity</label><input id=iq type=number><label>Low stock alert at</label><input id=il type=number value=2><button class=primary onclick=saveInventory()>Save Stock</button>`)}function saveInventory(){let a=I();a.push({id:crypto.randomUUID(),name:ii.value,type:it.value,qty:+iq.value||0,low:+il.value||2});S("inventory",a);dlg.close();render()}
+function inventoryById(id){return I().find(x=>x.id===id)}
+function openInventory(id){
+  const x=inventoryById(id);if(!x)return;
+  const low=(+x.qty||0)<=(+x.low||0);
+  openF(`<div class="record-detail inventory-detail">
+    <div class="record-detail-title"><div><span>INVENTORY</span><h2>${esc(x.name||"Stock item")}</h2><p>${esc(x.type||"Yarn / Material")}</p></div><strong class="${low?"is-low":""}">${x.qty||0}${x.unit?" "+esc(x.unit):""}</strong></div>
+    <div class="record-detail-grid">
+      <div><span>Quantity</span><b>${x.qty||0} ${esc(x.unit||"")}</b></div>
+      <div><span>Low-stock alert</span><b>${x.low||0}</b></div>
+    </div>
+    ${low?`<div class="inventory-low-note">${ameaIcon("warning")} <span>This item is at or below your low-stock level.</span></div>`:""}
+    ${x.notes?`<div class="record-detail-note"><span>Notes</span><p>${esc(x.notes)}</p></div>`:""}
+    <div class="record-detail-section"><span>ACTIVITY</span>${recordActivityMarkup(x.history,x.created,x.updated)||'<p class="record-detail-muted">No changes recorded yet.</p>'}</div>
+    <div class="record-detail-actions"><button class=primary onclick="newInventory('${x.id}')">Edit Stock</button><button class=danger onclick="deleteInventory('${x.id}')">Delete Stock</button></div>
+  </div>`);
+}
+function newInventory(id=""){
+  const x=id?inventoryById(id):{};
+  openF(`<h2>${id?"Edit Stock":"Add Inventory"}</h2><p class=meta>Inventory is for yarn, packaging, tools and supplies—not products for sale.</p>
+    <label>Item</label><input id=ii value="${esc(x?.name||"")}" placeholder="e.g. Pink cotton yarn">
+    <label>Type</label><select id=it>${["Yarn / Material","Packaging","Tools / Supplies","Other"].map(z=>`<option ${x?.type===z?"selected":""}>${z}</option>`).join("")}</select>
+    <div class=row><div><label>Quantity</label><input id=iq type=number min=0 step=.01 value="${x?.qty??""}"></div><div><label>Unit <span class=meta>(optional)</span></label><input id=iu value="${esc(x?.unit||"")}" placeholder="skeins, pcs"></div></div>
+    <label>Low stock alert at</label><input id=il type=number min=0 step=.01 value="${x?.low??2}">
+    <label>Notes <span class=meta>(optional)</span></label><textarea id=inotes>${esc(x?.notes||"")}</textarea>
+    <button class=primary onclick="saveInventory('${id}')">${id?"Save Changes":"Save Stock"}</button>`)
+}
+function saveInventory(id=""){
+  const name=ii.value.trim();if(!name)return alert("Add an inventory item name.");
+  const old=id?inventoryById(id):null;
+  const qty=Math.max(0,+iq.value||0),low=Math.max(0,+il.value||0),now=new Date().toISOString();
+  const history=Array.isArray(old?.history)?[...old.history]:[];
+  let text=id?"Inventory updated":"Inventory item created";
+  if(id&&old&&(+old.qty||0)!==qty)text=`Quantity changed from ${+old.qty||0} to ${qty}`;
+  history.push({at:now,text});
+  const x={
+    id:id||crypto.randomUUID(),name,type:it.value,qty,low,unit:iu.value.trim(),notes:inotes.value.trim(),
+    created:old?.created||now,updated:now,history:history.slice(-20)
+  };
+  const a=id?I().map(z=>z.id===id?x:z):[...I(),x];
+  S("inventory",a);dlg.close();page("inventory")
+}
+function deleteInventory(id){
+  const x=inventoryById(id);if(!x)return;
+  if(!confirm(`Delete ${x.name||"this inventory item"}?`))return;
+  S("inventory",I().filter(z=>z.id!==id));deleteCloudRow("inventory",id);dlg.close();page("inventory")
+}
 
 function analyticsMonthKey(dateString){
   if(!dateString)return "";
