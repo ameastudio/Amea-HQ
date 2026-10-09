@@ -1686,7 +1686,7 @@ else if(cur=="expenses"){
   v.innerHTML=`<div class="tool-page">
     <div class="tool-page-head"><div><span>STOCK & MONEY</span><h2>Expenses</h2><p>Keep track of what the business spends.</p></div><div class=top-actions><button onclick=manageSuppliers()>Suppliers</button><button class=tool-add-btn onclick=newExpense()>＋ Add</button></div></div>
     <div class="tool-summary-grid one"><div><span>Total recorded</span><strong>${M(total)}</strong></div></div>
-    <div class="tool-list-card">${expenses.map(x=>`<div class="expense-modern-row"><span class="expense-icon">${ameaIcon("expense")}</span><span class=expense-main><b>${esc(x.category||"Expense")}</b><small>${esc(x.date||"")}${x.supplier?" · "+esc(x.supplier):""}${x.note?" · "+esc(x.note):""}</small></span><strong>${M(x.amount)}</strong></div>`).join("")||'<div class=empty>No expenses yet.</div>'}</div>
+    <div class="tool-list-card">${expenses.map(x=>{const yarns=Array.isArray(x.yarnItems)?x.yarnItems:[],first=yarns[0];return `<div class="expense-modern-row">${first?.photo?`<img class="expense-thumb" src="${first.photo}" alt="">`:`<span class="expense-icon">${ameaIcon("expense")}</span>`}<span class=expense-main><b>${esc(x.category||"Expense")}</b><small>${esc(x.date||"")}${x.supplier?" · "+esc(x.supplier):""}${yarns.length?" · "+yarns.length+" yarn"+(yarns.length===1?"":"s"):""}${x.note?" · "+esc(x.note):""}</small></span><strong>${M(x.amount)}</strong></div>`}).join("")||'<div class=empty>No expenses yet.</div>'}</div>
   </div>`;
 }
 else if(cur=="analytics"){renderAnalytics("month")}
