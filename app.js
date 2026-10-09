@@ -889,6 +889,14 @@ function openStudioPatternWriter(id){
   cur="crochet";
   render();
 }
+function openStudioWriterInfo(id){
+  const p=studioPatternById(id);if(!p)return;
+  const instructions=collectStudioInstructions();
+  const updated={...p,instructions,updated:new Date().toISOString()};
+  try{S("studio_patterns",PATTERNS().map(x=>x.id===id?updated:x))}
+  catch(e){return alert("Save the pattern before opening Pattern Info.")}
+  editStudioPattern(id);
+}
 function studioWriterBack(){
   const id=studioWriterPatternId;
   studioWriterPatternId="";
@@ -917,7 +925,7 @@ function renderStudioPatternWriterPage(){
     <div class="studio-writer-page-head">
       <button class="crochet-back" onclick="studioWriterBack()">‹</button>
       <div><span>PATTERN WRITER</span><h2>${esc(p.name||"Untitled Pattern")}</h2><p>Write the actual pattern row by row.</p></div>
-      <button id="studioWriterSave" class="crochet-new-pattern studio-writer-save" onclick="saveStudioPatternWriter('${id}')">Save</button>
+      <div class="studio-writer-head-actions"><button type=button class="studio-writer-info-btn" onclick="openStudioWriterInfo('${id}')">Info</button><button id="studioWriterSave" class="crochet-new-pattern studio-writer-save" onclick="saveStudioPatternWriter('${id}')">Save</button></div>
     </div>
     <div class=studio-writer-intro>
       <div><span>ACTUAL PATTERN</span><h3>Write it row by row</h3><p>Type naturally. Press Enter and the next row appears automatically.</p></div>
@@ -1298,7 +1306,27 @@ function installStudioPatternDraftAutosave(){
   const f=$("#form");if(!f||f.dataset.studioDraftAutosave)return;f.dataset.studioDraftAutosave="1";let t;const save=()=>{clearTimeout(t);t=setTimeout(autoSaveStudioPatternDraft,180)};f.addEventListener("input",save);f.addEventListener("change",save);
 }
 function clearStudioPatternDraftAndRestart(){clearStudioPatternDraft();editStudioPattern("")}
-function newStudioPattern(){editStudioPattern("")}
+function newStudioPattern(){
+  openF(`<div class="pattern-start-choice">
+    <h2>New Pattern</h2>
+    <p>How do you want to start?</p>
+    <button class="pattern-start-option" onclick="dlg.close();editStudioPattern('')"><b>Start with Pattern Info</b><small>Add photos, yarn, sizing and details first.</small><span>›</span></button>
+    <button class="pattern-start-option" onclick="startStudioPatternWritingFirst()"><b>Start Writing First</b><small>Jump straight into Row 1 and fill in the info later.</small><span>›</span></button>
+  </div>`);
+}
+function startStudioPatternWritingFirst(){
+  const now=new Date().toISOString();
+  const x={...studioDefaultPattern(),id:crypto.randomUUID(),name:"Untitled Pattern",created:now,updated:now};
+  try{S("studio_patterns",[...PATTERNS(),x])}
+  catch(e){return alert("I couldn't create the pattern on this device.")}
+  clearStudioPatternDraft();studioPatternDraftEnabled=false;
+  dlg.close();
+  studioPatternId="";
+  studioWriterPatternId=x.id;
+  studioSub="writer";
+  cur="crochet";
+  render();
+}
 function editStudioPattern(id=""){
   studioPatternDraftEnabled=!id;
   const saved=!id?readStudioPatternDraft():null;
