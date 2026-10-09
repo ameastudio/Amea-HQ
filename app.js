@@ -734,7 +734,7 @@ function renderStudioLibrary(){
 }
 function studioPatternCards(patterns){
   if(!patterns.length)return `<div class="empty studio-empty crochet-empty"><b>No patterns yet.</b><span>Start your first pattern and keep every row, yarn and measurement together.</span><button onclick="newStudioPattern()">＋ Create Pattern</button></div>`;
-  return patterns.map(x=>`<button class="studio-pattern-card crochet-v1-card" data-search="${esc([x.name,x.technique,x.category,x.status,x.collection,(x.tags||[]).join(" ")].join(" ").toLowerCase())}" data-technique="${esc(x.technique||"")}" data-category="${esc(x.category||"")}" data-status="${esc(x.status||"")}" data-collection="${esc(x.collection||"")}" onclick="openStudioPattern('${x.id}')">
+  return patterns.map(x=>`<button class="studio-pattern-card crochet-v1-card" data-search="${esc([x.name,x.technique,x.category,x.status,x.collection,(x.tags||[]).join(" ")].join(" ").toLowerCase())}" data-technique="${esc(x.technique||"")}" data-category="${esc(x.category||"")}" data-status="${esc(x.status||"")}" data-collection="${esc(x.collection||"")}" onclick="openStudioPatternWriter('${x.id}')">
     <div class="studio-pattern-photo">
       ${x.mainPhoto?`<img src="${x.mainPhoto}" alt="${esc(x.name)}">`:`<div class="studio-pattern-placeholder crochet-placeholder"><img src="amea-logo.png" alt=""><span>${esc(x.category||"Pattern")}</span></div>`}
       ${x.pinned?'<span class="studio-pin">★</span>':""}
