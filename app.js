@@ -2059,7 +2059,6 @@ function recordActivityMarkup(history=[],created="",updated=""){
   const fallback=updated||created;
   return fallback?`<div class="record-activity"><div><span></span><p><b>${updated?"Last updated":"Added to Améa HQ"}</b><small>${esc(recordTimeLabel(fallback))}</small></p></div></div>`:"";
 }
-function itemById(id){return ITEMS().find(x=>x.id===id)}
 function openProduct(id){
   const x=itemById(id);if(!x)return;
   openF(`<div class="record-detail product-detail">
