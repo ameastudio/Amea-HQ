@@ -3050,3 +3050,39 @@ body{background:var(--amea-page)}
   .studio-pattern-writer-page{padding-left:10px!important;padding-right:10px!important}
   .studio-writer-page-head{margin-left:-10px!important;margin-right:-10px!important}
 }
+
+
+/* Pattern start choice */
+.pattern-start-choice{width:100%}
+.pattern-start-choice h2{margin:0 0 4px;color:var(--amea-ink)}
+.pattern-start-choice>p{margin:0 0 14px;color:var(--amea-muted);font-size:9px}
+.pattern-start-option{
+  width:100%;
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:3px 10px;
+  align-items:center;
+  padding:13px 0;
+  border:0;
+  border-bottom:1px solid var(--amea-line);
+  border-radius:0;
+  background:transparent;
+  text-align:left;
+}
+.pattern-start-option:last-child{border-bottom:0}
+.pattern-start-option b{font-size:11px;color:var(--amea-ink)}
+.pattern-start-option small{grid-column:1;font-size:8px;line-height:1.4;color:var(--amea-muted)}
+.pattern-start-option span{grid-column:2;grid-row:1/3;color:var(--amea-gold);font-size:20px}
+
+/* Pattern writer header actions */
+.studio-writer-head-actions{display:flex;align-items:center;gap:5px}
+.studio-writer-info-btn{
+  min-height:36px;
+  padding:0 10px;
+  border:1px solid #edcfdd;
+  border-radius:10px;
+  background:#fff;
+  color:var(--amea-hot);
+  font-size:8px;
+  font-weight:850;
+}
