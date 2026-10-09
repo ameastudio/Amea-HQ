@@ -251,7 +251,7 @@ function localToRemote(kind,x){
   if(kind==="items")return {
     id:x.id,name:x.name,category:x.category||null,price:+x.price||0,
     sizes:x.sizes||null,item_type:x.status||"Made to order",
-    photo_url:x.photo||null,notes:x.notes||null,active:true
+    photo_url:x.photo||null,notes:itemCloudNote(x),active:true
   };
   if(kind==="orders")return {
     id:x.id,order_number:x.no,customer_id:x.customerId||null,item_id:x.itemId||null,
@@ -273,7 +273,7 @@ function localToRemote(kind,x){
   };
   if(kind==="inventory")return {
     id:x.id,name:x.name,inventory_type:x.type||null,quantity:+x.qty||0,
-    low_stock_level:+x.low||0,unit:x.unit||null,notes:x.notes||null
+    low_stock_level:+x.low||0,unit:x.unit||null,notes:inventoryCloudNote(x)
   };
   if(kind==="suppliers")return {
     id:x.id,name:x.name,phone:x.phone||null,email:x.email||null,
@@ -282,27 +282,58 @@ function localToRemote(kind,x){
   return x;
 }
 
+function itemCloudNote(x={}){
+  const payload={note:String(x.notes||""),created:String(x.created||""),updated:String(x.updated||""),history:Array.isArray(x.history)?x.history:[]};
+  if(!payload.created&&!payload.updated&&!payload.history.length)return payload.note||null;
+  return "__AMEA_ITEM_V2__"+JSON.stringify(payload);
+}
+function itemFromCloudNote(raw){
+  const text=String(raw||"");
+  if(!text.startsWith("__AMEA_ITEM_V2__"))return {note:text,created:"",updated:"",history:[]};
+  try{
+    const x=JSON.parse(text.slice("__AMEA_ITEM_V2__".length));
+    return {note:String(x.note||""),created:String(x.created||""),updated:String(x.updated||""),history:Array.isArray(x.history)?x.history:[]};
+  }catch(e){return {note:text,created:"",updated:"",history:[]}}
+}
+function inventoryCloudNote(x={}){
+  const payload={note:String(x.notes||""),created:String(x.created||""),updated:String(x.updated||""),history:Array.isArray(x.history)?x.history:[]};
+  if(!payload.created&&!payload.updated&&!payload.history.length)return payload.note||null;
+  return "__AMEA_INVENTORY_V2__"+JSON.stringify(payload);
+}
+function inventoryFromCloudNote(raw){
+  const text=String(raw||"");
+  if(!text.startsWith("__AMEA_INVENTORY_V2__"))return {note:text,created:"",updated:"",history:[]};
+  try{
+    const x=JSON.parse(text.slice("__AMEA_INVENTORY_V2__".length));
+    return {note:String(x.note||""),created:String(x.created||""),updated:String(x.updated||""),history:Array.isArray(x.history)?x.history:[]};
+  }catch(e){return {note:text,created:"",updated:"",history:[]}}
+}
+
 function expenseCloudNote(x={}){
   const payload={
     note:String(x.note||""),
     yarnItems:Array.isArray(x.yarnItems)?x.yarnItems:[],
-    receiptPhoto:String(x.receiptPhoto||"")
+    receiptPhoto:String(x.receiptPhoto||""),
+    created:String(x.created||""),
+    history:Array.isArray(x.history)?x.history:[]
   };
-  if(!payload.yarnItems.length&&!payload.receiptPhoto)return payload.note||null;
+  if(!payload.yarnItems.length&&!payload.receiptPhoto&&!payload.created&&!payload.history.length)return payload.note||null;
   return "__AMEA_EXPENSE_V2__"+JSON.stringify(payload);
 }
 function expenseFromCloudNote(raw){
   const text=String(raw||"");
-  if(!text.startsWith("__AMEA_EXPENSE_V2__"))return {note:text,yarnItems:[],receiptPhoto:""};
+  if(!text.startsWith("__AMEA_EXPENSE_V2__"))return {note:text,yarnItems:[],receiptPhoto:"",created:"",history:[]};
   try{
     const x=JSON.parse(text.slice("__AMEA_EXPENSE_V2__".length));
     return {
       note:String(x.note||""),
       yarnItems:Array.isArray(x.yarnItems)?x.yarnItems:[],
-      receiptPhoto:String(x.receiptPhoto||"")
+      receiptPhoto:String(x.receiptPhoto||""),
+      created:String(x.created||""),
+      history:Array.isArray(x.history)?x.history:[]
     };
   }catch(e){
-    return {note:text,yarnItems:[],receiptPhoto:""};
+    return {note:text,yarnItems:[],receiptPhoto:"",created:"",history:[]};
   }
 }
 
@@ -311,11 +342,14 @@ function remoteToLocal(kind,x){
     id:x.id,name:x.name,phone:x.phone||"",email:x.email||"",
     instagram:x.instagram||"",measurements:x.measurements||"",notes:x.notes||""
   };
-  if(kind==="items")return {
-    id:x.id,name:x.name,category:x.category||"Other",price:+x.price||0,
-    sizes:x.sizes||"",status:x.item_type||"Made to order",
-    photo:x.photo_url||"",notes:x.notes||""
-  };
+  if(kind==="items"){
+    const extra=itemFromCloudNote(x.notes);
+    return {
+      id:x.id,name:x.name,category:x.category||"Other",price:+x.price||0,
+      sizes:x.sizes||"",status:x.item_type||"Made to order",
+      photo:x.photo_url||"",notes:extra.note,created:extra.created,updated:extra.updated,history:extra.history
+    };
+  }
   if(kind==="orders")return {
     id:x.id,no:x.order_number,customerId:x.customer_id||"",itemId:x.item_id||"",
     customer:x.customer_name||"",product:x.product_name||"",size:x.size||"",
@@ -334,13 +368,18 @@ function remoteToLocal(kind,x){
     return {
       id:x.id,category:x.category||"Other",supplier:x.description||"",
       amount:+x.amount||0,date:x.expense_date||"",note:extra.note,
-      yarnItems:extra.yarnItems,receiptPhoto:extra.receiptPhoto
+      yarnItems:extra.yarnItems,receiptPhoto:extra.receiptPhoto,
+      created:extra.created,history:extra.history
     };
   }
-  if(kind==="inventory")return {
-    id:x.id,name:x.name,type:x.inventory_type||"Material",qty:+x.quantity||0,
-    low:+x.low_stock_level||0,unit:x.unit||"",notes:x.notes||""
-  };
+  if(kind==="inventory"){
+    const extra=inventoryFromCloudNote(x.notes);
+    return {
+      id:x.id,name:x.name,type:x.inventory_type||"Yarn / Material",qty:+x.quantity||0,
+      low:+x.low_stock_level||0,unit:x.unit||"",notes:extra.note,
+      created:extra.created,updated:extra.updated,history:extra.history
+    };
+  }
   if(kind==="suppliers")return {
     id:x.id,name:x.name,phone:x.phone||"",email:x.email||"",
     website:x.website||"",instagram:x.instagram||"",notes:x.notes||""
@@ -2715,9 +2754,11 @@ function saveExpense(){
     ? yarnItems.reduce((sum,x)=>sum+(x.qty*x.costEach),0)
     : Math.max(0,+($("#ea")?.value||0));
   if(category==="Yarn/materials"&&!yarnItems.length)return alert("Add at least one yarn.");
+  const now=new Date().toISOString();
   a.push({
     id:crypto.randomUUID(),category,supplier,amount,date:ed.value,note:en.value,
-    yarnItems,receiptPhoto:expenseReceiptPhoto
+    yarnItems,receiptPhoto:expenseReceiptPhoto,created:now,
+    history:[{at:now,text:"Expense recorded"}]
   });
   S("expenses",a);
   if(supplier&&!SUP().some(x=>x.name.toLowerCase()===supplier.toLowerCase())){
