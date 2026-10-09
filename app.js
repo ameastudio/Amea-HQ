@@ -1648,14 +1648,14 @@ else if(cur=="crochet"){renderStudio()}
 else if(cur=="items"){
   const items=ITEMS();
   v.innerHTML=`<div class="tool-page">
-    <div class="tool-page-head"><div><span>STOCK & MONEY</span><h2>Items</h2><p>Your product catalogue for orders and pricing.</p></div><button onclick=newItem()>＋ Add</button></div>
+    <div class="tool-page-head"><div><span>FOR CUSTOMERS</span><h2>Products</h2><p>Finished Améa pieces you sell or add to customer orders.</p></div><button onclick=newItem()>＋ Add Product</button></div>
     <div class="item-catalog modern-item-catalog">${items.map(x=>`<button class="item-card" onclick="newItem('${x.id}')">${x.photo?`<img src="${x.photo}" alt="${esc(x.name)}">`:`<div class=item-photo-placeholder>AMÉA</div>`}<div class=item-card-body><b>${esc(x.name)}</b><div class=meta>${esc(x.category||"Other")} · ${M(x.price)}</div><div class=meta>${x.status=="Ready-made"?"Ready-made":"Made to order"}${x.sizes?` · ${esc(x.sizes)}`:""}</div></div></button>`).join("")||'<div class=empty>No items yet.</div>'}</div>
   </div>`;
 }
 else if(cur=="inventory"){
   const stock=I(),low=stock.filter(x=>(+x.qty||0)<=(+x.low||0));
   v.innerHTML=`<div class="tool-page">
-    <div class="tool-page-head"><div><span>STOCK & MONEY</span><h2>Inventory</h2><p>Materials and supplies you need to keep making.</p></div><button onclick=newInventory()>＋ Add</button></div>
+    <div class="tool-page-head"><div><span>BEHIND THE SCENES</span><h2>Inventory</h2><p>Yarn, packaging, tools and supplies you keep on hand.</p></div><button onclick=newInventory()>＋ Add Stock</button></div>
     <div class="tool-summary-grid two"><div><span>Inventory items</span><strong>${stock.length}</strong></div><div class="${low.length?"alert":""}"><span>Low stock</span><strong>${low.length}</strong></div></div>
     <div class="tool-list-card">${stock.map(x=>`<button class="stock-modern-row" onclick="newInventory('${x.id}')">
       <span class="stock-icon">${ameaIcon((+x.qty||0)<=(+x.low||0)?"warning":"inventory")}</span><span class="stock-main"><b>${esc(x.name)}</b><small>${esc(x.type||"Material")}</small></span>
@@ -1671,8 +1671,8 @@ else if(cur=="more"){
   v.innerHTML=`<div class="more-page clean-more-page">
     <div class="tool-page-head more-head"><div><h2>More</h2><p>Secondary tools for everything else.</p></div></div>
     <section class="more-menu-list">
-      <button onclick="page('items')"><span class="more-line-icon">${ameaIcon("product")}</span><span><b>Products</b><small>Manage your product catalogue</small></span><i>›</i></button>
-      <button onclick="page('inventory')"><span class="more-line-icon">${ameaIcon("inventory")}</span><span><b>Inventory</b><small>Track materials and stock levels</small></span><i>›</i></button>
+      <button onclick="page('items')"><span class="more-line-icon">${ameaIcon("product")}</span><span><b>Products</b><small>Finished pieces you sell to customers</small></span><i>›</i></button>
+      <button onclick="page('inventory')"><span class="more-line-icon">${ameaIcon("inventory")}</span><span><b>Inventory</b><small>Yarn, packaging, tools & supplies</small></span><i>›</i></button>
       <button onclick="page('expenses')"><span class="more-line-icon">${ameaIcon("expense")}</span><span><b>Expenses</b><small>Log and manage business costs</small></span><i>›</i></button>
       <button onclick="page('analytics')"><span class="more-line-icon">${ameaIcon("chart")}</span><span><b>Analytics</b><small>View detailed reports and insights</small></span><i>›</i></button>
       <button onclick="syncNow()"><span class="more-line-icon">${ameaIcon("cloud")}</span><span><b>Cloud Sync</b><small>${esc(cs)} · ${esc(when)}</small></span><i class="${state==="error"?"sync-error":""}">↻</i></button>
@@ -1686,7 +1686,7 @@ else if(cur=="expenses"){
   v.innerHTML=`<div class="tool-page">
     <div class="tool-page-head"><div><span>STOCK & MONEY</span><h2>Expenses</h2><p>Keep track of what the business spends.</p></div><div class=top-actions><button onclick=manageSuppliers()>Suppliers</button><button class=tool-add-btn onclick=newExpense()>＋ Add</button></div></div>
     <div class="tool-summary-grid one"><div><span>Total recorded</span><strong>${M(total)}</strong></div></div>
-    <div class="tool-list-card">${expenses.map(x=>{const yarns=Array.isArray(x.yarnItems)?x.yarnItems:[],first=yarns[0];return `<div class="expense-modern-row">${first?.photo?`<img class="expense-thumb" src="${first.photo}" alt="">`:`<span class="expense-icon">${ameaIcon("expense")}</span>`}<span class=expense-main><b>${esc(x.category||"Expense")}</b><small>${esc(x.date||"")}${x.supplier?" · "+esc(x.supplier):""}${yarns.length?" · "+yarns.length+" yarn"+(yarns.length===1?"":"s"):""}${x.note?" · "+esc(x.note):""}</small></span><strong>${M(x.amount)}</strong><button class="expense-delete-btn" onclick="deleteExpense('${x.id}')" aria-label="Delete expense">×</button></div>`}).join("")||'<div class=empty>No expenses yet.</div>'}</div>
+    <div class="tool-list-card">${expenses.map(x=>{const yarns=Array.isArray(x.yarnItems)?x.yarnItems:[],first=yarns[0];return `<button class="expense-modern-row expense-view-row" onclick="openExpense('${x.id}')">${first?.photo?`<img class="expense-thumb" src="${first.photo}" alt="">`:`<span class="expense-icon">${ameaIcon("expense")}</span>`}<span class=expense-main><b>${esc(x.category||"Expense")}</b><small>${esc(x.date||"")}${x.supplier?" · "+esc(x.supplier):""}${yarns.length?" · "+yarns.length+" yarn"+(yarns.length===1?"":"s"):""}${x.note?" · "+esc(x.note):""}</small></span><strong>${M(x.amount)}</strong><i>›</i></button>`}).join("")||'<div class=empty>No expenses yet.</div>'}</div>
   </div>`;
 }
 else if(cur=="analytics"){renderAnalytics("month")}
@@ -2726,6 +2726,22 @@ function saveExpense(){
   dlg.close();render()
 }
 
+function openExpense(id){
+  const x=E().find(e=>e.id===id);if(!x)return;
+  const yarns=Array.isArray(x.yarnItems)?x.yarnItems:[];
+  openF(`<div class="expense-detail-sheet">
+    <div class="expense-detail-head"><div><span>EXPENSE</span><h2>${esc(x.category||"Expense")}</h2></div><strong>${M(x.amount)}</strong></div>
+    <div class="expense-detail-meta">
+      <div><span>Date purchased</span><b>${esc(x.date||"—")}</b></div>
+      <div><span>Supplier / store</span><b>${esc(x.supplier||"—")}</b></div>
+    </div>
+    ${yarns.length?`<div class="expense-detail-yarns"><div class="expense-detail-section-title">Yarn purchased</div>${yarns.map(y=>`<div class="expense-detail-yarn">${y.photo?`<img src="${y.photo}" alt="">`:`<span class="expense-yarn-placeholder">YARN</span>`}<div><b>${esc(y.name||"Yarn")}</b><small>${esc(y.colour||"")}</small><span>${y.qty||0} × ${M(y.costEach||0)}</span></div><strong>${M((+y.qty||0)*(+y.costEach||0))}</strong></div>`).join("")}</div>`:""}
+    ${x.receiptPhoto?`<div class="expense-detail-receipt"><div class="expense-detail-section-title">Receipt</div><img src="${x.receiptPhoto}" alt="Receipt"></div>`:""}
+    ${x.note?`<div class="expense-detail-note"><span>Note</span><p>${esc(x.note)}</p></div>`:""}
+    <button class="danger expense-detail-delete" onclick="deleteExpense('${x.id}');dlg.close()">Delete Expense</button>
+  </div>`);
+}
+
 function deleteExpense(id){
   const x=E().find(e=>e.id===id);if(!x)return;
   if(!confirm(`Delete this ${x.category||"expense"} expense for ${M(x.amount)}?`))return;
@@ -2737,7 +2753,7 @@ function deleteExpense(id){
 function manageSuppliers(){let s=SUP();openF(`<div class=top><h2>Suppliers</h2><button onclick=addSupplier()>＋ Add</button></div><div id=supplierRows>${s.map(x=>`<div class=item><div class=top><b>${x.name}</b><button class=mini-danger onclick="deleteSupplier('${x.id}')">Remove</button></div></div>`).join("")||'<div class=empty>No suppliers saved yet.</div>'}</div>`)}
 function addSupplier(){let name=prompt("Supplier name");if(!name||!name.trim())return;let s=SUP();if(!s.some(x=>x.name.toLowerCase()==name.trim().toLowerCase())){s.push({id:crypto.randomUUID(),name:name.trim()});S("suppliers",s)}manageSuppliers()}
 function deleteSupplier(id){if(!confirm("Remove this supplier?"))return;S("suppliers",SUP().filter(x=>x.id!=id));deleteCloudRow("suppliers",id);manageSuppliers()}
-function newInventory(){openF(`<h2>Add Inventory</h2><label>Item</label><input id=ii><label>Type</label><select id=it><option>Material</option><option>Packaging</option><option>Finished product</option></select><label>Quantity</label><input id=iq type=number><label>Low stock alert at</label><input id=il type=number value=2><button class=primary onclick=saveInventory()>Save</button>`)}function saveInventory(){let a=I();a.push({id:crypto.randomUUID(),name:ii.value,type:it.value,qty:+iq.value||0,low:+il.value||2});S("inventory",a);dlg.close();render()}
+function newInventory(){openF(`<h2>Add Inventory</h2><p class=meta>Inventory is for materials and supplies—not finished products for sale.</p><label>Item</label><input id=ii placeholder="e.g. Pink cotton yarn"><label>Type</label><select id=it><option>Yarn / Material</option><option>Packaging</option><option>Tools / Supplies</option><option>Other</option></select><label>Quantity</label><input id=iq type=number><label>Low stock alert at</label><input id=il type=number value=2><button class=primary onclick=saveInventory()>Save Stock</button>`)}function saveInventory(){let a=I();a.push({id:crypto.randomUUID(),name:ii.value,type:it.value,qty:+iq.value||0,low:+il.value||2});S("inventory",a);dlg.close();render()}
 
 function analyticsMonthKey(dateString){
   if(!dateString)return "";
