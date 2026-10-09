@@ -1635,8 +1635,8 @@ function page(x){
       <div class="hq-panel-head"><div><span class="hq-section-kicker">QUICK ACTIONS</span><h3>Get it done</h3></div></div>
       <div class="hq-quick-grid">
         <button onclick="newOrder()"><span>${ameaIcon("plus")}</span><b>New Order</b></button>
-        <button onclick="newCustomer()"><span>${ameaIcon("people")}</span><b>New Customer</b></button>
-        <button onclick="setOrderHubTab('invoices')"><span>${ameaIcon("invoice")}</span><b>Invoices</b></button>
+        <button onclick="newExpense()"><span>${ameaIcon("expense")}</span><b>Add Expense</b></button>
+        <button onclick="page('crochet');setTimeout(newStudioPattern,0)"><span>${ameaIcon("yarn")}</span><b>New Pattern</b></button>
         <button onclick="newItem()"><span>${ameaIcon("product")}</span><b>New Product</b></button>
       </div>
     </section>
@@ -1647,7 +1647,7 @@ function page(x){
         ${recent.length?recent.map(o=>`<button class="hq-order-row" onclick="openOrderView('${o.id}')">
           <span><b>${esc(o.no||"Order")} · ${esc(o.customer||"Customer")}</b><small>${esc(orderSummaryProduct(orderItemsFor(o))||o.product||"Order")} · ${esc(orderDueLabel(o))}</small></span>
           <span class="hq-order-side"><em class="hq-status ${String(o.status||"").toLowerCase().replaceAll(" ","-")}">${esc(o.status||"New")}</em></span>
-        </button>`).join(""):`<div class="hq-empty">No orders yet.</div>`}
+        </button>`).join(""):`<div class="empty-state"><span>${ameaIcon("orders")}</span><b>No orders yet</b><small>Your newest orders will show here.</small><button onclick="newOrder()">＋ New Order</button></div>`}
       </div>
     </section>
   </div>`;
@@ -1686,20 +1686,20 @@ else if(cur=="invoices"){
 else if(cur=="crochet"){renderStudio()}
 else if(cur=="items"){
   const items=ITEMS();
-  v.innerHTML=`<div class="tool-page">
+  v.innerHTML=`<div class="tool-page products-page">
     <div class="tool-page-head"><div><span>FOR CUSTOMERS</span><h2>Products</h2><p>Finished Améa pieces you sell or add to customer orders.</p></div><button onclick=newItem()>＋ Add Product</button></div>
-    <div class="item-catalog modern-item-catalog">${items.map(x=>`<button class="item-card" onclick="newItem('${x.id}')">${x.photo?`<img src="${x.photo}" alt="${esc(x.name)}">`:`<div class=item-photo-placeholder>AMÉA</div>`}<div class=item-card-body><b>${esc(x.name)}</b><div class=meta>${esc(x.category||"Other")} · ${M(x.price)}</div><div class=meta>${x.status=="Ready-made"?"Ready-made":"Made to order"}${x.sizes?` · ${esc(x.sizes)}`:""}</div></div></button>`).join("")||'<div class=empty>No items yet.</div>'}</div>
+    <div class="item-catalog modern-item-catalog">${items.map(x=>`<button class="item-card" onclick="openProduct('${x.id}')">${x.photo?`<img src="${x.photo}" alt="${esc(x.name)}">`:`<div class=item-photo-placeholder>AMÉA</div>`}<div class=item-card-body><b>${esc(x.name)}</b><div class=meta>${esc(x.category||"Other")} · ${M(x.price)}</div><div class=meta>${x.status=="Ready-made"?"Ready-made":"Made to order"}${x.sizes?` · ${esc(x.sizes)}`:""}</div></div></button>`).join("")||`<div class="empty-state wide"><span>${ameaIcon("product")}</span><b>No products yet</b><small>Add the pieces you sell so they’re ready for orders.</small><button onclick="newItem()">＋ Add Product</button></div>`}</div>
   </div>`;
 }
 else if(cur=="inventory"){
   const stock=I(),low=stock.filter(x=>(+x.qty||0)<=(+x.low||0));
-  v.innerHTML=`<div class="tool-page">
+  v.innerHTML=`<div class="tool-page inventory-page">
     <div class="tool-page-head"><div><span>BEHIND THE SCENES</span><h2>Inventory</h2><p>Yarn, packaging, tools and supplies you keep on hand.</p></div><button onclick=newInventory()>＋ Add Stock</button></div>
     <div class="tool-summary-grid two"><div><span>Inventory items</span><strong>${stock.length}</strong></div><div class="${low.length?"alert":""}"><span>Low stock</span><strong>${low.length}</strong></div></div>
-    <div class="tool-list-card">${stock.map(x=>`<button class="stock-modern-row" onclick="newInventory('${x.id}')">
+    <div class="tool-list-card">${stock.map(x=>`<button class="stock-modern-row" onclick="openInventory('${x.id}')">
       <span class="stock-icon">${ameaIcon((+x.qty||0)<=(+x.low||0)?"warning":"inventory")}</span><span class="stock-main"><b>${esc(x.name)}</b><small>${esc(x.type||"Material")}</small></span>
       <span class="stock-count ${(+x.qty||0)<=(+x.low||0)?"low":""}"><b>${x.qty}</b><small>${esc(x.unit||"")}</small></span><i>›</i>
-    </button>`).join("")||'<div class=empty>No inventory yet.</div>'}</div>
+    </button>`).join("")||`<div class="empty-state"><span>${ameaIcon("inventory")}</span><b>No inventory yet</b><small>Add yarn, packaging, tools or supplies you want to track.</small><button onclick="newInventory()">＋ Add Stock</button></div>`}</div>
   </div>`;
 }
 else if(cur=="more"){
@@ -1722,10 +1722,10 @@ else if(cur=="more"){
 else if(cur=="expenses"){
   const expenses=E().slice().reverse();
   const total=expenses.reduce((a,x)=>a+(+x.amount||0),0);
-  v.innerHTML=`<div class="tool-page">
-    <div class="tool-page-head"><div><span>STOCK & MONEY</span><h2>Expenses</h2><p>Keep track of what the business spends.</p></div><div class=top-actions><button onclick=manageSuppliers()>Suppliers</button><button class=tool-add-btn onclick=newExpense()>＋ Add</button></div></div>
+  v.innerHTML=`<div class="tool-page expenses-page">
+    <div class="tool-page-head"><div><span>BUSINESS SPENDING</span><h2>Expenses</h2><p>Keep track of what the business spends.</p></div><div class=top-actions><button onclick=manageSuppliers()>Suppliers</button><button class=tool-add-btn onclick=newExpense()>＋ Add</button></div></div>
     <div class="tool-summary-grid one"><div><span>Total recorded</span><strong>${M(total)}</strong></div></div>
-    <div class="tool-list-card">${expenses.map(x=>{const yarns=Array.isArray(x.yarnItems)?x.yarnItems:[],first=yarns[0];return `<button class="expense-modern-row expense-view-row" onclick="openExpense('${x.id}')">${first?.photo?`<img class="expense-thumb" src="${first.photo}" alt="">`:`<span class="expense-icon">${ameaIcon("expense")}</span>`}<span class=expense-main><b>${esc(x.category||"Expense")}</b><small>${esc(x.date||"")}${x.supplier?" · "+esc(x.supplier):""}${yarns.length?" · "+yarns.length+" yarn"+(yarns.length===1?"":"s"):""}${x.note?" · "+esc(x.note):""}</small></span><strong>${M(x.amount)}</strong><i>›</i></button>`}).join("")||'<div class=empty>No expenses yet.</div>'}</div>
+    <div class="tool-list-card">${expenses.map(x=>{const yarns=Array.isArray(x.yarnItems)?x.yarnItems:[],first=yarns[0];return `<button class="expense-modern-row expense-view-row" onclick="openExpense('${x.id}')">${first?.photo?`<img class="expense-thumb" src="${first.photo}" alt="">`:`<span class="expense-icon">${ameaIcon("expense")}</span>`}<span class=expense-main><b>${esc(x.category||"Expense")}</b><small>${esc(x.date||"")}${x.supplier?" · "+esc(x.supplier):""}${yarns.length?" · "+yarns.length+" yarn"+(yarns.length===1?"":"s"):""}${x.note?" · "+esc(x.note):""}</small></span><strong>${M(x.amount)}</strong><i>›</i></button>`}).join("")||`<div class="empty-state"><span>${ameaIcon("expense")}</span><b>No expenses yet</b><small>Record yarn, packaging, delivery or other business costs.</small><button onclick="newExpense()">＋ Add Expense</button></div>`}</div>
   </div>`;
 }
 else if(cur=="analytics"){renderAnalytics("month")}
@@ -2812,6 +2812,7 @@ function openExpense(id){
     ${yarns.length?`<div class="expense-detail-yarns"><div class="expense-detail-section-title">Yarn purchased</div>${yarns.map(y=>`<div class="expense-detail-yarn">${y.photo?`<img src="${y.photo}" alt="">`:`<span class="expense-yarn-placeholder">YARN</span>`}<div><b>${esc(y.name||"Yarn")}</b><small>${esc(y.colour||"")}</small><span>${y.qty||0} × ${M(y.costEach||0)}</span></div><strong>${M((+y.qty||0)*(+y.costEach||0))}</strong></div>`).join("")}</div>`:""}
     ${x.receiptPhoto?`<div class="expense-detail-receipt"><div class="expense-detail-section-title">Receipt</div><img src="${x.receiptPhoto}" alt="Receipt"></div>`:""}
     ${x.note?`<div class="expense-detail-note"><span>Note</span><p>${esc(x.note)}</p></div>`:""}
+    <div class="record-detail-section"><span>ACTIVITY</span>${recordActivityMarkup(x.history,x.created,x.created)||'<p class="record-detail-muted">Recorded from purchase date.</p>'}</div>
     <button class="danger expense-detail-delete" onclick="deleteExpense('${x.id}');dlg.close()">Delete Expense</button>
   </div>`);
 }
