@@ -2053,3 +2053,73 @@ dialog:has(.studio-pattern-editor-title){width:min(780px,100%);max-height:96dvh;
 
 /* Hide duplicate HQ eyebrow now that the brand is fixed in the top header */
 .hq-welcome .hq-kicker{display:none!important}
+
+
+/* Pattern Writer: one continuous document, not separate bubbles */
+.studio-pattern-writer-page{
+  background:#fffafc;
+}
+.studio-pattern-writer-page .studio-writer-intro{
+  margin:0;
+  border-bottom:1px solid #efdce5;
+}
+.studio-pattern-writer-page .studio-pattern-writer-section,
+.studio-pattern-writer-page .studio-pattern-writer-section.main-pattern{
+  margin:0;
+  padding:16px 2px 18px;
+  border:0;
+  border-bottom:1px solid #efdce5;
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+}
+.studio-pattern-writer-page .studio-piece-options{
+  margin:8px 0 12px;
+  padding:0;
+  border-radius:0;
+  background:transparent;
+}
+.studio-pattern-writer-page .studio-document-rows{
+  overflow:visible;
+  border:0;
+  border-radius:0;
+  background:transparent;
+}
+.studio-pattern-writer-page .studio-pattern-row,
+.studio-pattern-writer-page .studio-pattern-row.repeat{
+  padding:9px 0;
+  border:0;
+  border-bottom:1px solid #f3e4ea;
+  border-radius:0;
+  background:transparent;
+}
+.studio-pattern-writer-page .studio-pattern-row:focus-within{
+  background:transparent;
+}
+.studio-pattern-writer-page .studio-row-extras{
+  margin:4px 0 3px;
+  padding:8px 0;
+  border-radius:0;
+  background:transparent;
+  border-top:1px dashed #f0d8e2;
+}
+.studio-pattern-writer-page .studio-row-tools button,
+.studio-pattern-writer-page .studio-row-trash{
+  background:transparent;
+}
+.studio-pattern-writer-page .studio-add-row-button{
+  margin-top:8px;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  text-align:left;
+  padding:8px 0;
+}
+.studio-pattern-writer-page .studio-add-piece-bottom{
+  margin:12px 0 0;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  text-align:left;
+  padding:10px 2px;
+}
