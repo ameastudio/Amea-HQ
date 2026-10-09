@@ -981,17 +981,17 @@ function openStudioWriterInfo(id){
   saveStudioPatternWriter(id,true);
   editStudioPattern(id);
 }
-function studioWriterLeave(id){
+function studioWriterLeave(id,requireName=true){
   clearTimeout(studioWriterAutoSaveTimer);
-  if(!saveStudioPatternWriter(id,false))return;
+  if(!saveStudioPatternWriter(id,!requireName))return;
   studioWriterPatternId="";
   studioSub="patterns";
-  studioPatternId=id||"";
+  studioPatternId=requireName?(id||""):"";
   cur="crochet";
   render();
 }
-function studioWriterBack(){studioWriterLeave(studioWriterPatternId)}
-function studioWriterDone(id){studioWriterLeave(id)}
+function studioWriterBack(){studioWriterLeave(studioWriterPatternId,false)}
+function studioWriterDone(id){studioWriterLeave(id,true)}
 function renderStudioPatternWriterPage(){
   const id=studioWriterPatternId;
   const p=studioPatternById(id);
