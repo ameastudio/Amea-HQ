@@ -943,51 +943,81 @@ function openStudioPatternWriter(id){
   cur="crochet";
   render();
 }
+let studioWriterAutoSaveTimer=null;
+function studioWriterSetSaveState(text="Saved ✓"){
+  const el=$("#studioWriterSaveState");if(el)el.textContent=text;
+}
+function saveStudioPatternWriter(id,auto=false){
+  const p=studioPatternById(id);if(!p)return false;
+  const instructions=document.querySelector("[data-section-row]")?collectStudioInstructions():(p.instructions||studioDefaultPattern().instructions);
+  let updated={...p,instructions,updated:new Date().toISOString()};
+  if(!auto&&(!String(updated.name||"").trim()||updated.namePending)){
+    const name=prompt("Name this pattern before you finish","");
+    if(!name||!name.trim())return false;
+    updated={...updated,name:name.trim(),namePending:false};
+  }
+  const rows=PATTERNS().map(x=>x.id===id?updated:x);
+  try{
+    if(auto&&(!String(updated.name||"").trim()||updated.namePending)){
+      localStorage.setItem("ah_studio_patterns",JSON.stringify(rows));
+    }else{
+      S("studio_patterns",rows);
+      syncDesignPatternLink(updated);
+    }
+  }catch(e){
+    if(!auto)alert("This pattern is too large to save on this device. Try removing a row photo.");
+    return false;
+  }
+  studioWriterSetSaveState("Saved ✓");
+  return true;
+}
+function studioWriterInputChanged(id){
+  studioWriterSetSaveState("Saving…");
+  clearTimeout(studioWriterAutoSaveTimer);
+  studioWriterAutoSaveTimer=setTimeout(()=>saveStudioPatternWriter(id,true),650);
+}
 function openStudioWriterInfo(id){
   const p=studioPatternById(id);if(!p)return;
-  const instructions=collectStudioInstructions();
-  const updated={...p,instructions,updated:new Date().toISOString()};
-  try{S("studio_patterns",PATTERNS().map(x=>x.id===id?updated:x))}
-  catch(e){return alert("Save the pattern before opening Pattern Info.")}
+  saveStudioPatternWriter(id,true);
   editStudioPattern(id);
 }
-function studioWriterBack(){
-  const id=studioWriterPatternId;
+function studioWriterLeave(id){
+  clearTimeout(studioWriterAutoSaveTimer);
+  if(!saveStudioPatternWriter(id,false))return;
   studioWriterPatternId="";
   studioSub="patterns";
   studioPatternId=id||"";
   cur="crochet";
   render();
 }
-function saveStudioPatternWriter(id){
-  const p=studioPatternById(id);if(!p)return;
-  const instructions=collectStudioInstructions();
-  const updated={...p,instructions,updated:new Date().toISOString()};
-  try{S("studio_patterns",PATTERNS().map(x=>x.id===id?updated:x))}
-  catch(e){return alert("This pattern is too large to save on this device. Try removing a row photo.")}
-  const btn=$("#studioWriterSave");
-  if(btn){const old=btn.textContent;btn.textContent="Saved ✓";setTimeout(()=>{if(btn)btn.textContent=old},1200)}
-}
+function studioWriterBack(){studioWriterLeave(studioWriterPatternId)}
+function studioWriterDone(id){studioWriterLeave(id)}
 function renderStudioPatternWriterPage(){
   const id=studioWriterPatternId;
   const p=studioPatternById(id);
   if(!p){studioWriterPatternId="";studioSub="patterns";return renderStudioLibrary()}
   const instructions=Array.isArray(p.instructions)&&p.instructions.length?JSON.parse(JSON.stringify(p.instructions)):studioDefaultPattern().instructions;
   if(!instructions[0].isMain)instructions[0]={...instructions[0],isMain:true,name:instructions[0].name||"Main Pattern"};
+  const design=studioDesignById(p.linkedDesignId||"");
   const v=$("#view");
   v.innerHTML=`<div class="studio-pattern-writer-page crochet-studio-v1">
     <div class="studio-writer-page-head">
       <button class="crochet-back" onclick="studioWriterBack()">‹</button>
-      <div><span>PATTERN WRITER</span><h2>${esc(p.name||"Untitled Pattern")}</h2><p>Write the actual pattern row by row.</p></div>
-      <div class="studio-writer-head-actions"><button type=button class="studio-writer-info-btn" onclick="openStudioWriterInfo('${id}')">Info</button><button id="studioWriterSave" class="crochet-new-pattern studio-writer-save" onclick="saveStudioPatternWriter('${id}')">Save</button></div>
+      <div><span>PATTERN</span><h2>${esc(p.name||"Untitled Pattern")}</h2><p>Write the actual pattern row by row.</p></div>
+      <span id="studioWriterSaveState" class="studio-writer-save-state">Saved ✓</span>
     </div>
+    <div class="studio-pattern-tabs">
+      <button type=button class=active>Pattern</button>
+      <button type=button onclick="openStudioWriterInfo('${id}')">Info</button>
+    </div>
+    ${design?`<button class="studio-writer-design-link" onclick="openLinkedDesign('${design.id}')">${design.thumbnail?`<img src="${design.thumbnail}" alt="${esc(design.name||"Design")}">`:""}<span><small>LINKED DESIGN</small><b>${esc(design.name||"Untitled Artwork")}</b></span><i>Open ↗</i></button>`:""}
     <div class=studio-writer-intro>
       <div><span>ACTUAL PATTERN</span><h3>Write it row by row</h3><p>Type naturally. Press Enter and the next row appears automatically.</p></div>
       <button type=button onclick=studioAddSection()>＋ Add Piece</button>
     </div>
-    <div id=studioSectionList>${instructions.map((sec,i)=>studioSectionEditor(sec,i)).join("")}</div>
+    <div id=studioSectionList oninput="studioWriterInputChanged('${id}')" onchange="studioWriterInputChanged('${id}')">${instructions.map((sec,i)=>studioSectionEditor(sec,i)).join("")}</div>
     <button type=button class=studio-add-piece-bottom onclick=studioAddSection()>＋ Add Optional Piece</button>
-    <button class="primary studio-writer-page-save-bottom" onclick="saveStudioPatternWriter('${id}')">Save Pattern</button>
+    <button class="primary studio-writer-page-save-bottom" onclick="studioWriterDone('${id}')">Done</button>
   </div>`;
   setTimeout(()=>document.querySelectorAll("[data-row-text]").forEach(studioAutoGrowRow),0);
 }
