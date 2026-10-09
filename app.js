@@ -779,19 +779,16 @@ function renderStudioLibrary(){
   v.innerHTML=`<div class="studio-page crochet-studio-v1">
     <div class="crochet-v1-head">
       <button class="crochet-back" onclick="goStudioHub()">‹</button>
-      <div><span>AMÉA STUDIO</span><h2>Crochet Studio</h2><p>Patterns, yarn and your making progress.</p></div>
+      <div><span>CROCHET STUDIO</span><h2>Patterns</h2><p>Write, save and work from your crochet patterns.</p></div>
       <button class="crochet-new-pattern" onclick="newStudioPattern()">＋</button>
     </div>
 
     ${studioSectionNav("patterns")}
 
-    <section class="crochet-work-banner">
-      <div>
-        <span>IN THE STUDIO</span>
-        <h3>${inStudio.length} active order${inStudio.length===1?"":"s"}</h3>
-        <p>${linked} linked to a saved pattern</p>
-      </div>
-      <button onclick="setOrderHubTab('orders')">View orders <b>›</b></button>
+    <section class="crochet-work-strip">
+      <span><b>${inStudio.length}</b> active order${inStudio.length===1?"":"s"}</span>
+      <span><b>${linked}</b> linked to patterns</span>
+      <button onclick="setOrderHubTab('orders')">Orders ›</button>
     </section>
 
     <div class="crochet-v1-stats">
@@ -1386,14 +1383,14 @@ function renderStudioYarns(){
   v.innerHTML=`<div class="studio-subpage crochet-studio-v1 crochet-library-subpage">
     <div class="crochet-v1-head compact">
       <button class="crochet-back" onclick="goStudioHub()">‹</button>
-      <div><span>AMÉA STUDIO</span><h2>Yarn Library</h2><p>Save the yarns you reach for most.</p></div>
+      <div><span>CROCHET STUDIO</span><h2>Yarn Library</h2><p>Save the yarns you reach for most.</p></div>
       <button class="crochet-new-pattern" onclick="newStudioYarn()">＋</button>
     </div>
     ${studioSectionNav("yarns")}
     <section class="crochet-sub-card">
       <div class="crochet-library-head"><div><span>YOUR STASH</span><h3>${yarns.length} saved yarn${yarns.length===1?"":"s"}</h3></div><button onclick="newStudioYarn()">＋ Add Yarn</button></div>
       <div class="crochet-yarn-grid">
-        ${yarns.map(y=>`<button class="crochet-yarn-card" onclick="newStudioYarn('${y.id}')">
+        ${yarns.map(y=>`<button class="crochet-yarn-card" onclick="openStudioYarn('${y.id}')">
           <span class="crochet-yarn-swatch"></span>
           <span><b>${esc(y.yarnName||"Yarn")}</b><small>${esc([y.brand,y.colour,y.weightType].filter(Boolean).join(" · ")||"Add details")}</small></span>
           <i>›</i>
@@ -1401,6 +1398,20 @@ function renderStudioYarns(){
       </div>
     </section>
   </div>`;
+}
+function openStudioYarn(id){
+  const y=studioYarnById(id);if(!y)return;
+  openF(`<div class="crochet-record-detail">
+    <div class="crochet-record-title"><div><span>YARN LIBRARY</span><h2>${esc(y.yarnName||"Yarn")}</h2><p>${esc([y.brand,y.colour,y.weightType].filter(Boolean).join(" · ")||"Saved yarn")}</p></div><span class="crochet-yarn-swatch large"></span></div>
+    <div class="crochet-record-grid">
+      <div><span>Brand</span><b>${esc(y.brand||"—")}</b></div>
+      <div><span>Colour</span><b>${esc(y.colour||"—")}</b></div>
+      <div><span>Weight / type</span><b>${esc(y.weightType||"—")}</b></div>
+      <div><span>Updated</span><b>${esc(y.updated?new Date(y.updated).toLocaleDateString("en-JM",{day:"numeric",month:"short",year:"numeric"}):"—")}</b></div>
+    </div>
+    ${y.notes?`<div class="crochet-record-note"><span>Notes</span><p>${esc(y.notes)}</p></div>`:""}
+    <div class="crochet-record-actions"><button class=primary onclick="newStudioYarn('${y.id}')">Edit Yarn</button><button class=danger onclick="deleteStudioYarn('${y.id}')">Delete Yarn</button></div>
+  </div>`);
 }
 function newStudioYarn(id=""){
   const y=id?studioYarnById(id):{};
@@ -1422,14 +1433,14 @@ function renderStudioModels(){
   v.innerHTML=`<div class="studio-subpage crochet-studio-v1 crochet-library-subpage">
     <div class="crochet-v1-head compact">
       <button class="crochet-back" onclick="goStudioHub()">‹</button>
-      <div><span>AMÉA STUDIO</span><h2>Models</h2><p>Saved measurements for repeat fittings.</p></div>
+      <div><span>CROCHET STUDIO</span><h2>Models</h2><p>Saved measurements for repeat fittings.</p></div>
       <button class="crochet-new-pattern" onclick="newStudioModel()">＋</button>
     </div>
     ${studioSectionNav("models")}
     <section class="crochet-sub-card">
       <div class="crochet-library-head"><div><span>MEASUREMENTS</span><h3>${models.length} saved model${models.length===1?"":"s"}</h3></div><button onclick="newStudioModel()">＋ Add Model</button></div>
       <div class="crochet-model-grid">
-        ${models.map(m=>`<button class="crochet-model-card" onclick="newStudioModel('${m.id}')">
+        ${models.map(m=>`<button class="crochet-model-card" onclick="openStudioModel('${m.id}')">
           <span class="crochet-model-avatar">${esc((m.name||"?").trim().charAt(0).toUpperCase())}</span>
           <span><b>${esc(m.name||"Model")}</b><small>${esc(m.usualSize||"No usual size")} · ${(m.measurements||[]).length} measurements</small></span>
           <i>›</i>
@@ -1442,6 +1453,17 @@ function studioModelMeasureRow(m={}){
   return `<div class=studio-measure-edit data-model-measure><input data-mm-name placeholder="Measurement" value="${esc(m.name||"")}"><input data-mm-value placeholder="Value" value="${esc(m.value||"")}"><select data-mm-unit><option ${m.unit==="in"?"selected":""}>in</option><option ${m.unit==="cm"?"selected":""}>cm</option></select><button type=button onclick="this.parentElement.remove()">×</button></div>`;
 }
 function addStudioModelMeasure(){const box=$("#studioModelMeasures");box.insertAdjacentHTML("beforeend",studioModelMeasureRow({unit:"in"}))}
+function openStudioModel(id){
+  const m=studioModelById(id);if(!m)return;
+  openF(`<div class="crochet-record-detail">
+    <div class="crochet-record-title"><div><span>MODEL</span><h2>${esc(m.name||"Model")}</h2><p>${esc(m.usualSize?"Usual size "+m.usualSize:"Saved measurements")}</p></div><span class="crochet-model-avatar large">${esc((m.name||"?").trim().charAt(0).toUpperCase())}</span></div>
+    <div class="crochet-measure-detail">
+      ${(m.measurements||[]).map(x=>`<div><span>${esc(x.name||"Measurement")}</span><b>${esc(x.value||"—")} ${esc(x.unit||"")}</b></div>`).join("")||'<p class=meta>No measurements saved.</p>'}
+    </div>
+    ${m.notes?`<div class="crochet-record-note"><span>Notes</span><p>${esc(m.notes)}</p></div>`:""}
+    <div class="crochet-record-actions"><button class=primary onclick="newStudioModel('${m.id}')">Edit Model</button><button class=danger onclick="deleteStudioModel('${m.id}')">Delete Model</button></div>
+  </div>`);
+}
 function newStudioModel(id=""){
   const m=id?studioModelById(id):{measurements:[{name:"Bust",unit:"in"},{name:"Waist",unit:"in"},{name:"Hips",unit:"in"}]};
   openF(`<button class=close onclick=dlg.close()>×</button><h2>${id?"Edit":"Add"} Model</h2><label>Name / nickname</label><input id=smName value="${esc(m?.name||"")}"><label>Usual size</label><input id=smSize value="${esc(m?.usualSize||"")}" placeholder="S, M, L…"><div class=studio-editor-row-head><label>Measurements</label><button type=button onclick=addStudioModelMeasure()>＋ Add</button></div><div id=studioModelMeasures>${(m?.measurements||[]).map(studioModelMeasureRow).join("")}</div><label>Notes</label><textarea id=smNotes>${esc(m?.notes||"")}</textarea><button class=primary onclick="saveStudioModel('${id}')">Save Model</button>${id?`<button class=danger onclick="deleteStudioModel('${id}')">Delete Model</button>`:""}`);
@@ -1465,7 +1487,7 @@ function renderStudioCalculator(){
   v.innerHTML=`<div class="studio-subpage crochet-studio-v1 crochet-library-subpage">
     <div class="crochet-v1-head compact">
       <button class="crochet-back" onclick="goStudioHub()">‹</button>
-      <div><span>AMÉA STUDIO</span><h2>Calculator</h2><p>Turn your swatch gauge into stitches and rows.</p></div>
+      <div><span>CROCHET STUDIO</span><h2>Calculator</h2><p>Turn your swatch gauge into stitches and rows.</p></div>
       <span class="crochet-head-spacer"></span>
     </div>
     ${studioSectionNav("calculator")}
