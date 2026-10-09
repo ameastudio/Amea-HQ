@@ -2048,40 +2048,73 @@ function previewItemPhoto(input){
   r.onload=()=>{let p=$("#itemPhotoPreview");if(p){p.src=r.result;p.style.display="block"}};
   r.readAsDataURL(f);
 }
+function recordTimeLabel(v){
+  if(!v)return "";
+  const d=new Date(v);if(Number.isNaN(d.getTime()))return "";
+  return d.toLocaleString("en-JM",{dateStyle:"medium",timeStyle:"short"});
+}
+function recordActivityMarkup(history=[],created="",updated=""){
+  const rows=(Array.isArray(history)?history:[]).slice(-5).reverse();
+  if(rows.length)return `<div class="record-activity">${rows.map(h=>`<div><span></span><p><b>${esc(h.text||"Updated")}</b><small>${esc(recordTimeLabel(h.at)||"")}</small></p></div>`).join("")}</div>`;
+  const fallback=updated||created;
+  return fallback?`<div class="record-activity"><div><span></span><p><b>${updated?"Last updated":"Added to Améa HQ"}</b><small>${esc(recordTimeLabel(fallback))}</small></p></div></div>`:"";
+}
+function itemById(id){return ITEMS().find(x=>x.id===id)}
+function openProduct(id){
+  const x=itemById(id);if(!x)return;
+  openF(`<div class="record-detail product-detail">
+    <div class="record-detail-hero">${x.photo?`<img src="${x.photo}" alt="${esc(x.name)}">`:`<div class="product-detail-placeholder">AMÉA</div>`}</div>
+    <div class="record-detail-title"><div><span>PRODUCT</span><h2>${esc(x.name||"Product")}</h2><p>${esc(x.category||"Other")} · ${esc(x.status||"Made to order")}</p></div><strong>${M(x.price||0)}</strong></div>
+    <div class="record-detail-grid">
+      <div><span>Sizes</span><b>${esc(x.sizes||"—")}</b></div>
+      <div><span>Type</span><b>${esc(x.status||"Made to order")}</b></div>
+    </div>
+    ${x.notes?`<div class="record-detail-note"><span>Notes</span><p>${esc(x.notes)}</p></div>`:""}
+    <div class="record-detail-section"><span>ACTIVITY</span>${recordActivityMarkup(x.history,x.created,x.updated)||'<p class="record-detail-muted">No changes recorded yet.</p>'}</div>
+    <div class="record-detail-actions"><button class=primary onclick="newItem('${x.id}')">Edit Product</button><button class=danger onclick="deleteItem('${x.id}')">Delete Product</button></div>
+  </div>`);
+}
 function newItem(id=""){
   const x=id?itemById(id):{};
-  openF(`<h2>${id?"Edit":"New"} Item</h2>
-    <label>Item name</label><input id=itemName value="${esc(x?.name||"")}" placeholder="e.g. Eve Dress">
-    <label>Category</label><select id=itemCategory>${["Dresses","Skirt Sets","Short Sets","Other"].map(z=>`<option ${x?.category==z?"selected":""}>${z}</option>`).join("")}</select>
-    <label>Default price (JMD)</label><input id=itemPrice type=number value="${x?.price||""}">
+  openF(`<h2>${id?"Edit Product":"New Product"}</h2>
+    <label>Product name</label><input id=itemName value="${esc(x?.name||"")}" placeholder="e.g. Eve Dress">
+    <label>Category</label><select id=itemCategory>${["Dresses","Skirt Sets","Short Sets","Tops","Bikinis","Accessories","Other"].map(z=>`<option ${x?.category==z?"selected":""}>${z}</option>`).join("")}</select>
+    <label>Default price (JMD)</label><input id=itemPrice type=number min=0 value="${x?.price||""}">
     <label>Sizes offered</label><input id=itemSizes value="${esc(x?.sizes||"XS, S, M, L, XL")}" placeholder="XS, S, M, L, XL">
-    <label>Item type</label><select id=itemStatus>${["Made to order","Ready-made"].map(z=>`<option ${x?.status==z?"selected":""}>${z}</option>`).join("")}</select>
+    <label>Product type</label><select id=itemStatus>${["Made to order","Ready-made"].map(z=>`<option ${x?.status==z?"selected":""}>${z}</option>`).join("")}</select>
     <label>Photo <span class=meta>(optional)</span></label>
     ${x?.photo?`<img id=itemPhotoPreview class=item-photo-preview src="${x.photo}" alt="">`:`<img id=itemPhotoPreview class=item-photo-preview style="display:none" alt="">`}
     <input id=itemPhoto type=file accept="image/*" onchange="previewItemPhoto(this)">
-    <label>Notes</label><textarea id=itemNotes>${esc(x?.notes||"")}</textarea>
-    <button class=primary onclick="saveItem('${id}')">${id?"Save Changes":"Add Item"}</button>
-    ${id?`<button class=danger onclick="deleteItem('${id}')">Delete Item</button>`:""}`)
+    <label>Notes <span class=meta>(optional)</span></label><textarea id=itemNotes>${esc(x?.notes||"")}</textarea>
+    <button class=primary onclick="saveItem('${id}')">${id?"Save Changes":"Add Product"}</button>`)
 }
 async function saveItem(id=""){
   const name=itemName.value.trim();
-  if(!name)return alert("Add an item name.");
-  const price=+itemPrice.value||0;
+  if(!name)return alert("Add a product name.");
+  const price=Math.max(0,+itemPrice.value||0);
   let a=ITEMS(),old=id?itemById(id):null,photo=old?.photo||"";
   const file=itemPhoto.files&&itemPhoto.files[0];
   if(file){
     try{photo=await imageToSmallDataUrl(file)}
     catch(e){return alert("I couldn't process that photo. Try another image.")}
   }
-  const x={id:id||crypto.randomUUID(),name,category:itemCategory.value,price,sizes:itemSizes.value.trim(),status:itemStatus.value,photo,notes:itemNotes.value.trim()};
+  const now=new Date().toISOString();
+  const history=Array.isArray(old?.history)?[...old.history]:[];
+  history.push({at:now,text:id?"Product updated":"Product created"});
+  const x={
+    id:id||crypto.randomUUID(),name,category:itemCategory.value,price,
+    sizes:itemSizes.value.trim(),status:itemStatus.value,photo,notes:itemNotes.value.trim(),
+    created:old?.created||now,updated:now,history:history.slice(-20)
+  };
   a=id?a.map(z=>z.id===id?x:z):[...a,x];
   try{S("items",a)}
   catch(e){return alert("That photo is too large for the current offline app storage. Try a smaller image.")}
   dlg.close();page("items")
 }
 function deleteItem(id){
-  if(O().some(o=>o.itemId===id))return alert("This item is already used on an order, so it can't be deleted yet.");
-  if(confirm("Delete this item?")){S("items",ITEMS().filter(x=>x.id!==id));deleteCloudRow("items",id);dlg.close();page("items")}
+  const used=O().some(o=>o.itemId===id||orderItemsFor(o).some(it=>it.itemId===id));
+  if(used)return alert("This product is already used on an order, so it can't be deleted yet.");
+  if(confirm("Delete this product?")){S("items",ITEMS().filter(x=>x.id!==id));deleteCloudRow("items",id);dlg.close();page("items")}
 }
 
 function orderItemsFor(o={}){
@@ -2794,7 +2827,52 @@ function deleteExpense(id){
 function manageSuppliers(){let s=SUP();openF(`<div class=top><h2>Suppliers</h2><button onclick=addSupplier()>＋ Add</button></div><div id=supplierRows>${s.map(x=>`<div class=item><div class=top><b>${x.name}</b><button class=mini-danger onclick="deleteSupplier('${x.id}')">Remove</button></div></div>`).join("")||'<div class=empty>No suppliers saved yet.</div>'}</div>`)}
 function addSupplier(){let name=prompt("Supplier name");if(!name||!name.trim())return;let s=SUP();if(!s.some(x=>x.name.toLowerCase()==name.trim().toLowerCase())){s.push({id:crypto.randomUUID(),name:name.trim()});S("suppliers",s)}manageSuppliers()}
 function deleteSupplier(id){if(!confirm("Remove this supplier?"))return;S("suppliers",SUP().filter(x=>x.id!=id));deleteCloudRow("suppliers",id);manageSuppliers()}
-function newInventory(){openF(`<h2>Add Inventory</h2><p class=meta>Inventory is for materials and supplies—not finished products for sale.</p><label>Item</label><input id=ii placeholder="e.g. Pink cotton yarn"><label>Type</label><select id=it><option>Yarn / Material</option><option>Packaging</option><option>Tools / Supplies</option><option>Other</option></select><label>Quantity</label><input id=iq type=number><label>Low stock alert at</label><input id=il type=number value=2><button class=primary onclick=saveInventory()>Save Stock</button>`)}function saveInventory(){let a=I();a.push({id:crypto.randomUUID(),name:ii.value,type:it.value,qty:+iq.value||0,low:+il.value||2});S("inventory",a);dlg.close();render()}
+function inventoryById(id){return I().find(x=>x.id===id)}
+function openInventory(id){
+  const x=inventoryById(id);if(!x)return;
+  const low=(+x.qty||0)<=(+x.low||0);
+  openF(`<div class="record-detail inventory-detail">
+    <div class="record-detail-title"><div><span>INVENTORY</span><h2>${esc(x.name||"Stock item")}</h2><p>${esc(x.type||"Yarn / Material")}</p></div><strong class="${low?"is-low":""}">${x.qty||0}${x.unit?" "+esc(x.unit):""}</strong></div>
+    <div class="record-detail-grid">
+      <div><span>Quantity</span><b>${x.qty||0} ${esc(x.unit||"")}</b></div>
+      <div><span>Low-stock alert</span><b>${x.low||0}</b></div>
+    </div>
+    ${low?`<div class="inventory-low-note">${ameaIcon("warning")} <span>This item is at or below your low-stock level.</span></div>`:""}
+    ${x.notes?`<div class="record-detail-note"><span>Notes</span><p>${esc(x.notes)}</p></div>`:""}
+    <div class="record-detail-section"><span>ACTIVITY</span>${recordActivityMarkup(x.history,x.created,x.updated)||'<p class="record-detail-muted">No changes recorded yet.</p>'}</div>
+    <div class="record-detail-actions"><button class=primary onclick="newInventory('${x.id}')">Edit Stock</button><button class=danger onclick="deleteInventory('${x.id}')">Delete Stock</button></div>
+  </div>`);
+}
+function newInventory(id=""){
+  const x=id?inventoryById(id):{};
+  openF(`<h2>${id?"Edit Stock":"Add Inventory"}</h2><p class=meta>Inventory is for yarn, packaging, tools and supplies—not products for sale.</p>
+    <label>Item</label><input id=ii value="${esc(x?.name||"")}" placeholder="e.g. Pink cotton yarn">
+    <label>Type</label><select id=it>${["Yarn / Material","Packaging","Tools / Supplies","Other"].map(z=>`<option ${x?.type===z?"selected":""}>${z}</option>`).join("")}</select>
+    <div class=row><div><label>Quantity</label><input id=iq type=number min=0 step=.01 value="${x?.qty??""}"></div><div><label>Unit <span class=meta>(optional)</span></label><input id=iu value="${esc(x?.unit||"")}" placeholder="skeins, pcs"></div></div>
+    <label>Low stock alert at</label><input id=il type=number min=0 step=.01 value="${x?.low??2}">
+    <label>Notes <span class=meta>(optional)</span></label><textarea id=inotes>${esc(x?.notes||"")}</textarea>
+    <button class=primary onclick="saveInventory('${id}')">${id?"Save Changes":"Save Stock"}</button>`)
+}
+function saveInventory(id=""){
+  const name=ii.value.trim();if(!name)return alert("Add an inventory item name.");
+  const old=id?inventoryById(id):null;
+  const qty=Math.max(0,+iq.value||0),low=Math.max(0,+il.value||0),now=new Date().toISOString();
+  const history=Array.isArray(old?.history)?[...old.history]:[];
+  let text=id?"Inventory updated":"Inventory item created";
+  if(id&&old&&(+old.qty||0)!==qty)text=`Quantity changed from ${+old.qty||0} to ${qty}`;
+  history.push({at:now,text});
+  const x={
+    id:id||crypto.randomUUID(),name,type:it.value,qty,low,unit:iu.value.trim(),notes:inotes.value.trim(),
+    created:old?.created||now,updated:now,history:history.slice(-20)
+  };
+  const a=id?I().map(z=>z.id===id?x:z):[...I(),x];
+  S("inventory",a);dlg.close();page("inventory")
+}
+function deleteInventory(id){
+  const x=inventoryById(id);if(!x)return;
+  if(!confirm(`Delete ${x.name||"this inventory item"}?`))return;
+  S("inventory",I().filter(z=>z.id!==id));deleteCloudRow("inventory",id);dlg.close();page("inventory")
+}
 
 function analyticsMonthKey(dateString){
   if(!dateString)return "";
