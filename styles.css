@@ -2696,3 +2696,357 @@ body{background:var(--amea-page)}
   .expense-yarn-line{grid-template-columns:50px minmax(0,1fr) 20px!important}
   .expense-yarn-photo{width:50px!important;height:50px!important}
 }
+
+
+/* ===== Crochet Studio cleanup ===== */
+.crochet-studio-v1,
+.studio-subpage,
+.studio-detail,
+.studio-work-page,
+.studio-pattern-writer-page{
+  max-width:760px;
+  margin:0 auto;
+  width:100%;
+  overflow-x:hidden;
+}
+.crochet-v1-head{
+  padding:4px 0 10px;
+  border-bottom:1px solid var(--amea-line);
+}
+.crochet-v1-head>div>span{
+  color:#b58435!important;
+}
+.crochet-v1-head h2{
+  font-size:27px!important;
+  letter-spacing:-1px!important;
+}
+.crochet-v1-head p{
+  white-space:normal!important;
+  overflow:visible!important;
+  text-overflow:clip!important;
+  line-height:1.4;
+}
+.crochet-back,.crochet-new-pattern{
+  border-radius:11px!important;
+  box-shadow:none!important;
+}
+.crochet-section-nav{
+  position:sticky;
+  top:70px;
+  z-index:12;
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:0;
+  padding:0;
+  border:0;
+  border-bottom:1px solid var(--amea-line);
+  border-radius:0;
+  background:rgba(255,250,252,.96);
+  box-shadow:none;
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+}
+.crochet-section-nav button{
+  padding:11px 4px;
+  border-radius:0!important;
+  border-bottom:2px solid transparent;
+  font-size:8px;
+}
+.crochet-section-nav button.active{
+  background:transparent!important;
+  color:var(--amea-hot)!important;
+  border-bottom-color:var(--amea-hot);
+  box-shadow:none!important;
+}
+.crochet-work-strip{
+  display:grid;
+  grid-template-columns:1fr 1fr auto;
+  gap:10px;
+  align-items:center;
+  padding:10px 0;
+  border-bottom:1px solid var(--amea-line);
+}
+.crochet-work-strip span{
+  display:flex;
+  align-items:baseline;
+  gap:4px;
+  color:var(--amea-muted);
+  font-size:8px;
+}
+.crochet-work-strip span b{
+  color:var(--amea-ink);
+  font-size:13px;
+}
+.crochet-work-strip button{
+  border:0;
+  background:transparent;
+  color:var(--amea-hot);
+  padding:6px 0;
+  font-size:8px;
+  font-weight:850;
+}
+.crochet-v1-stats{
+  gap:0;
+  border-bottom:1px solid var(--amea-line);
+}
+.crochet-v1-stats>div{
+  padding:12px 8px;
+  border:0!important;
+  border-right:1px solid var(--amea-line)!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+.crochet-v1-stats>div:last-child{border-right:0!important}
+.crochet-library-v1,
+.crochet-sub-card{
+  padding:14px 0 0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+.crochet-library-head{
+  padding-bottom:8px;
+  margin-bottom:8px;
+  border-bottom:1px solid var(--amea-line);
+}
+.crochet-library-head>button{
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  padding:6px 0!important;
+}
+.crochet-filter-row{
+  display:grid!important;
+  grid-template-columns:1fr 1fr;
+  gap:6px;
+  overflow:visible!important;
+  padding-bottom:8px;
+}
+.crochet-filter-row select{
+  width:100%!important;
+  max-width:none!important;
+  min-width:0!important;
+  border-radius:11px!important;
+}
+.crochet-card-grid{gap:10px!important}
+.crochet-v1-card{
+  border-radius:15px!important;
+  box-shadow:none!important;
+}
+.crochet-v1-card .studio-pattern-photo{border-radius:0!important}
+.crochet-yarn-card,.crochet-model-card{
+  padding:11px 0!important;
+  border:0!important;
+  border-bottom:1px solid var(--amea-line)!important;
+  border-radius:0!important;
+  background:transparent!important;
+}
+.crochet-yarn-card:last-child,.crochet-model-card:last-child{border-bottom:0!important}
+.crochet-yarn-swatch,.crochet-model-avatar{
+  border-radius:10px!important;
+}
+.crochet-yarn-swatch.large,.crochet-model-avatar.large{
+  width:46px;
+  height:46px;
+  flex:0 0 46px;
+}
+
+/* Yarn / model details */
+.crochet-record-detail{width:100%;overflow-x:hidden}
+.crochet-record-title{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  padding-bottom:13px;
+  border-bottom:1px solid var(--amea-line);
+}
+.crochet-record-title>div{min-width:0}
+.crochet-record-title>div>span,
+.crochet-record-note>span{
+  display:block;
+  color:#b58435;
+  font-size:7px;
+  font-weight:900;
+  letter-spacing:1.2px;
+}
+.crochet-record-title h2{
+  margin:3px 0 2px;
+  font-size:22px;
+  color:var(--amea-ink);
+}
+.crochet-record-title p{
+  margin:0;
+  color:var(--amea-muted);
+  font-size:9px;
+}
+.crochet-record-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:0 14px;
+  padding:7px 0;
+  border-bottom:1px solid var(--amea-line);
+}
+.crochet-record-grid>div,
+.crochet-measure-detail>div{
+  padding:9px 0;
+  border-bottom:1px solid #f5e7ed;
+}
+.crochet-record-grid span,
+.crochet-measure-detail span{
+  display:block;
+  color:var(--amea-muted);
+  font-size:7px;
+}
+.crochet-record-grid b,
+.crochet-measure-detail b{
+  display:block;
+  margin-top:3px;
+  color:var(--amea-ink);
+  font-size:10px;
+}
+.crochet-measure-detail{
+  padding:6px 0;
+  border-bottom:1px solid var(--amea-line);
+}
+.crochet-record-note{
+  padding:12px 0;
+  border-bottom:1px solid var(--amea-line);
+}
+.crochet-record-note p{margin:4px 0 0;font-size:10px;line-height:1.45}
+.crochet-record-actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin-top:13px;
+}
+
+/* Calculator becomes a clean tool sheet */
+.crochet-calc-v1{
+  padding:14px 0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+.crochet-calc-v1 .studio-calc-switch{
+  border-radius:11px!important;
+  background:#fff1f6!important;
+}
+.crochet-calc-gauge{
+  padding:13px 0!important;
+  border:0!important;
+  border-top:1px solid var(--amea-line)!important;
+  border-bottom:1px solid var(--amea-line)!important;
+  border-radius:0!important;
+  background:transparent!important;
+}
+
+/* Pattern detail: information first, fewer containers */
+.studio-detail-nav{
+  top:70px!important;
+  padding:7px 0!important;
+  background:rgba(255,250,252,.95)!important;
+}
+.studio-detail-hero{
+  padding:0 0 14px!important;
+  border:0!important;
+  border-bottom:1px solid var(--amea-line)!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+.studio-detail-photo{border-radius:14px!important}
+.studio-action-row{
+  border-bottom:1px solid var(--amea-line);
+  padding-bottom:11px;
+}
+.studio-action-row button{
+  border-radius:11px!important;
+  box-shadow:none!important;
+}
+.studio-detail-section{
+  margin:0!important;
+  padding:15px 0!important;
+  border:0!important;
+  border-bottom:1px solid var(--amea-line)!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+.studio-instruction-section{
+  padding:10px 0 14px!important;
+  border:0!important;
+  border-bottom:1px solid #f1e1e8!important;
+  border-radius:0!important;
+  background:transparent!important;
+}
+
+/* Writer stays one continuous document */
+.studio-pattern-writer-page{
+  background:#fffafc!important;
+}
+.studio-writer-page-head{
+  box-shadow:none!important;
+}
+.studio-pattern-writer-page .studio-pattern-writer-section,
+.studio-pattern-writer-page .studio-pattern-writer-section.main-pattern{
+  border-radius:0!important;
+  box-shadow:none!important;
+}
+.studio-pattern-writer-page .studio-shortcut-wrap{
+  border-radius:0!important;
+  margin-left:0!important;
+  margin-right:0!important;
+  border-top:1px solid var(--amea-line);
+  box-shadow:none!important;
+}
+.studio-pattern-writer-page .studio-shortcut-bar button{
+  border-radius:9px!important;
+}
+.studio-writer-page-save-bottom{
+  border-radius:11px!important;
+}
+.studio-piece-options textarea,
+.studio-pattern-row textarea[data-row-text]{
+  max-width:100%;
+}
+.studio-row-tools{flex-wrap:wrap}
+
+/* Making mode */
+.studio-work-nav{top:70px!important}
+.studio-work-piece{
+  border-radius:0!important;
+  border-left:0!important;
+  border-right:0!important;
+  box-shadow:none!important;
+}
+.studio-work-row{
+  border-radius:0!important;
+}
+
+/* No sideways scrolling in Crochet Studio */
+.crochet-studio-v1 *,
+.studio-pattern-writer-page *,
+.studio-detail *,
+.studio-work-page *{
+  box-sizing:border-box;
+  max-width:100%;
+}
+@media(max-width:480px){
+  .crochet-work-strip{
+    grid-template-columns:1fr 1fr;
+  }
+  .crochet-work-strip button{
+    grid-column:1/-1;
+    text-align:left;
+    padding-top:0;
+  }
+  .crochet-filter-row{grid-template-columns:1fr 1fr}
+  .crochet-record-grid{grid-template-columns:1fr}
+  .crochet-record-actions{grid-template-columns:1fr}
+  .studio-pattern-writer-page{padding-left:10px!important;padding-right:10px!important}
+  .studio-writer-page-head{margin-left:-10px!important;margin-right:-10px!important}
+}
