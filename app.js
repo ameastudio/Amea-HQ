@@ -1686,7 +1686,7 @@ else if(cur=="expenses"){
   v.innerHTML=`<div class="tool-page">
     <div class="tool-page-head"><div><span>STOCK & MONEY</span><h2>Expenses</h2><p>Keep track of what the business spends.</p></div><div class=top-actions><button onclick=manageSuppliers()>Suppliers</button><button class=tool-add-btn onclick=newExpense()>＋ Add</button></div></div>
     <div class="tool-summary-grid one"><div><span>Total recorded</span><strong>${M(total)}</strong></div></div>
-    <div class="tool-list-card">${expenses.map(x=>{const yarns=Array.isArray(x.yarnItems)?x.yarnItems:[],first=yarns[0];return `<div class="expense-modern-row">${first?.photo?`<img class="expense-thumb" src="${first.photo}" alt="">`:`<span class="expense-icon">${ameaIcon("expense")}</span>`}<span class=expense-main><b>${esc(x.category||"Expense")}</b><small>${esc(x.date||"")}${x.supplier?" · "+esc(x.supplier):""}${yarns.length?" · "+yarns.length+" yarn"+(yarns.length===1?"":"s"):""}${x.note?" · "+esc(x.note):""}</small></span><strong>${M(x.amount)}</strong></div>`}).join("")||'<div class=empty>No expenses yet.</div>'}</div>
+    <div class="tool-list-card">${expenses.map(x=>{const yarns=Array.isArray(x.yarnItems)?x.yarnItems:[],first=yarns[0];return `<div class="expense-modern-row">${first?.photo?`<img class="expense-thumb" src="${first.photo}" alt="">`:`<span class="expense-icon">${ameaIcon("expense")}</span>`}<span class=expense-main><b>${esc(x.category||"Expense")}</b><small>${esc(x.date||"")}${x.supplier?" · "+esc(x.supplier):""}${yarns.length?" · "+yarns.length+" yarn"+(yarns.length===1?"":"s"):""}${x.note?" · "+esc(x.note):""}</small></span><strong>${M(x.amount)}</strong><button class="expense-delete-btn" onclick="deleteExpense('${x.id}')" aria-label="Delete expense">×</button></div>`}).join("")||'<div class=empty>No expenses yet.</div>'}</div>
   </div>`;
 }
 else if(cur=="analytics"){renderAnalytics("month")}
@@ -2663,6 +2663,21 @@ function recalcExpenseYarn(){
   });
   const grand=$("#expenseGrandTotal");if(grand)grand.textContent=M(total);
 }
+function expenseSupplierOptions(selected=""){
+  return '<option value="">Select supplier</option>'+SUP().map(x=>`<option value="${esc(x.name)}" ${x.name===selected?"selected":""}>${esc(x.name)}</option>`).join("")+'<option value="__new__">＋ Add new supplier</option>';
+}
+function expenseSupplierChanged(sel){
+  if(sel.value!=="__new__")return;
+  const name=prompt("New supplier name");
+  if(!name||!name.trim()){sel.value="";return}
+  const clean=name.trim(),exists=SUP().find(x=>x.name.toLowerCase()===clean.toLowerCase());
+  if(!exists){
+    const s=SUP();s.push({id:crypto.randomUUID(),name:clean});S("suppliers",s);
+  }
+  sel.innerHTML=expenseSupplierOptions(clean);
+  sel.value=clean;
+}
+
 function newExpense(){
   const suppliers=SUP();expenseReceiptPhoto="";
   openF(`<div class="expense-sheet">
@@ -2670,7 +2685,7 @@ function newExpense(){
     <label>Category</label>
     <select id=ec onchange="toggleExpenseType()">${["Yarn/materials","Packaging","Ads","Delivery","Equipment","Other"].map(x=>`<option>${x}</option>`).join("")}</select>
     <div class="expense-purchase-meta">
-      <div><label>Supplier / store</label><input id=es list=supplierList placeholder="Where did you buy it?"><datalist id=supplierList>${suppliers.map(x=>`<option value="${esc(x.name)}">`).join("")}</datalist></div>
+      <div><label>Supplier / store</label><select id=es onchange="expenseSupplierChanged(this)"><option value="">Select supplier</option>${suppliers.map(x=>`<option value="${esc(x.name)}">${esc(x.name)}</option>`).join("")}<option value="__new__">＋ Add new supplier</option></select></div>
       <div><label>Date purchased</label><input id=ed type=date value="${new Date().toISOString().slice(0,10)}"></div>
     </div>
     <div id=expenseYarnArea>
@@ -2688,7 +2703,7 @@ function newExpense(){
   toggleExpenseType();
 }
 function saveExpense(){
-  const a=E(),supplier=es.value.trim(),category=ec.value;
+  const a=E(),supplier=es.value==="__new__"?"":es.value.trim(),category=ec.value;
   const yarnItems=category==="Yarn/materials"?[...document.querySelectorAll("[data-yarn-line]")].map(row=>({
     photo:row.dataset.photo||"",
     name:row.querySelector("[data-yarn-name]")?.value.trim()||"",
@@ -2709,6 +2724,14 @@ function saveExpense(){
     const s=SUP();s.push({id:crypto.randomUUID(),name:supplier});S("suppliers",s)
   }
   dlg.close();render()
+}
+
+function deleteExpense(id){
+  const x=E().find(e=>e.id===id);if(!x)return;
+  if(!confirm(`Delete this ${x.category||"expense"} expense for ${M(x.amount)}?`))return;
+  S("expenses",E().filter(e=>e.id!==id));
+  deleteCloudRow("expenses",id);
+  render();
 }
 
 function manageSuppliers(){let s=SUP();openF(`<div class=top><h2>Suppliers</h2><button onclick=addSupplier()>＋ Add</button></div><div id=supplierRows>${s.map(x=>`<div class=item><div class=top><b>${x.name}</b><button class=mini-danger onclick="deleteSupplier('${x.id}')">Remove</button></div></div>`).join("")||'<div class=empty>No suppliers saved yet.</div>'}</div>`)}
