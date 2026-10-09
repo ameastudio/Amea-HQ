@@ -779,7 +779,7 @@ function renderStudioLibrary(){
   v.innerHTML=`<div class="studio-page crochet-studio-v1">
     <div class="crochet-v1-head">
       <button class="crochet-back" onclick="goStudioHub()">‹</button>
-      <div><span>CROCHET STUDIO</span><h2>Patterns</h2><p>Write, save and work from your crochet patterns.</p></div>
+      <div><span>STUDIO</span><h2>Crochet Studio</h2><p>Patterns, yarn and your making progress.</p></div>
       <button class="crochet-new-pattern" onclick="newStudioPattern()">＋</button>
     </div>
 
