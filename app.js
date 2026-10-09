@@ -7,6 +7,40 @@ function S(k,v){
 }
 let cur="home",orderHubTab="orders";const O=()=>G("orders"),C=()=>G("customers"),I=()=>G("inventory"),E=()=>G("expenses"),SUP=()=>G("suppliers"),ITEMS=()=>G("items"),
 PATTERNS=()=>G("studio_patterns"),MODELS=()=>G("studio_models"),YARNS=()=>G("studio_yarns"),VERSIONS=()=>G("studio_versions");
+const DESIGN_GALLERY_KEY="design_studio_gallery_v3",DESIGN_OPEN_KEY="amea_open_design_id";
+function DESIGN_GALLERY(){try{return JSON.parse(localStorage.getItem(DESIGN_GALLERY_KEY)||"[]")||[]}catch(e){return []}}
+function studioDesignById(id){return DESIGN_GALLERY().find(x=>x.id===id)}
+function studioDesignOptions(selected=""){
+  const designs=DESIGN_GALLERY();
+  return '<option value="">No linked design</option>'+designs.map(d=>`<option value="${esc(d.id)}" ${d.id===selected?"selected":""}>${esc(d.name||"Untitled Artwork")}</option>`).join("");
+}
+function studioLinkedDesignPreviewMarkup(id=""){
+  if(!id)return '<div class="studio-design-empty"><span>No design linked yet.</span></div>';
+  const d=studioDesignById(id);
+  if(!d)return '<div class="studio-design-empty"><span>This linked design is not saved on this device.</span></div>';
+  return `<button type=button class="studio-linked-design-card" onclick="openLinkedDesign('${d.id}')">${d.thumbnail?`<img src="${d.thumbnail}" alt="${esc(d.name||"Design")}">`:'<span class="studio-design-placeholder">DESIGN</span>'}<span><b>${esc(d.name||"Untitled Artwork")}</b><small>Open in Design Studio →</small></span></button>`;
+}
+function studioLinkedDesignChanged(){
+  const box=$("#studioLinkedDesignPreview"),id=$("#studioLinkedDesign")?.value||"";
+  if(box)box.innerHTML=studioLinkedDesignPreviewMarkup(id);
+  autoSaveStudioPatternDraft();
+}
+function syncDesignPatternLink(pattern){
+  if(!pattern?.id)return;
+  const designs=DESIGN_GALLERY();let changed=false;
+  const next=designs.map(d=>{
+    const before=Array.isArray(d.linkedPatternIds)?d.linkedPatternIds:[];
+    let ids=before.filter(id=>id!==pattern.id);
+    if(d.id===pattern.linkedDesignId&&!ids.includes(pattern.id))ids.push(pattern.id);
+    if(ids.length!==before.length||ids.some((id,i)=>id!==before[i]))changed=true;
+    return {...d,linkedPatternIds:ids};
+  });
+  if(changed)try{localStorage.setItem(DESIGN_GALLERY_KEY,JSON.stringify(next))}catch(e){}
+}
+function openLinkedDesign(id){
+  if(id)localStorage.setItem(DESIGN_OPEN_KEY,id);
+  openDesignStudio();
+}
 const M=n=>new Intl.NumberFormat("en-JM",{style:"currency",currency:"JMD",maximumFractionDigits:0}).format(+n||0);
 const AMEA_LOGO_DATA="data:image/png;base64,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";
 
@@ -136,6 +170,21 @@ const STUDIO_COLLECTIONS={
 };
 let studioCloudAvailable=true;
 
+const STUDIO_PATTERN_META="__AMEA_PATTERN_V2__";
+function studioPatternCloudNote(x={}){
+  const payload={note:String(x.notes||""),linkedDesignId:String(x.linkedDesignId||""),namePending:!!x.namePending};
+  if(!payload.linkedDesignId&&!payload.namePending)return payload.note||null;
+  return STUDIO_PATTERN_META+JSON.stringify(payload);
+}
+function studioPatternFromCloudNote(raw){
+  const text=String(raw||"");
+  if(!text.startsWith(STUDIO_PATTERN_META))return {note:text,linkedDesignId:"",namePending:false};
+  try{
+    const x=JSON.parse(text.slice(STUDIO_PATTERN_META.length));
+    return {note:String(x.note||""),linkedDesignId:String(x.linkedDesignId||""),namePending:!!x.namePending};
+  }catch(e){return {note:text,linkedDesignId:"",namePending:false}}
+}
+
 function studioLocalToRemote(kind,x){
   if(kind==="studio_patterns")return {
     id:x.id,name:x.name||"Untitled Pattern",technique:x.technique||"Crochet",
@@ -145,7 +194,7 @@ function studioLocalToRemote(kind,x){
     hook_size:x.hookSize||null,knit_details:x.knit||{},materials:Array.isArray(x.materials)?x.materials:[],
     material_notes:x.materialNotes||null,sizes:Array.isArray(x.sizes)?x.sizes:[],
     linked_model_id:x.linkedModelId||null,measurements:Array.isArray(x.measurements)?x.measurements:[],
-    instructions:Array.isArray(x.instructions)?x.instructions:[],notes:x.notes||null,costing:x.costing||{},
+    instructions:Array.isArray(x.instructions)?x.instructions:[],notes:studioPatternCloudNote(x),costing:x.costing||{},
     created_at:x.created||new Date().toISOString(),updated_at:x.updated||new Date().toISOString()
   };
   if(kind==="studio_models")return {
@@ -165,17 +214,21 @@ function studioLocalToRemote(kind,x){
   return x;
 }
 function studioRemoteToLocal(kind,x){
-  if(kind==="studio_patterns")return {
-    id:x.id,name:x.name||"Untitled Pattern",technique:x.technique||"Crochet",
-    category:x.category||"Other",status:x.status||"Draft",collection:x.collection_name||"",
-    tags:Array.isArray(x.tags)?x.tags:[],pinned:!!x.pinned,mainPhoto:x.main_photo||"",
-    extraPhotos:Array.isArray(x.extra_photos)?x.extra_photos:[],yarns:Array.isArray(x.yarns)?x.yarns:[],
-    hookSize:x.hook_size||"",knit:x.knit_details||{},materials:Array.isArray(x.materials)?x.materials:[],
-    materialNotes:x.material_notes||"",sizes:Array.isArray(x.sizes)?x.sizes:[],
-    linkedModelId:x.linked_model_id||"",measurements:Array.isArray(x.measurements)?x.measurements:[],
-    instructions:Array.isArray(x.instructions)?x.instructions:[],notes:x.notes||"",costing:x.costing||{},
-    created:x.created_at,updated:x.updated_at
-  };
+  if(kind==="studio_patterns"){
+    const extra=studioPatternFromCloudNote(x.notes);
+    return {
+      id:x.id,name:extra.namePending?"":(x.name||"Untitled Pattern"),namePending:extra.namePending,
+      technique:x.technique||"Crochet",category:x.category||"Other",status:x.status||"Draft",collection:x.collection_name||"",
+      tags:Array.isArray(x.tags)?x.tags:[],pinned:!!x.pinned,mainPhoto:x.main_photo||"",
+      extraPhotos:Array.isArray(x.extra_photos)?x.extra_photos:[],yarns:Array.isArray(x.yarns)?x.yarns:[],
+      hookSize:x.hook_size||"",knit:x.knit_details||{},materials:Array.isArray(x.materials)?x.materials:[],
+      materialNotes:x.material_notes||"",sizes:Array.isArray(x.sizes)?x.sizes:[],
+      linkedModelId:x.linked_model_id||"",linkedDesignId:extra.linkedDesignId,
+      measurements:Array.isArray(x.measurements)?x.measurements:[],
+      instructions:Array.isArray(x.instructions)?x.instructions:[],notes:extra.note,costing:x.costing||{},
+      created:x.created_at,updated:x.updated_at
+    };
+  }
   if(kind==="studio_models")return {
     id:x.id,name:x.name||"Model",usualSize:x.usual_size||"",
     measurements:Array.isArray(x.measurements)?x.measurements:[],notes:x.notes||"",
@@ -650,7 +703,8 @@ function applyAmeaBrandHeader(){
   refreshHomeGreeting();
 }
 
-function openDesignStudio(){
+function openDesignStudio(id=""){
+  if(id)localStorage.setItem(DESIGN_OPEN_KEY,id);
   history.replaceState(null,"","#studio");
   window.location.href="design-studio.html";
 }
@@ -672,7 +726,7 @@ function renderStudioHub(){
   return `<div class="studio-hub-page">
     <div class="studio-hub-head">
       <div><span class="studio-hub-kicker">AMÉA CREATIVE</span><h2>Studio</h2><p>Create • Plan • Grow</p></div>
-      <button class="studio-hub-add" onclick="page('crochet');setTimeout(newStudioPattern,0)">＋ Pattern</button>
+      <span class="studio-hub-spark">✦</span>
     </div>
 
     <button class="studio-feature-card crochet" onclick="page('crochet')">
@@ -726,7 +780,7 @@ function studioDefaultPattern(){
     id:"",name:"",technique:"Crochet",category:"Dress",status:"Draft",collection:"",
     tags:[],pinned:false,mainPhoto:"",extraPhotos:[],yarns:[{}],hookSize:"",
     knit:{machine:"",mode:"Panel",rowCount:"",tension:"",notes:""},
-    materials:[{text:""}],materialNotes:"",sizes:["S"],linkedModelId:"",
+    materials:[{text:""}],materialNotes:"",sizes:["S"],linkedModelId:"",linkedDesignId:"",namePending:false,
     measurements:[{name:"Bust",value:"",unit:"in"}],
     instructions:[{name:"Main Pattern",isMain:true,photo:"",notes:"",steps:[{id:crypto.randomUUID(),rowNumber:1,text:""}]}],
     notes:"",costing:{enabled:false,yarn:"",labor:"",other:""}
@@ -889,43 +943,81 @@ function openStudioPatternWriter(id){
   cur="crochet";
   render();
 }
-function studioWriterBack(){
-  const id=studioWriterPatternId;
+let studioWriterAutoSaveTimer=null;
+function studioWriterSetSaveState(text="Saved ✓"){
+  const el=$("#studioWriterSaveState");if(el)el.textContent=text;
+}
+function saveStudioPatternWriter(id,auto=false){
+  const p=studioPatternById(id);if(!p)return false;
+  const instructions=document.querySelector("[data-section-row]")?collectStudioInstructions():(p.instructions||studioDefaultPattern().instructions);
+  let updated={...p,instructions,updated:new Date().toISOString()};
+  if(!auto&&(!String(updated.name||"").trim()||updated.namePending)){
+    const name=prompt("Name this pattern before you finish","");
+    if(!name||!name.trim())return false;
+    updated={...updated,name:name.trim(),namePending:false};
+  }
+  const rows=PATTERNS().map(x=>x.id===id?updated:x);
+  try{
+    if(auto&&(!String(updated.name||"").trim()||updated.namePending)){
+      localStorage.setItem("ah_studio_patterns",JSON.stringify(rows));
+    }else{
+      S("studio_patterns",rows);
+      syncDesignPatternLink(updated);
+    }
+  }catch(e){
+    if(!auto)alert("This pattern is too large to save on this device. Try removing a row photo.");
+    return false;
+  }
+  studioWriterSetSaveState("Saved ✓");
+  return true;
+}
+function studioWriterInputChanged(id){
+  studioWriterSetSaveState("Saving…");
+  clearTimeout(studioWriterAutoSaveTimer);
+  studioWriterAutoSaveTimer=setTimeout(()=>saveStudioPatternWriter(id,true),650);
+}
+function openStudioWriterInfo(id){
+  const p=studioPatternById(id);if(!p)return;
+  saveStudioPatternWriter(id,true);
+  editStudioPattern(id);
+}
+function studioWriterLeave(id){
+  clearTimeout(studioWriterAutoSaveTimer);
+  if(!saveStudioPatternWriter(id,false))return;
   studioWriterPatternId="";
   studioSub="patterns";
   studioPatternId=id||"";
   cur="crochet";
   render();
 }
-function saveStudioPatternWriter(id){
-  const p=studioPatternById(id);if(!p)return;
-  const instructions=collectStudioInstructions();
-  const updated={...p,instructions,updated:new Date().toISOString()};
-  try{S("studio_patterns",PATTERNS().map(x=>x.id===id?updated:x))}
-  catch(e){return alert("This pattern is too large to save on this device. Try removing a row photo.")}
-  const btn=$("#studioWriterSave");
-  if(btn){const old=btn.textContent;btn.textContent="Saved ✓";setTimeout(()=>{if(btn)btn.textContent=old},1200)}
-}
+function studioWriterBack(){studioWriterLeave(studioWriterPatternId)}
+function studioWriterDone(id){studioWriterLeave(id)}
 function renderStudioPatternWriterPage(){
   const id=studioWriterPatternId;
   const p=studioPatternById(id);
   if(!p){studioWriterPatternId="";studioSub="patterns";return renderStudioLibrary()}
   const instructions=Array.isArray(p.instructions)&&p.instructions.length?JSON.parse(JSON.stringify(p.instructions)):studioDefaultPattern().instructions;
   if(!instructions[0].isMain)instructions[0]={...instructions[0],isMain:true,name:instructions[0].name||"Main Pattern"};
+  const design=studioDesignById(p.linkedDesignId||"");
   const v=$("#view");
   v.innerHTML=`<div class="studio-pattern-writer-page crochet-studio-v1">
     <div class="studio-writer-page-head">
       <button class="crochet-back" onclick="studioWriterBack()">‹</button>
-      <div><span>PATTERN WRITER</span><h2>${esc(p.name||"Untitled Pattern")}</h2><p>Write the actual pattern row by row.</p></div>
-      <button id="studioWriterSave" class="crochet-new-pattern studio-writer-save" onclick="saveStudioPatternWriter('${id}')">Save</button>
+      <div><span>PATTERN</span><h2>${esc(p.name||"Untitled Pattern")}</h2><p>Write the actual pattern row by row.</p></div>
+      <span id="studioWriterSaveState" class="studio-writer-save-state">Saved ✓</span>
     </div>
+    <div class="studio-pattern-tabs">
+      <button type=button class=active>Pattern</button>
+      <button type=button onclick="openStudioWriterInfo('${id}')">Info</button>
+    </div>
+    ${design?`<button class="studio-writer-design-link" onclick="openLinkedDesign('${design.id}')">${design.thumbnail?`<img src="${design.thumbnail}" alt="${esc(design.name||"Design")}">`:""}<span><small>LINKED DESIGN</small><b>${esc(design.name||"Untitled Artwork")}</b></span><i>Open ↗</i></button>`:""}
     <div class=studio-writer-intro>
       <div><span>ACTUAL PATTERN</span><h3>Write it row by row</h3><p>Type naturally. Press Enter and the next row appears automatically.</p></div>
       <button type=button onclick=studioAddSection()>＋ Add Piece</button>
     </div>
-    <div id=studioSectionList>${instructions.map((sec,i)=>studioSectionEditor(sec,i)).join("")}</div>
+    <div id=studioSectionList oninput="studioWriterInputChanged('${id}')" onchange="studioWriterInputChanged('${id}')">${instructions.map((sec,i)=>studioSectionEditor(sec,i)).join("")}</div>
     <button type=button class=studio-add-piece-bottom onclick=studioAddSection()>＋ Add Optional Piece</button>
-    <button class="primary studio-writer-page-save-bottom" onclick="saveStudioPatternWriter('${id}')">Save Pattern</button>
+    <button class="primary studio-writer-page-save-bottom" onclick="studioWriterDone('${id}')">Done</button>
   </div>`;
   setTimeout(()=>document.querySelectorAll("[data-row-text]").forEach(studioAutoGrowRow),0);
 }
@@ -1284,7 +1376,7 @@ function captureStudioPatternDraft(){
     ...studioDefaultPattern(),name:$("#studioPatternName")?.value.trim()||"",technique:$("#studioTechniqueEdit")?.value||"Crochet",category:$("#studioCategoryEdit")?.value||"Dress",status:$("#studioStatusEdit")?.value||"Draft",collection:$("#studioCollectionEdit")?.value.trim()||"",tags:($("#studioTags")?.value||"").split(",").map(x=>x.trim()).filter(Boolean),
     mainPhoto:studioMainPhoto,extraPhotos:[...studioExtraPhotos],yarns:collectStudioYarns(),hookSize:$("#studioHook")?.value.trim()||"",
     knit:{machine:$("#studioMachine")?.value.trim()||"",mode:$("#studioMachineMode")?.value||"Panel",rowCount:$("#studioRowCount")?.value.trim()||"",tension:$("#studioTension")?.value.trim()||"",notes:$("#studioMachineNotes")?.value.trim()||""},
-    materials:collectStudioMaterials(),materialNotes:$("#studioMaterialNotes")?.value.trim()||"",sizes:[...new Set([...baseSizes,...custom])],linkedModelId:$("#studioModel")?.value||"",measurements:collectStudioMeasurements(),instructions:studioDefaultPattern().instructions,notes:$("#studioPatternNotes")?.value.trim()||"",
+    materials:collectStudioMaterials(),materialNotes:$("#studioMaterialNotes")?.value.trim()||"",sizes:[...new Set([...baseSizes,...custom])],linkedModelId:$("#studioModel")?.value||"",linkedDesignId:$("#studioLinkedDesign")?.value||"",measurements:collectStudioMeasurements(),instructions:studioDefaultPattern().instructions,notes:$("#studioPatternNotes")?.value.trim()||"",
     costing:{enabled:!!$("#studioCostEnabled")?.checked,yarn:+($("#studioCostYarn")?.value||0),labor:+($("#studioCostLabor")?.value||0),other:+($("#studioCostOther")?.value||0)}
   };
 }
@@ -1298,7 +1390,27 @@ function installStudioPatternDraftAutosave(){
   const f=$("#form");if(!f||f.dataset.studioDraftAutosave)return;f.dataset.studioDraftAutosave="1";let t;const save=()=>{clearTimeout(t);t=setTimeout(autoSaveStudioPatternDraft,180)};f.addEventListener("input",save);f.addEventListener("change",save);
 }
 function clearStudioPatternDraftAndRestart(){clearStudioPatternDraft();editStudioPattern("")}
-function newStudioPattern(){editStudioPattern("")}
+function newStudioPattern(){
+  openF(`<div class="pattern-start-choice">
+    <h2>New Pattern</h2>
+    <p>How do you want to start?</p>
+    <button class="pattern-start-option" onclick="startStudioPatternWritingFirst()"><b>Write Pattern</b><small>Jump straight into Row 1. Add the details whenever you want.</small><span>›</span></button>
+    <button class="pattern-start-option" onclick="dlg.close();editStudioPattern('')"><b>Add Pattern Details</b><small>Add photos, yarn, sizing and other info first.</small><span>›</span></button>
+  </div>`);
+}
+function startStudioPatternWritingFirst(){
+  const now=new Date().toISOString();
+  const x={...studioDefaultPattern(),id:crypto.randomUUID(),name:"",namePending:true,created:now,updated:now};
+  try{localStorage.setItem("ah_studio_patterns",JSON.stringify([...PATTERNS(),x]))}
+  catch(e){return alert("I couldn't create the pattern on this device.")}
+  clearStudioPatternDraft();studioPatternDraftEnabled=false;
+  dlg.close();
+  studioPatternId="";
+  studioWriterPatternId=x.id;
+  studioSub="writer";
+  cur="crochet";
+  render();
+}
 function editStudioPattern(id=""){
   studioPatternDraftEnabled=!id;
   const saved=!id?readStudioPatternDraft():null;
@@ -1307,17 +1419,19 @@ function editStudioPattern(id=""){
   if(!Array.isArray(x.instructions)||!x.instructions.length)x.instructions=studioDefaultPattern().instructions;
   if(!x.instructions[0].isMain)x.instructions[0]={...x.instructions[0],isMain:true,name:x.instructions[0].name||"Main Pattern"};
   const sizes=["XS","S","M","L","XL"];
-  openF(`<div class="studio-editor-title studio-pattern-editor-title"><div>${studioLogoBlock(id?"Edit Pattern":"New Pattern")}${!id&&saved?'<span class=draft-restored>Autosaved draft restored ✓</span>':""}</div><div class=studio-pattern-top-actions>${!id?'<button type=button class=draft-clear-btn onclick=clearStudioPatternDraftAndRestart()>Start Fresh</button>':""}<button type=button class=studio-top-save onclick="saveStudioPattern('${id}')">Save</button></div></div>
+  openF(`<div class="studio-editor-title studio-pattern-editor-title"><div>${studioLogoBlock(id?"Pattern Info":"New Pattern")}${!id&&saved?'<span class=draft-restored>Autosaved draft restored ✓</span>':""}</div><div class=studio-pattern-top-actions>${!id?'<button type=button class=draft-clear-btn onclick=clearStudioPatternDraftAndRestart()>Start Fresh</button>':""}<button type=button class=studio-top-save onclick="saveStudioPattern('${id}')">${id?"Save":"Continue"}</button></div></div>
+    <div class="studio-pattern-editor-tabs"><button type=button onclick="saveStudioPattern('${id}','writer')">Pattern</button><button type=button class=active>Info</button></div>
     <div id=studioPatternInfoPane class=studio-pattern-pane>
       <div class=studio-editor-block><h3>Basic Details</h3><label>Pattern name</label><input id=studioPatternName value="${esc(x.name||"")}" placeholder="e.g. Flora Dress"><div class=studio-three><div><label>Technique</label><select id=studioTechniqueEdit onchange=studioToggleTechnique()><option ${x.technique==="Crochet"?"selected":""}>Crochet</option><option ${x.technique==="Knit"?"selected":""}>Knit</option></select></div><div><label>Category</label><select id=studioCategoryEdit>${studioCategories().map(z=>`<option ${x.category===z?"selected":""}>${z}</option>`).join("")}</select></div><div><label>Status</label><select id=studioStatusEdit>${["Draft","Testing","Final"].map(z=>`<option ${x.status===z?"selected":""}>${z}</option>`).join("")}</select></div></div><div class=studio-two><div><label>Collection <span class=meta>(optional)</span></label><input id=studioCollectionEdit value="${esc(x.collection||"")}" placeholder="e.g. Eden"></div><div><label>Tags</label><input id=studioTags value="${esc((x.tags||[]).join(", "))}" placeholder="floral, summer, fitted"></div></div></div>
       <div class=studio-editor-block><h3>Photos</h3>${studioMainPhoto?`<img id=studioMainPreview class=studio-main-preview src="${studioMainPhoto}" alt="">`:`<img id=studioMainPreview class=studio-main-preview style="display:none" alt="">`}<label>Main finished-piece photo</label><input type=file accept="image/*" onchange=studioMainPhotoChanged(this)><label>Gallery <span class=meta>(optional, up to 6)</span></label><input type=file accept="image/*" multiple onchange=studioExtraPhotosChanged(this)><div id=studioExtraPreview class=studio-extra-preview></div></div>
       <div class=studio-editor-block><div class=studio-editor-row-head><h3>Yarn & Hook</h3><button type=button onclick=studioAddYarn()>＋ Add Yarn</button></div><div id=studioYarnList>${(x.yarns?.length?x.yarns:[{}]).map((y,i)=>studioYarnRow(y,i)).join("")}</div><div id=studioCrochetFields><label>Hook size</label><input id=studioHook value="${esc(x.hookSize||"")}" placeholder="e.g. 4 mm"></div><div id=studioKnitFields><h3>Knit Machine Details</h3><div class=studio-two><input id=studioMachine value="${esc(x.knit?.machine||"")}" placeholder="Machine / size, e.g. Sentro 48"><select id=studioMachineMode><option ${x.knit?.mode==="Panel"?"selected":""}>Panel</option><option ${x.knit?.mode==="Tube"?"selected":""}>Tube</option></select></div><div class=studio-two><input id=studioRowCount value="${esc(x.knit?.rowCount||"")}" placeholder="Row count"><input id=studioTension value="${esc(x.knit?.tension||"")}" placeholder="Tension / settings"></div><textarea id=studioMachineNotes placeholder="Machine notes">${esc(x.knit?.notes||"")}</textarea></div></div>
       <div class=studio-editor-block><div class=studio-editor-row-head><h3>Materials</h3><button type=button onclick=studioAddMaterial()>＋ Add</button></div><div id=studioMaterialList>${(x.materials?.length?x.materials:[{}]).map(studioMaterialRow).join("")}</div><textarea id=studioMaterialNotes placeholder="Extra materials notes">${esc(x.materialNotes||"")}</textarea></div>
       <div class=studio-editor-block><h3>Sizes & Measurements</h3><div class=studio-size-checks>${sizes.map(s=>`<label><input type=checkbox value="${s}" ${x.sizes?.includes(s)?"checked":""}> ${s}</label>`).join("")}<label><input id=studioCustomSizeCheck type=checkbox ${x.sizes?.some(s=>!sizes.includes(s))?"checked":""}> Custom</label></div><input id=studioCustomSize value="${esc((x.sizes||[]).filter(s=>!sizes.includes(s)).join(", "))}" placeholder="Custom size name(s), optional"><label>Saved model <span class=meta>(optional)</span></label><select id=studioModel><option value="">No saved model</option>${MODELS().map(m=>`<option value="${m.id}" ${x.linkedModelId===m.id?"selected":""}>${esc(m.name)}${m.usualSize?" · "+esc(m.usualSize):""}</option>`).join("")}</select><div class=studio-editor-row-head><label>Measurements</label><button type=button onclick=studioAddMeasurement()>＋ Add Measurement</button></div><div id=studioMeasurementList>${(x.measurements?.length?x.measurements:[{name:"Bust",unit:"in"}]).map(studioMeasurementRow).join("")}</div></div>
+      <div class="studio-editor-block studio-linked-design-block"><h3>Linked Design</h3><p class=meta>Connect this pattern to a saved Design Studio artwork.</p><select id=studioLinkedDesign onchange=studioLinkedDesignChanged()>${studioDesignOptions(x.linkedDesignId||"")}</select><div id=studioLinkedDesignPreview>${studioLinkedDesignPreviewMarkup(x.linkedDesignId||"")}</div><button type=button class=studio-open-design-studio onclick="openDesignStudio()">Open Design Studio</button></div>
       <div class=studio-editor-block><h3>Notes</h3><textarea id=studioPatternNotes placeholder="Anything else you want to remember…">${esc(x.notes||"")}</textarea></div>
       <div class=studio-editor-block><h3>Costing</h3><label class=studio-cost-toggle><input id=studioCostEnabled type=checkbox ${x.costing?.enabled?"checked":""} onchange=studioToggleCost()> Track cost for this pattern</label><div id=studioCostFields class=studio-cost-fields><input id=studioCostYarn type=number placeholder="Yarn cost" value="${esc(x.costing?.yarn||"")}"><input id=studioCostLabor type=number placeholder="Labour" value="${esc(x.costing?.labor||"")}"><input id=studioCostOther type=number placeholder="Other cost" value="${esc(x.costing?.other||"")}"></div></div>
     </div>
-    <button class="primary studio-pattern-save-bottom" onclick="saveStudioPattern('${id}')">${id?"Save Pattern":"Create Pattern"}</button>`);
+    <button class="primary studio-pattern-save-bottom" onclick="saveStudioPattern('${id}','writer')">${id?"Save & Open Pattern":"Continue to Pattern Writer →"}</button>`);
   studioToggleTechnique();studioToggleCost();studioRenderExtraPreviews();if(!id)installStudioPatternDraftAutosave();
 }
 function collectStudioYarns(){
@@ -1353,7 +1467,7 @@ function collectStudioInstructions(){
     })
   }));
 }
-function saveStudioPattern(id=""){
+function saveStudioPattern(id="",after=""){
   const name=$("#studioPatternName")?.value.trim();if(!name)return alert("Give the pattern a name.");
   const now=new Date().toISOString(),old=id?studioPatternById(id):null;
   const baseSizes=[...document.querySelectorAll(".studio-size-checks input[type=checkbox][value]:checked")].map(x=>x.value);
@@ -1367,15 +1481,26 @@ function saveStudioPattern(id=""){
     hookSize:$("#studioHook")?.value.trim()||"",
     knit:{machine:$("#studioMachine")?.value.trim()||"",mode:$("#studioMachineMode")?.value||"Panel",rowCount:$("#studioRowCount")?.value.trim()||"",tension:$("#studioTension")?.value.trim()||"",notes:$("#studioMachineNotes")?.value.trim()||""},
     materials:collectStudioMaterials(),materialNotes:$("#studioMaterialNotes").value.trim(),sizes,
-    linkedModelId:$("#studioModel").value,measurements:collectStudioMeasurements(),instructions:id?(old?.instructions||studioDefaultPattern().instructions):studioDefaultPattern().instructions,
+    linkedModelId:$("#studioModel").value,linkedDesignId:$("#studioLinkedDesign")?.value||"",namePending:false,
+    measurements:collectStudioMeasurements(),instructions:id?(old?.instructions||studioDefaultPattern().instructions):studioDefaultPattern().instructions,
     notes:$("#studioPatternNotes").value.trim(),
     costing:{enabled:!!$("#studioCostEnabled")?.checked,yarn:+($("#studioCostYarn")?.value||0),labor:+($("#studioCostLabor")?.value||0),other:+($("#studioCostOther")?.value||0)},
     created:old?.created||now,updated:now
   };
   const a=id?PATTERNS().map(z=>z.id===id?x:z):[...PATTERNS(),x];
   try{S("studio_patterns",a)}catch(e){return alert("This pattern is too large to save on this device. Try removing an extra photo.")}
+  syncDesignPatternLink(x);
   if(!id)clearStudioPatternDraft();studioPatternDraftEnabled=false;
-  dlg.close();studioPatternId=x.id;studioSub="patterns";page("crochet");
+  dlg.close();
+  if(after==="writer"||!id){
+    studioPatternId="";
+    studioWriterPatternId=x.id;
+    studioSub="writer";
+    cur="crochet";
+    render();
+    return;
+  }
+  studioPatternId=x.id;studioWriterPatternId="";studioSub="patterns";page("crochet");
 }
 
 function renderStudioYarns(){

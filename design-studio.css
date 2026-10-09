@@ -352,3 +352,13 @@ svg{fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-l
 
 /* Prevent accidental double-tap zoom while preserving normal pinch zoom */
 html,body,.screen,button,a{touch-action:manipulation}
+
+
+/* Linked crochet pattern note */
+.artwork-linked-pattern{
+  display:block;
+  margin-top:3px;
+  color:#b88730!important;
+  font-size:10px!important;
+  font-weight:700;
+}
