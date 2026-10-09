@@ -269,7 +269,7 @@ function localToRemote(kind,x){
   if(kind==="expenses")return {
     id:x.id,category:x.category||null,description:x.supplier||null,
     amount:+x.amount||0,expense_date:x.date||new Date().toISOString().slice(0,10),
-    notes:x.note||null
+    notes:expenseCloudNote(x)
   };
   if(kind==="inventory")return {
     id:x.id,name:x.name,inventory_type:x.type||null,quantity:+x.qty||0,
@@ -280,6 +280,30 @@ function localToRemote(kind,x){
     website:x.website||null,instagram:x.instagram||null,notes:x.notes||null
   };
   return x;
+}
+
+function expenseCloudNote(x={}){
+  const payload={
+    note:String(x.note||""),
+    yarnItems:Array.isArray(x.yarnItems)?x.yarnItems:[],
+    receiptPhoto:String(x.receiptPhoto||"")
+  };
+  if(!payload.yarnItems.length&&!payload.receiptPhoto)return payload.note||null;
+  return "__AMEA_EXPENSE_V2__"+JSON.stringify(payload);
+}
+function expenseFromCloudNote(raw){
+  const text=String(raw||"");
+  if(!text.startsWith("__AMEA_EXPENSE_V2__"))return {note:text,yarnItems:[],receiptPhoto:""};
+  try{
+    const x=JSON.parse(text.slice("__AMEA_EXPENSE_V2__".length));
+    return {
+      note:String(x.note||""),
+      yarnItems:Array.isArray(x.yarnItems)?x.yarnItems:[],
+      receiptPhoto:String(x.receiptPhoto||"")
+    };
+  }catch(e){
+    return {note:text,yarnItems:[],receiptPhoto:""};
+  }
 }
 
 function remoteToLocal(kind,x){
@@ -305,10 +329,14 @@ function remoteToLocal(kind,x){
     patternProgress:x.pattern_progress&&typeof x.pattern_progress==="object"?x.pattern_progress:{},
     created:x.created_at
   };
-  if(kind==="expenses")return {
-    id:x.id,category:x.category||"Other",supplier:x.description||"",
-    amount:+x.amount||0,date:x.expense_date||"",note:x.notes||""
-  };
+  if(kind==="expenses"){
+    const extra=expenseFromCloudNote(x.notes);
+    return {
+      id:x.id,category:x.category||"Other",supplier:x.description||"",
+      amount:+x.amount||0,date:x.expense_date||"",note:extra.note,
+      yarnItems:extra.yarnItems,receiptPhoto:extra.receiptPhoto
+    };
+  }
   if(kind==="inventory")return {
     id:x.id,name:x.name,type:x.inventory_type||"Material",qty:+x.quantity||0,
     low:+x.low_stock_level||0,unit:x.unit||"",notes:x.notes||""
@@ -1658,7 +1686,7 @@ else if(cur=="expenses"){
   v.innerHTML=`<div class="tool-page">
     <div class="tool-page-head"><div><span>STOCK & MONEY</span><h2>Expenses</h2><p>Keep track of what the business spends.</p></div><div class=top-actions><button onclick=manageSuppliers()>Suppliers</button><button class=tool-add-btn onclick=newExpense()>＋ Add</button></div></div>
     <div class="tool-summary-grid one"><div><span>Total recorded</span><strong>${M(total)}</strong></div></div>
-    <div class="tool-list-card">${expenses.map(x=>`<div class="expense-modern-row"><span class="expense-icon">${ameaIcon("expense")}</span><span class=expense-main><b>${esc(x.category||"Expense")}</b><small>${esc(x.date||"")}${x.supplier?" · "+esc(x.supplier):""}${x.note?" · "+esc(x.note):""}</small></span><strong>${M(x.amount)}</strong></div>`).join("")||'<div class=empty>No expenses yet.</div>'}</div>
+    <div class="tool-list-card">${expenses.map(x=>{const yarns=Array.isArray(x.yarnItems)?x.yarnItems:[],first=yarns[0];return `<div class="expense-modern-row">${first?.photo?`<img class="expense-thumb" src="${first.photo}" alt="">`:`<span class="expense-icon">${ameaIcon("expense")}</span>`}<span class=expense-main><b>${esc(x.category||"Expense")}</b><small>${esc(x.date||"")}${x.supplier?" · "+esc(x.supplier):""}${yarns.length?" · "+yarns.length+" yarn"+(yarns.length===1?"":"s"):""}${x.note?" · "+esc(x.note):""}</small></span><strong>${M(x.amount)}</strong></div>`}).join("")||'<div class=empty>No expenses yet.</div>'}</div>
   </div>`;
 }
 else if(cur=="analytics"){renderAnalytics("month")}
@@ -2572,8 +2600,114 @@ function deleteCustomer(id){
   dlg.close();
   render();
 }
-function newExpense(){let suppliers=SUP();openF(`<h2>Add Expense</h2><label>Category</label><select id=ec>${["Yarn/materials","Packaging","Ads","Delivery","Equipment","Other"].map(x=>`<option>${x}</option>`)}</select><label>Supplier</label><input id=es list=supplierList placeholder="Where did you buy it?"><datalist id=supplierList>${suppliers.map(x=>`<option value="${x.name}">`).join("")}</datalist><label>Amount</label><input id=ea type=number><label>Date</label><input id=ed type=date value="${new Date().toISOString().slice(0,10)}"><label>Note</label><input id=en><button class=primary onclick=saveExpense()>Save</button>`)}
-function saveExpense(){let a=E(),supplier=es.value.trim();a.push({id:crypto.randomUUID(),category:ec.value,supplier,amount:+ea.value||0,date:ed.value,note:en.value});S("expenses",a);if(supplier&&!SUP().some(x=>x.name.toLowerCase()==supplier.toLowerCase())){let s=SUP();s.push({id:crypto.randomUUID(),name:supplier});S("suppliers",s)}dlg.close();render()}
+let expenseReceiptPhoto="";
+function expenseYarnLine(item={},index=0){
+  const photo=item.photo||"";
+  return `<div class="expense-yarn-line" data-yarn-line data-photo="${photo}">
+    <label class="expense-yarn-photo">
+      ${photo?`<img src="${photo}" alt="">`:`<span>＋ Photo</span>`}
+      <input type="file" accept="image/*" onchange="expenseYarnPhotoChanged(this)">
+    </label>
+    <div class="expense-yarn-fields">
+      <input data-yarn-name placeholder="Yarn / brand" value="${esc(item.name||"")}">
+      <input data-yarn-colour placeholder="Colour" value="${esc(item.colour||"")}">
+      <div class="expense-yarn-numbers">
+        <label>Qty<input data-yarn-qty type="number" min="1" step="1" value="${item.qty||1}" oninput="recalcExpenseYarn()"></label>
+        <label>Cost each<input data-yarn-cost type="number" min="0" step=".01" value="${item.costEach||""}" oninput="recalcExpenseYarn()"></label>
+        <div class="expense-line-total"><span>Total</span><b data-yarn-total>${M((+item.qty||1)*(+item.costEach||0))}</b></div>
+      </div>
+    </div>
+    <button type="button" class="expense-yarn-remove" onclick="this.closest('[data-yarn-line]').remove();recalcExpenseYarn()" aria-label="Remove yarn">×</button>
+  </div>`;
+}
+function addExpenseYarnLine(item={}){
+  const box=$("#expenseYarnLines");if(!box)return;
+  box.insertAdjacentHTML("beforeend",expenseYarnLine(item,box.querySelectorAll("[data-yarn-line]").length));
+  recalcExpenseYarn();
+}
+async function expenseYarnPhotoChanged(input){
+  const row=input.closest("[data-yarn-line]"),f=input.files?.[0];if(!row||!f)return;
+  try{
+    const src=await imageToSmallDataUrl(f);
+    row.dataset.photo=src;
+    const label=input.closest(".expense-yarn-photo");
+    let img=label.querySelector("img");
+    if(!img){img=document.createElement("img");label.prepend(img);label.querySelector("span")?.remove()}
+    img.src=src;
+  }catch(e){alert("I couldn't process that yarn photo. Try another image.")}
+}
+async function expenseReceiptChanged(input){
+  const f=input.files?.[0];if(!f)return;
+  try{
+    expenseReceiptPhoto=await imageToSmallDataUrl(f);
+    const p=$("#expenseReceiptPreview");
+    if(p){p.src=expenseReceiptPhoto;p.style.display="block"}
+  }catch(e){alert("I couldn't process that receipt photo. Try another image.")}
+}
+function toggleExpenseType(){
+  const yarn=$("#ec")?.value==="Yarn/materials";
+  if($("#expenseYarnArea"))$("#expenseYarnArea").hidden=!yarn;
+  if($("#expenseAmountArea"))$("#expenseAmountArea").hidden=yarn;
+  recalcExpenseYarn();
+}
+function recalcExpenseYarn(){
+  let total=0;
+  document.querySelectorAll("[data-yarn-line]").forEach(row=>{
+    const qty=Math.max(0,+row.querySelector("[data-yarn-qty]")?.value||0);
+    const each=Math.max(0,+row.querySelector("[data-yarn-cost]")?.value||0);
+    const line=qty*each;total+=line;
+    const out=row.querySelector("[data-yarn-total]");if(out)out.textContent=M(line);
+  });
+  const grand=$("#expenseGrandTotal");if(grand)grand.textContent=M(total);
+}
+function newExpense(){
+  const suppliers=SUP();expenseReceiptPhoto="";
+  openF(`<div class="expense-sheet">
+    <div class="expense-sheet-head"><h2>Add Expense</h2><p>Record what you bought without the clutter.</p></div>
+    <label>Category</label>
+    <select id=ec onchange="toggleExpenseType()">${["Yarn/materials","Packaging","Ads","Delivery","Equipment","Other"].map(x=>`<option>${x}</option>`).join("")}</select>
+    <div class="expense-purchase-meta">
+      <div><label>Supplier / store</label><input id=es list=supplierList placeholder="Where did you buy it?"><datalist id=supplierList>${suppliers.map(x=>`<option value="${esc(x.name)}">`).join("")}</datalist></div>
+      <div><label>Date purchased</label><input id=ed type=date value="${new Date().toISOString().slice(0,10)}"></div>
+    </div>
+    <div id=expenseYarnArea>
+      <div class="expense-yarn-heading"><div><span>YARN PURCHASE</span><h3>What you bought</h3></div><button type=button onclick="addExpenseYarnLine()">＋ Add yarn</button></div>
+      <div id=expenseYarnLines>${expenseYarnLine({},0)}</div>
+      <div class="expense-grand-total"><span>Purchase total</span><strong id=expenseGrandTotal>${M(0)}</strong></div>
+    </div>
+    <div id=expenseAmountArea hidden><label>Amount</label><input id=ea type=number min=0 step=.01 placeholder="0"></div>
+    <label>Receipt photo <span class=meta>(optional)</span></label>
+    <img id=expenseReceiptPreview class=expense-receipt-preview style="display:none" alt="">
+    <input type=file accept="image/*" onchange="expenseReceiptChanged(this)">
+    <label>Note <span class=meta>(optional)</span></label><input id=en placeholder="Anything you want to remember">
+    <button class=primary onclick=saveExpense()>Save Expense</button>
+  </div>`);
+  toggleExpenseType();
+}
+function saveExpense(){
+  const a=E(),supplier=es.value.trim(),category=ec.value;
+  const yarnItems=category==="Yarn/materials"?[...document.querySelectorAll("[data-yarn-line]")].map(row=>({
+    photo:row.dataset.photo||"",
+    name:row.querySelector("[data-yarn-name]")?.value.trim()||"",
+    colour:row.querySelector("[data-yarn-colour]")?.value.trim()||"",
+    qty:Math.max(0,+row.querySelector("[data-yarn-qty]")?.value||0),
+    costEach:Math.max(0,+row.querySelector("[data-yarn-cost]")?.value||0)
+  })).filter(x=>x.name||x.colour||x.photo||x.costEach||x.qty):[];
+  const amount=category==="Yarn/materials"
+    ? yarnItems.reduce((sum,x)=>sum+(x.qty*x.costEach),0)
+    : Math.max(0,+($("#ea")?.value||0));
+  if(category==="Yarn/materials"&&!yarnItems.length)return alert("Add at least one yarn.");
+  a.push({
+    id:crypto.randomUUID(),category,supplier,amount,date:ed.value,note:en.value,
+    yarnItems,receiptPhoto:expenseReceiptPhoto
+  });
+  S("expenses",a);
+  if(supplier&&!SUP().some(x=>x.name.toLowerCase()===supplier.toLowerCase())){
+    const s=SUP();s.push({id:crypto.randomUUID(),name:supplier});S("suppliers",s)
+  }
+  dlg.close();render()
+}
+
 function manageSuppliers(){let s=SUP();openF(`<div class=top><h2>Suppliers</h2><button onclick=addSupplier()>＋ Add</button></div><div id=supplierRows>${s.map(x=>`<div class=item><div class=top><b>${x.name}</b><button class=mini-danger onclick="deleteSupplier('${x.id}')">Remove</button></div></div>`).join("")||'<div class=empty>No suppliers saved yet.</div>'}</div>`)}
 function addSupplier(){let name=prompt("Supplier name");if(!name||!name.trim())return;let s=SUP();if(!s.some(x=>x.name.toLowerCase()==name.trim().toLowerCase())){s.push({id:crypto.randomUUID(),name:name.trim()});S("suppliers",s)}manageSuppliers()}
 function deleteSupplier(id){if(!confirm("Remove this supplier?"))return;S("suppliers",SUP().filter(x=>x.id!=id));deleteCloudRow("suppliers",id);manageSuppliers()}

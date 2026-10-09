@@ -2123,3 +2123,83 @@ dialog:has(.studio-pattern-editor-title){width:min(780px,100%);max-height:96dvh;
   text-align:left;
   padding:10px 2px;
 }
+
+
+/* ===== Mobile touch + centered Améa HQ brand ===== */
+html,body,#app,button,a,nav{touch-action:manipulation}
+.hq-header-main{justify-content:center!important}
+.hq-brand-home{
+  width:100%!important;
+  flex:1 1 100%!important;
+  justify-content:center!important;
+  text-align:center!important;
+}
+.hq-brand-home .hq-logo-shell{
+  min-width:154px;
+  height:56px;
+  padding:7px 14px;
+}
+.hq-brand-home .hq-logo-shell img{
+  width:110px;
+  height:35px;
+}
+@media(max-width:460px){
+  .hq-brand-home .hq-logo-shell{min-width:142px;height:53px}
+  .hq-brand-home .hq-logo-shell img{width:102px;height:33px}
+}
+
+/* ===== Expense purchase sheet ===== */
+dialog:has(.expense-sheet){width:min(620px,100%);max-height:94dvh;padding:18px 16px 26px}
+.expense-sheet-head{padding:1px 0 12px;border-bottom:1px solid #efdce5;margin-bottom:12px}
+.expense-sheet-head h2{margin:0;color:var(--amea-ink);font-size:21px}
+.expense-sheet-head p{margin:4px 0 0;color:var(--amea-muted);font-size:9px}
+.expense-purchase-meta{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.expense-yarn-heading{display:flex;align-items:end;justify-content:space-between;gap:10px;margin:17px 0 6px;padding-top:12px;border-top:1px solid #efdce5}
+.expense-yarn-heading span{display:block;color:#b98432;font-size:7px;font-weight:900;letter-spacing:1.15px}
+.expense-yarn-heading h3{margin:2px 0 0;font-size:16px;color:var(--amea-ink)}
+.expense-yarn-heading button{border:0;background:transparent;color:var(--amea-hot);font-size:9px;font-weight:850;padding:6px 0}
+.expense-yarn-line{
+  display:grid;
+  grid-template-columns:62px minmax(0,1fr) 26px;
+  gap:9px;
+  align-items:start;
+  padding:11px 0;
+  border-bottom:1px solid #f1e2e9;
+}
+.expense-yarn-photo{
+  width:62px;height:62px;
+  display:grid;place-items:center;
+  margin:0;
+  overflow:hidden;
+  border:1px dashed #e7bfd0;
+  border-radius:12px;
+  background:#fff8fb;
+  color:#c3507e;
+  font-size:8px;
+  font-weight:800;
+}
+.expense-yarn-photo img{width:100%;height:100%;object-fit:cover}
+.expense-yarn-photo input{display:none}
+.expense-yarn-fields{min-width:0}
+.expense-yarn-fields>input{margin:0 0 6px!important}
+.expense-yarn-numbers{display:grid;grid-template-columns:64px minmax(90px,1fr) auto;gap:6px;align-items:end}
+.expense-yarn-numbers label{margin:0;color:var(--amea-muted);font-size:7px}
+.expense-yarn-numbers input{margin:3px 0 0!important;padding:8px 7px!important}
+.expense-line-total{padding:0 2px 7px;text-align:right;white-space:nowrap}
+.expense-line-total span,.expense-line-total b{display:block}
+.expense-line-total span{font-size:7px;color:var(--amea-muted)}
+.expense-line-total b{margin-top:3px;font-size:10px;color:var(--amea-hot)}
+.expense-yarn-remove{width:26px;height:26px;padding:0;border:0;background:transparent;color:#ad4968;font-size:17px}
+.expense-grand-total{display:flex;justify-content:space-between;align-items:center;padding:13px 0 15px;border-bottom:1px solid #efdce5}
+.expense-grand-total span{font-size:9px;color:var(--amea-muted)}
+.expense-grand-total strong{font-size:17px;color:var(--amea-hot)}
+.expense-receipt-preview{width:100%;max-height:180px;object-fit:cover;border-radius:12px;margin:5px 0 8px}
+.expense-thumb{width:40px;height:40px;border-radius:12px;object-fit:cover}
+@media(max-width:430px){
+  .expense-purchase-meta{grid-template-columns:1fr}
+  .expense-yarn-line{grid-template-columns:54px minmax(0,1fr) 22px}
+  .expense-yarn-photo{width:54px;height:54px}
+  .expense-yarn-numbers{grid-template-columns:54px minmax(78px,1fr);gap:5px}
+  .expense-line-total{grid-column:1/-1;text-align:left;padding:0 0 2px}
+  .expense-line-total span,.expense-line-total b{display:inline;margin-right:5px}
+}
